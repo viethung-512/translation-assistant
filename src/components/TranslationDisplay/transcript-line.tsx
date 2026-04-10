@@ -10,13 +10,13 @@ function TranscriptLineComponent({ line }: Props) {
   const time = new Date(line.timestampMs).toISOString().slice(11, 19);
 
   return (
-    <div style={{ padding: '8px 0', borderBottom: '1px solid #f3f4f6' }}>
-      <p style={{ margin: '0 0 2px', fontSize: 16, fontWeight: 500, color: '#111827', lineHeight: 1.4 }}>
+    <div style={{ padding: '10px 0', borderBottom: '1px solid var(--border-light)' }}>
+      <p style={{ margin: '0 0 3px', fontSize: 16, fontWeight: 500, color: 'var(--text-primary)', lineHeight: 1.45 }}>
         {line.translatedText}
       </p>
-      <p style={{ margin: 0, fontSize: 12, color: '#9ca3af', lineHeight: 1.3 }}>
-        <span style={{ marginRight: 8 }}>{time}</span>
-        {line.originalText}
+      <p style={{ margin: 0, fontSize: 12, color: 'var(--text-muted)', lineHeight: 1.3, display: 'flex', gap: 8 }}>
+        <span>{time}</span>
+        <span>{line.originalText}</span>
       </p>
     </div>
   );

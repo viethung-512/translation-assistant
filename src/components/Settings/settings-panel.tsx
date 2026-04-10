@@ -1,12 +1,31 @@
-// Slide-up settings panel: API key management, language pickers, output mode toggle.
+// Slide-up settings sheet: API key, language pickers, output mode toggle.
 import { useEffect, useState } from 'react';
 import { LanguagePicker } from './language-picker';
 import { useSettingsStore } from '@/store/settings-store';
 import { saveApiKey, getApiKey, deleteApiKey } from '@/tauri/secure-storage';
+import { BottomSheet, Button, IconButton } from '@/components/ui';
 
 interface Props {
   isOpen: boolean;
   onClose: () => void;
+}
+
+// Close (X) icon
+function IconClose() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" aria-hidden="true">
+      <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+    </svg>
+  );
+}
+
+// Check icon for "stored" indicator
+function IconCheck() {
+  return (
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <polyline points="20 6 9 17 4 12" />
+    </svg>
+  );
 }
 
 export function SettingsPanel({ isOpen, onClose }: Props) {
@@ -16,7 +35,6 @@ export function SettingsPanel({ isOpen, onClose }: Props) {
   const [hasStoredKey, setHasStoredKey] = useState(false);
   const [saving, setSaving] = useState(false);
 
-  // Check for existing stored key on panel open
   useEffect(() => {
     if (!isOpen) return;
     getApiKey().then((k) => setHasStoredKey(!!k));
@@ -42,44 +60,27 @@ export function SettingsPanel({ isOpen, onClose }: Props) {
     setKeyInput('');
   };
 
-  const panelStyle: React.CSSProperties = {
-    position: 'fixed',
-    inset: 0,
-    display: 'flex',
-    alignItems: 'flex-end',
-    background: isOpen ? 'rgba(0,0,0,0.4)' : 'transparent',
-    pointerEvents: isOpen ? 'auto' : 'none',
-    transition: 'background 0.2s',
-    zIndex: 100,
-  };
-
-  const sheetStyle: React.CSSProperties = {
-    width: '100%',
-    maxWidth: 480,
-    margin: '0 auto',
-    background: '#fff',
-    borderRadius: '16px 16px 0 0',
-    padding: '20px 20px 32px',
-    maxHeight: '70vh',
-    overflowY: 'auto',
-    transform: isOpen ? 'translateY(0)' : 'translateY(100%)',
-    transition: 'transform 0.25s ease',
-  };
-
   return (
-    <div style={panelStyle} onClick={(e) => e.target === e.currentTarget && onClose()}>
-      <div style={sheetStyle}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 20 }}>
-          <h2 style={{ margin: 0, fontSize: 18, fontWeight: 600 }}>Settings</h2>
-          <button onClick={onClose} style={{ background: 'none', border: 'none', fontSize: 20, cursor: 'pointer' }}>
-            ✕
-          </button>
+    <BottomSheet isOpen={isOpen} onClose={onClose}>
+      <div className="px-5 pb-0 max-h-[72vh] overflow-y-auto">
+
+        {/* Header */}
+        <div className="flex justify-between items-center mb-[22px]">
+          <h2 className="m-0 text-heading text-text-primary">Settings</h2>
+          <IconButton aria-label="Close settings" onClick={onClose} className="rounded-full bg-bg-tertiary">
+            <IconClose />
+          </IconButton>
         </div>
 
         {/* API Key */}
-        <div style={{ marginBottom: 16 }}>
-          <label style={{ display: 'block', fontSize: 12, color: '#666', marginBottom: 4 }}>
-            Soniox API Key {hasStoredKey && <span style={{ color: '#22c55e' }}>✓ Stored</span>}
+        <div className="mb-5">
+          <label className="flex items-center gap-[6px] text-label text-text-muted mb-[6px]">
+            Soniox API Key
+            {hasStoredKey && (
+              <span className="flex items-center gap-[3px] text-success text-[11px]">
+                <IconCheck /> Stored
+              </span>
+            )}
           </label>
           <input
             type="password"
@@ -87,18 +88,25 @@ export function SettingsPanel({ isOpen, onClose }: Props) {
             onChange={(e) => setKeyInput(e.target.value)}
             placeholder={hasStoredKey ? '••••••••••••' : 'Enter your API key'}
             autoComplete="off"
-            style={{ width: '100%', padding: '8px 10px', borderRadius: 8, border: '1px solid #ddd', fontSize: 14, boxSizing: 'border-box' }}
+            className="w-full px-3 py-[10px] rounded-[10px] border border-border text-[15px] bg-bg-secondary text-text-primary outline-none focus:border-accent"
           />
-          <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
-            <button onClick={handleSaveKey} disabled={saving || !keyInput.trim()}
-              style={{ flex: 1, padding: '8px', borderRadius: 8, background: '#3b82f6', color: '#fff', border: 'none', cursor: 'pointer', fontSize: 13 }}>
+          <div className="flex gap-2 mt-2">
+            <Button
+              variant="primary"
+              onClick={handleSaveKey}
+              disabled={saving || !keyInput.trim()}
+              className="flex-1 rounded-[10px] text-[14px] font-medium"
+            >
               {saving ? 'Saving…' : 'Save Key'}
-            </button>
+            </Button>
             {hasStoredKey && (
-              <button onClick={handleDeleteKey}
-                style={{ padding: '8px 14px', borderRadius: 8, background: '#fee2e2', color: '#dc2626', border: 'none', cursor: 'pointer', fontSize: 13 }}>
+              <Button
+                variant="danger"
+                onClick={handleDeleteKey}
+                className="rounded-[10px] text-[14px] font-medium px-4"
+              >
                 Delete
-              </button>
+              </Button>
             )}
           </div>
         </div>
@@ -110,23 +118,33 @@ export function SettingsPanel({ isOpen, onClose }: Props) {
           onChange={setTargetLanguage} exclude={sourceLanguage} />
 
         {/* Output mode */}
-        <div>
-          <label style={{ display: 'block', fontSize: 12, color: '#666', marginBottom: 8 }}>Output mode</label>
-          <div style={{ display: 'flex', gap: 8 }}>
-            {(['text', 'tts'] as const).map((mode) => (
-              <button key={mode} onClick={() => setOutputMode(mode)}
-                style={{
-                  flex: 1, padding: '8px', borderRadius: 8, fontSize: 13, cursor: 'pointer',
-                  background: outputMode === mode ? '#3b82f6' : '#f3f4f6',
-                  color: outputMode === mode ? '#fff' : '#374151',
-                  border: outputMode === mode ? '2px solid #3b82f6' : '2px solid transparent',
-                }}>
-                {mode === 'text' ? '📝 Text' : '🔊 Voice'}
-              </button>
-            ))}
+        <div className="mb-2">
+          <label className="block text-label text-text-muted mb-2">
+            Output mode
+          </label>
+          <div className="flex gap-2">
+            {(['text', 'tts'] as const).map((mode) => {
+              const active = outputMode === mode;
+              return (
+                <button
+                  key={mode}
+                  onClick={() => setOutputMode(mode)}
+                  className={[
+                    'flex-1 py-[10px] rounded-[10px] text-[14px] cursor-pointer min-h-touch',
+                    'border-[1.5px] transition-colors duration-150',
+                    active
+                      ? 'bg-accent-dim text-accent border-accent font-semibold'
+                      : 'bg-bg-secondary text-text-secondary border-border font-normal',
+                  ].join(' ')}
+                >
+                  {mode === 'text' ? 'Text only' : 'Voice output'}
+                </button>
+              );
+            })}
           </div>
         </div>
+
       </div>
-    </div>
+    </BottomSheet>
   );
 }

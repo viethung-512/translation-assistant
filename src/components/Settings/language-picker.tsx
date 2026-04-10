@@ -29,8 +29,8 @@ export function LanguagePicker({ label, value, onChange, exclude }: Props) {
   const options = LANGUAGES.filter((l) => l.code !== exclude);
 
   return (
-    <div style={{ marginBottom: 12 }}>
-      <label style={{ display: 'block', fontSize: 12, color: '#666', marginBottom: 4 }}>
+    <div style={{ marginBottom: 14 }}>
+      <label style={{ display: 'block', fontSize: 12, color: 'var(--text-muted)', marginBottom: 5, fontWeight: 500 }}>
         {label}
       </label>
       <select
@@ -38,17 +38,18 @@ export function LanguagePicker({ label, value, onChange, exclude }: Props) {
         onChange={(e) => onChange(e.target.value)}
         style={{
           width: '100%',
-          padding: '8px 10px',
-          borderRadius: 8,
-          border: '1px solid #ddd',
-          fontSize: 14,
-          background: '#fff',
+          padding: '9px 12px',
+          borderRadius: 10,
+          border: '1px solid var(--border)',
+          fontSize: 15,
+          background: 'var(--bg-secondary)',
+          color: 'var(--text-primary)',
+          cursor: 'pointer',
+          appearance: 'auto',
         }}
       >
         {options.map((l) => (
-          <option key={l.code} value={l.code}>
-            {l.label}
-          </option>
+          <option key={l.code} value={l.code}>{l.label}</option>
         ))}
       </select>
     </div>
