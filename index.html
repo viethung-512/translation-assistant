@@ -3,11 +3,20 @@
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Tauri + React + Typescript</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <title>Translation Assistant</title>
+    <style>
+      *, *::before, *::after { box-sizing: border-box; }
+      html, body { height: 100%; margin: 0; padding: 0; }
+      #root { height: 100%; }
+    </style>
   </head>
 
   <body>
+    <!-- Visible before JS loads — React clears this when it mounts -->
+    <div id="pre-load" style="display:flex;align-items:center;justify-content:center;height:100%;color:#9ca3af;font-family:system-ui;font-size:14px;">
+      Loading…
+    </div>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
