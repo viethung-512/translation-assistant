@@ -53,7 +53,6 @@ targets:
           - UIInterfaceOrientationLandscapeRight
         CFBundleShortVersionString: 0.1.0
         CFBundleVersion: "0.1.0"
-        NSMicrophoneUsageDescription: "This app uses the microphone to capture your speech for real-time translation."
     entitlements:
       path: translation-assistant_iOS/translation-assistant_iOS.entitlements
     scheme:
