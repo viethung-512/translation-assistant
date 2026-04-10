@@ -3,9 +3,12 @@ import react from "@vitejs/plugin-react";
 import path from "path";
 
 // @ts-expect-error process is a nodejs global
-const host = process.env.TAURI_DEV_HOST;
+const devHost = process.env.TAURI_DEV_HOST;
 
 // https://vitejs.dev/config/
+// Physical iOS dev: TAURI_DEV_HOST is the LAN IP the device must use. Bind the dev server to
+// 0.0.0.0 so it accepts traffic on all interfaces; binding only to devHost can fail to accept
+// connections on some macOS/network setups while still advertising the correct IP for HMR.
 export default defineConfig(async () => ({
   plugins: [react()],
   resolve: {
@@ -20,11 +23,11 @@ export default defineConfig(async () => ({
   server: {
     port: 1420,
     strictPort: true,
-    host: host || false,
-    hmr: host
+    host: devHost ? "0.0.0.0" : false,
+    hmr: devHost
       ? {
           protocol: "ws",
-          host,
+          host: devHost,
           port: 1421,
         }
       : undefined,
