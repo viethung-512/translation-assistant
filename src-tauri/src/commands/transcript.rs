@@ -1,0 +1,77 @@
+use std::fs;
+use std::time::UNIX_EPOCH;
+
+use serde::Serialize;
+use tauri::Manager;
+
+#[derive(Serialize)]
+pub struct TranscriptMeta {
+    pub name: String,
+    pub path: String,
+    pub created_at: String,
+}
+
+fn transcript_dir(app: &tauri::AppHandle) -> Result<std::path::PathBuf, String> {
+    let docs = app
+        .path()
+        .document_dir()
+        .map_err(|e| e.to_string())?;
+    Ok(docs.join("TranslationAssistant"))
+}
+
+/// Write transcript content atomically to the documents dir.
+#[tauri::command]
+pub async fn write_transcript(
+    app: tauri::AppHandle,
+    filename: String,
+    content: String,
+) -> Result<(), String> {
+    let dir = transcript_dir(&app)?;
+    fs::create_dir_all(&dir).map_err(|e| e.to_string())?;
+
+    let path = dir.join(&filename);
+    let tmp = dir.join(format!(".{filename}.tmp"));
+    fs::write(&tmp, &content).map_err(|e| e.to_string())?;
+    fs::rename(&tmp, &path).map_err(|e| e.to_string())
+}
+
+/// List all transcript files in the documents dir.
+#[tauri::command]
+pub async fn list_transcripts(
+    app: tauri::AppHandle,
+) -> Result<Vec<TranscriptMeta>, String> {
+    let dir = transcript_dir(&app)?;
+    if !dir.exists() {
+        return Ok(vec![]);
+    }
+
+    let entries = fs::read_dir(&dir).map_err(|e| e.to_string())?;
+    let mut results = Vec::new();
+
+    for entry in entries.flatten() {
+        let path = entry.path();
+        let name = entry.file_name().to_string_lossy().to_string();
+
+        // Skip hidden/temp files
+        if name.starts_with('.') {
+            continue;
+        }
+
+        let created_at = entry
+            .metadata()
+            .ok()
+            .and_then(|m| m.created().ok())
+            .and_then(|t| t.duration_since(UNIX_EPOCH).ok())
+            .map(|d| d.as_secs().to_string())
+            .unwrap_or_default();
+
+        results.push(TranscriptMeta {
+            name,
+            path: path.to_string_lossy().to_string(),
+            created_at,
+        });
+    }
+
+    results.sort_by(|a, b| b.created_at.cmp(&a.created_at));
+    Ok(results)
+}
