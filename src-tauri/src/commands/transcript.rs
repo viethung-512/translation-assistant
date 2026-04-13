@@ -12,10 +12,7 @@ pub struct TranscriptMeta {
 }
 
 fn transcript_dir(app: &tauri::AppHandle) -> Result<std::path::PathBuf, String> {
-    let docs = app
-        .path()
-        .document_dir()
-        .map_err(|e| e.to_string())?;
+    let docs = app.path().document_dir().map_err(|e| e.to_string())?;
     Ok(docs.join("TranslationAssistant"))
 }
 
@@ -37,9 +34,7 @@ pub async fn write_transcript(
 
 /// List all transcript files in the documents dir.
 #[tauri::command]
-pub async fn list_transcripts(
-    app: tauri::AppHandle,
-) -> Result<Vec<TranscriptMeta>, String> {
+pub async fn list_transcripts(app: tauri::AppHandle) -> Result<Vec<TranscriptMeta>, String> {
     let dir = transcript_dir(&app)?;
     if !dir.exists() {
         return Ok(vec![]);
