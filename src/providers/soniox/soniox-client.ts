@@ -13,6 +13,7 @@ const WS_URL = 'wss://stt-rt.soniox.com/transcribe-websocket';
 // Pre-emptive reconnect before the 300-min stream limit
 const MAX_STREAM_MS = 280 * 60 * 1000;
 const MAX_BACKOFF_MS = 30_000;
+const MAX_RECONNECT_ATTEMPTS = 3;
 
 export class SonioxClient implements STTProvider {
   private ws: WebSocket | null = null;
@@ -102,6 +103,11 @@ export class SonioxClient implements STTProvider {
   }
 
   private scheduleReconnect(): void {
+    if (this.reconnectAttempts >= MAX_RECONNECT_ATTEMPTS) {
+      this.statusHandler?.('disconnected');
+      this.errorHandler?.(new Error(`Connection failed after ${MAX_RECONNECT_ATTEMPTS} attempts. Please check your API key and network, then restart the session.`));
+      return;
+    }
     const delay = Math.min(1000 * 2 ** this.reconnectAttempts, MAX_BACKOFF_MS);
     this.reconnectAttempts++;
     this.statusHandler?.('connecting');

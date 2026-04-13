@@ -11,6 +11,48 @@ import { StatusBadge } from '@/components/Controls/status-badge';
 import { SettingsPanel } from '@/components/Settings/settings-panel';
 import { useTheme } from '@/theme/use-theme';
 import { Button, ErrorBanner, IconButton } from '@/components/ui';
+import { BottomSheet } from '@/components/ui/bottom-sheet';
+import { useMicrophonePermission } from '@/hooks/use-microphone-permission';
+import { invoke } from '@tauri-apps/api/core';
+import { openUrl } from '@tauri-apps/plugin-opener';
+
+function guessHostOsFromUa(): string {
+  if (typeof navigator === 'undefined') return 'other';
+  const ua = navigator.userAgent;
+  if (/iPhone|iPad|iPod/i.test(ua)) return 'ios';
+  if (/Mac/i.test(ua)) return 'macos';
+  if (/Win/i.test(ua)) return 'windows';
+  if (/Android/i.test(ua)) return 'android';
+  if (/Linux/i.test(ua)) return 'linux';
+  return 'other';
+}
+
+async function resolveHostOsId(): Promise<string> {
+  try {
+    return await invoke<string>('host_os_id');
+  } catch {
+    return guessHostOsFromUa();
+  }
+}
+
+/** System URLs for opening microphone-related privacy settings (platform-specific). */
+function urlsForMicrophonePrivacy(host: string): string[] {
+  switch (host) {
+    case 'macos':
+      return [
+        'x-apple.systempreferences:com.apple.preference.security?Privacy_Microphone',
+        'x-apple.systemsettings:com.apple.preference.security?Privacy_Microphone',
+      ];
+    case 'windows':
+      return ['ms-settings:privacy-microphone'];
+    case 'ios':
+      return ['app-settings:', 'App-Prefs:'];
+    case 'android':
+      return ['app-settings:'];
+    default:
+      return ['app-settings:', 'App-Prefs:'];
+  }
+}
 
 // Error boundary — surfaces JS crashes instead of blank screen
 class ErrorBoundary extends Component<{ children: ReactNode }, { error: Error | null }> {
@@ -94,7 +136,7 @@ export default function App() {
   const setOutputMode = useSettingsStore((s) => s.setOutputMode);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const { theme, toggleTheme } = useTheme();
-
+  const { permissionState, needsPermission, requestPermission } = useMicrophonePermission();
   useEffect(() => {
     getApiKey().then((key) => { if (key) setApiKey(key); });
     if (typeof window.speechSynthesis !== 'undefined' &&
@@ -102,6 +144,20 @@ export default function App() {
       window.speechSynthesis.onvoiceschanged = () => {};
     }
   }, [setApiKey]);
+
+  const handleOpenSettings = async () => {
+    const host = await resolveHostOsId();
+    const targets = urlsForMicrophonePrivacy(host);
+    for (const target of targets) {
+      try {
+        await openUrl(target);
+        return;
+      } catch (e) {
+        console.log(e, target)
+        // try next URL
+      }
+    }
+  };
 
   const handleRecordToggle = () => {
     if (recordingStatus === 'idle') startSession();
@@ -182,6 +238,62 @@ export default function App() {
         </div>
 
         <SettingsPanel isOpen={settingsOpen} onClose={() => setSettingsOpen(false)} />
+
+        {/* ── Microphone permission sheet ───────────────────────────── */}
+        <BottomSheet isOpen={needsPermission} onClose={() => {}}>
+          <div style={{ padding: '16px 24px 8px', textAlign: 'center' }}>
+            {/* Mic icon */}
+            <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 16 }}>
+              {permissionState === 'denied' || permissionState === 'unavailable' ? (
+                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="var(--danger)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                  <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z" />
+                  <path d="M19 10v2a7 7 0 0 1-14 0v-2" />
+                  <line x1="12" y1="19" x2="12" y2="23" /><line x1="8" y1="23" x2="16" y2="23" />
+                  <line x1="2" y1="2" x2="22" y2="22" />
+                </svg>
+              ) : (
+                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                  <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z" />
+                  <path d="M19 10v2a7 7 0 0 1-14 0v-2" />
+                  <line x1="12" y1="19" x2="12" y2="23" /><line x1="8" y1="23" x2="16" y2="23" />
+                </svg>
+              )}
+            </div>
+
+            {/* Title + description */}
+            {(permissionState === 'idle' || permissionState === 'requesting') && (
+              <>
+                <p style={{ fontSize: 17, fontWeight: 600, margin: '0 0 8px' }}>Microphone Access</p>
+                <p style={{ fontSize: 14, color: 'var(--text-secondary)', margin: '0 0 24px', lineHeight: 1.5 }}>
+                  Translation Assistant needs access to your microphone to listen and translate conversations in real time.
+                </p>
+                <Button style={{ width: '100%' }} onClick={requestPermission} disabled={permissionState === 'requesting'}>
+                  {permissionState === 'requesting' ? 'Requesting…' : 'Allow Microphone Access'}
+                </Button>
+              </>
+            )}
+
+            {permissionState === 'denied' && (
+              <>
+                <p style={{ fontSize: 17, fontWeight: 600, margin: '0 0 8px' }}>Microphone Access Denied</p>
+                <p style={{ fontSize: 14, color: 'var(--text-secondary)', margin: '0 0 24px', lineHeight: 1.5 }}>
+                  Microphone permission was denied. To use this app, enable microphone access in your device settings.
+                </p>
+                <Button style={{ width: '100%' }} onClick={handleOpenSettings}>Open Settings</Button>
+              </>
+            )}
+
+            {permissionState === 'unavailable' && (
+              <>
+                <p style={{ fontSize: 17, fontWeight: 600, margin: '0 0 8px' }}>Microphone Unavailable</p>
+                <p style={{ fontSize: 14, color: 'var(--text-secondary)', margin: '0 0 24px', lineHeight: 1.5 }}>
+                  This app cannot access the microphone. Please enable microphone access for this app in device settings.
+                </p>
+                <Button style={{ width: '100%' }} onClick={handleOpenSettings}>Open Settings</Button>
+              </>
+            )}
+          </div>
+        </BottomSheet>
       </div>
     </ErrorBoundary>
   );

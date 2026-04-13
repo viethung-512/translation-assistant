@@ -27,14 +27,34 @@ export class AudioCapture {
   }
 
   async start(): Promise<void> {
-    this.stream = await navigator.mediaDevices.getUserMedia({
-      audio: {
-        sampleRate: TARGET_SAMPLE_RATE,
-        channelCount: 1,
-        echoCancellation: true,
-        noiseSuppression: true,
-      },
-    });
+    // navigator.mediaDevices is absent in non-secure contexts (HTTP) or misconfigured WebViews.
+    if (!navigator.mediaDevices) {
+      throw new Error(
+        'Microphone access is unavailable. The app must run in a secure context (HTTPS or native). Check that NSMicrophoneUsageDescription is set in Info.plist.'
+      );
+    }
+
+    // Calling getUserMedia triggers the OS permission dialog when permission is not yet granted.
+    try {
+      this.stream = await navigator.mediaDevices.getUserMedia({
+        audio: {
+          sampleRate: TARGET_SAMPLE_RATE,
+          channelCount: 1,
+          echoCancellation: true,
+          noiseSuppression: true,
+        },
+      });
+    } catch (err) {
+      if (err instanceof DOMException) {
+        if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
+          throw new Error('Microphone permission was denied. Please allow microphone access in your device settings and try again.');
+        }
+        if (err.name === 'NotFoundError') {
+          throw new Error('No microphone found on this device.');
+        }
+      }
+      throw err;
+    }
 
     this.context = new AudioContext({ sampleRate: TARGET_SAMPLE_RATE });
     const source = this.context.createMediaStreamSource(this.stream);
