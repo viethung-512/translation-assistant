@@ -352,52 +352,62 @@ async function saveTranscript(data: string) {
 
 ---
 
-## Audio Processing Patterns
+## Audio Processing Patterns (SDK-Managed)
 
-### AudioWorklet Setup
+**v0.2.0 Note**: Audio capture, PCM encoding, and WebSocket management now handled by @soniox/react SDK.
 
-Initialize AudioWorklet with proper error handling and cleanup.
+### Previous Custom Implementation (v0.1.0, Removed)
+
+Custom `AudioWorklet` and `SonioxClient` have been replaced by SDK hooks:
+
+**Removed**:
+- `AudioWorklet` setup (replaced by SDK's `useRecording` hook)
+- PCM Float32 → Int16 conversion (handled by SDK internally)
+- Custom WebSocket connection (replaced by SDK's connection management)
+
+**Current Pattern** (`src/hooks/use-translation-session.ts`):
 
 ```typescript
-async function initAudioWorklet() {
-  try {
-    const context = new (window.AudioContext || window.webkitAudioContext)();
-    await context.audioWorklet.addModule('/pcm-worklet-processor.js');
-    const worklet = new AudioWorkletNode(context, 'pcm-processor');
-    // Configure ports, error handling
-  } catch (err) {
-    console.error('[AudioWorklet] Initialization failed:', err);
-    throw err;
-  }
+import { useRecording, useMicrophonePermission } from '@soniox/react';
+
+export function useTranslationSession() {
+  const { status: permissionStatus } = useMicrophonePermission({ 
+    autoCheck: true 
+  });
+
+  const recording = useRecording({
+    model: 'stt-rt-v4',
+    language_hints: [sourceLanguage],
+    language_hints_strict: true,
+    translation: { type: 'one_way', target_language: targetLanguage },
+    apiKey: async () => {
+      const key = await getApiKey();
+      if (!key) throw new Error('API key not configured');
+      return key;
+    },
+    onResult: (result) => {
+      // Handle interim/final transcription + translation
+      // SDK handles PCM encoding, chunking, and WebSocket
+    },
+    onError: (err) => {
+      // Handle unrecoverable errors
+    },
+  });
+
+  return {
+    recordingStatus: toRecordingStatus(recording.status),
+    connectionStatus: toConnectionStatus(recording.status),
+    permissionStatus,
+    // ... expose state and handlers
+  };
 }
 ```
 
-### PCM Data Format
-
-Always use signed 16-bit PCM at 16kHz for Soniox compatibility.
-
-```typescript
-// pcm-worklet-processor.ts
-class PCMProcessor extends AudioWorkletProcessor {
-  process(
-    inputs: Float32Array[][],
-    outputs: Float32Array[][],
-    parameters: Record<string, Float32Array>
-  ) {
-    const float32 = inputs[0][0];
-    const int16 = new Int16Array(float32.length);
-
-    // Convert Float32 [-1, 1] to Int16 [-32768, 32767]
-    for (let i = 0; i < float32.length; i++) {
-      let s = Math.max(-1, Math.min(1, float32[i]));
-      int16[i] = s < 0 ? s * 0x8000 : s * 0x7fff;
-    }
-
-    this.port.postMessage({ pcmChunk: int16 });
-    return true;
-  }
-}
-```
+**Benefits**:
+- SDK handles PCM encoding internally (no manual Float32→Int16 conversion)
+- SDK manages WebSocket lifecycle and reconnection
+- Simplified error handling
+- Built-in support for iOS/Android via Tauri
 
 ---
 

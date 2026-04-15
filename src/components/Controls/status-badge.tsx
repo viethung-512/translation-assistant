@@ -1,5 +1,5 @@
 // Connection status indicator: dot + label, themed via CSS variables.
-import type { ConnectionStatus } from '@/providers/types';
+type ConnectionStatus = 'disconnected' | 'connecting' | 'connected' | 'error';
 
 interface Props {
   status: ConnectionStatus;

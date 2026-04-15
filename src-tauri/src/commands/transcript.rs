@@ -70,3 +70,33 @@ pub async fn list_transcripts(app: tauri::AppHandle) -> Result<Vec<TranscriptMet
     results.sort_by(|a, b| b.created_at.cmp(&a.created_at));
     Ok(results)
 }
+
+/// Read the full text content of a single transcript file.
+#[tauri::command]
+pub async fn read_transcript(
+    app: tauri::AppHandle,
+    filename: String,
+) -> Result<String, String> {
+    let dir = transcript_dir(&app)?;
+    let path = dir.join(&filename);
+    // Guard against path traversal (e.g. filename = "../../etc/passwd")
+    if !path.starts_with(&dir) {
+        return Err("Invalid filename".to_string());
+    }
+    fs::read_to_string(&path).map_err(|e| e.to_string())
+}
+
+/// Delete a transcript file. Irreversible — caller must confirm before invoking.
+#[tauri::command]
+pub async fn delete_transcript(
+    app: tauri::AppHandle,
+    filename: String,
+) -> Result<(), String> {
+    let dir = transcript_dir(&app)?;
+    let path = dir.join(&filename);
+    // Guard against path traversal
+    if !path.starts_with(&dir) {
+        return Err("Invalid filename".to_string());
+    }
+    fs::remove_file(&path).map_err(|e| e.to_string())
+}

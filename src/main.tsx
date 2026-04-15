@@ -1,7 +1,7 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
-import "./tailwind.css";
 import App from "./App";
+import "./tailwind.css";
 
 function clearPreLoad() {
   const el = document.getElementById("pre-load");
@@ -18,7 +18,10 @@ try {
   clearPreLoad();
   ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
     <React.StrictMode>
+      
+
       <App />
+      
     </React.StrictMode>,
   );
 } catch (err) {

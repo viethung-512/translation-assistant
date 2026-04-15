@@ -1,9 +1,9 @@
 # Architecture Overview
 
-**Version**: 0.1.0  
+**Version**: 0.2.0 (SDK Migration)  
 **Last Updated**: April 2026
 
-System architecture diagram and high-level component breakdown.
+System architecture diagram and high-level component breakdown. Migrated from hand-rolled WebSocket client and custom audio capture to @soniox/react SDK.
 
 ---
 
@@ -20,20 +20,20 @@ System architecture diagram and high-level component breakdown.
 │  │ └─ SettingsPanel (API key, languages, output mode)      │   │
 │  └──────────────────────────────────────────────────────────┘   │
 │  ┌──────────────────────────────────────────────────────────┐   │
-│  │ State Management (Zustand)                               │   │
-│  │ ├─ SessionStore (ephemeral: recording, tokens, errors)  │   │
+│  │ Orchestration Hook & State Management                   │   │
+│  │ ├─ useTranslationSession (session lifecycle)            │   │
+│  │ ├─ Hook-local state (finalLines, interimOriginal, etc)  │   │
 │  │ └─ SettingsStore (persistent: API key, languages)       │   │
 │  └──────────────────────────────────────────────────────────┘   │
 │  ┌──────────────────────────────────────────────────────────┐   │
-│  │ Audio Subsystem                                          │   │
-│  │ ├─ AudioCapture (getUserMedia → AudioWorklet)           │   │
-│  │ ├─ PCMWorklet (Float32 → Int16 conversion)              │   │
-│  │ └─ TTSService (Web Speech API queue)                    │   │
+│  │ @soniox/react SDK (Managed STT + Audio)                │   │
+│  │ ├─ useRecording (WebSocket, audio capture, PCM encode) │   │
+│  │ ├─ useMicrophonePermission (mic access handling)        │   │
+│  │ └─ Handles reconnection & buffering internally          │   │
 │  └──────────────────────────────────────────────────────────┘   │
 │  ┌──────────────────────────────────────────────────────────┐   │
-│  │ STT Provider (Soniox)                                    │   │
-│  │ ├─ SonioxClient (WebSocket, auth, reconnection)         │   │
-│  │ └─ Token callbacks (interim, final, error)              │   │
+│  │ TTS Service                                              │   │
+│  │ └─ TTSService (Web Speech API queue)                    │   │
 │  └──────────────────────────────────────────────────────────┘   │
 │  ┌──────────────────────────────────────────────────────────┐   │
 │  │ Tauri IPC Bridge                                         │   │
@@ -42,16 +42,15 @@ System architecture diagram and high-level component breakdown.
 ├─────────────────────────────────────────────────────────────────┤
 │                    Tauri Backend (Rust 2021)                     │
 │  ┌──────────────────────────────────────────────────────────┐   │
-│  │ Commands (transcript.rs)                                │   │
+│  │ Commands (transcript.rs)                                │
 │  │ ├─ write_transcript(filename, content) → atomic write   │   │
 │  │ └─ list_transcripts() → metadata array                  │   │
 │  └──────────────────────────────────────────────────────────┘   │
 ├─────────────────────────────────────────────────────────────────┤
 │                      External Services                           │
 │  ┌──────────────────────────────────────────────────────────┐   │
-│  │ Soniox WebSocket API (wss://api.soniox.com/v1/listen)   │   │
-│  │ ├─ Real-time STT (16kHz PCM in, transcription out)     │   │
-│  │ └─ Translation (source lang → target lang)              │   │
+│  │ Soniox WebSocket API (via @soniox/react SDK)            │   │
+│  │ └─ Real-time STT + translation (WebSocket managed)      │   │
 │  └──────────────────────────────────────────────────────────┘   │
 └─────────────────────────────────────────────────────────────────┘
 ```
@@ -68,62 +67,54 @@ System architecture diagram and high-level component breakdown.
 - `App.tsx` — Root layout component
 - `RecordButton`, `StatusBadge`, `TranslationDisplay` — Core UI
 - `SettingsPanel` — Configuration UI
-- `useTranslationSession` — Orchestration hook
+- `useTranslationSession` — Orchestration hook (manages SDK hooks + state)
 
 **Responsibilities**:
-- Render UI based on SessionStore + SettingsStore state
+- Render UI based on hook state + SettingsStore
 - Dispatch user actions (record, stop, select language)
 - Display real-time tokens and errors
 - Trigger transcript save on recording end
 
 ---
 
-### 2. State Management (Zustand)
+### 2. State Management
 
 **Purpose**: Manage application state across component tree
 
-**Two Stores**:
-
-#### SessionStore (Ephemeral)
+#### Hook-Local State (Ephemeral)
 - **Lifetime**: Resets when recording stops
-- **Contents**: recording status, connection state, tokens, errors
-- **Used by**: Components, hooks, providers
+- **Location**: `useTranslationSession` hook
+- **Contents**: finalLines, interimOriginal, interimTranslated
+- **Used by**: Hook itself; exposed via return object to App
 
-#### SettingsStore (Persistent)
+#### SettingsStore (Persistent via Zustand)
 - **Lifetime**: Survives app restart via localStorage
 - **Contents**: API key, language pair, output mode
-- **Used by**: App initialization, settings panel, provider setup
+- **Used by**: App initialization, settings panel, SDK setup
 
 See [State Management](./state-management.md) for detailed design.
 
 ---
 
-### 3. Audio Subsystem
+### 3. Audio & STT (Soniox SDK)
 
-**Purpose**: Capture microphone input and convert to PCM format
+**Purpose**: Capture mic input, send PCM to Soniox, receive transcription + translation
 
 **Components**:
-- `AudioCapture` — Gets user mic permission, creates AudioContext/AudioWorklet
-- `PCMWorklet` — Runs in Web Audio API thread; converts Float32 to Int16
-- `TTSService` — Queues text for voice synthesis
+- `useRecording` hook — Manages WebSocket connection, audio capture, PCM encoding, token callbacks (from @soniox/react)
+- `useMicrophonePermission` hook — Handles mic permission UI/logic (from @soniox/react)
+- `TTSService` — Queues translated text for voice synthesis (Web Speech API)
+
+**Previous Custom Implementations (Removed)**:
+- `AudioCapture` — Replaced by SDK's getUserMedia integration
+- `PCMWorklet` — Replaced by SDK's PCM encoding
+- `SonioxClient` — Replaced by SDK's WebSocket management
 
 See [Audio Pipeline](./audio-pipeline.md) for detailed flow.
 
 ---
 
-### 4. STT Provider (Soniox)
-
-**Purpose**: Send audio to Soniox API, receive tokens, handle errors
-
-**Components**:
-- `SonioxClient` — WebSocket client with auth, chunk buffering, reconnection
-- Implements `STTProvider` interface for future multi-provider support
-
-See [Soniox Provider](./soniox-provider.md) for detailed implementation.
-
----
-
-### 5. Tauri IPC Bridge
+### 4. Tauri IPC Bridge
 
 **Purpose**: Communicate with Rust backend for file I/O
 
@@ -135,13 +126,16 @@ See [Tauri Integration](./tauri-integration.md) for command details.
 
 ---
 
-### 6. Rust Backend
+### 5. Rust Backend
 
 **Purpose**: File I/O operations (Tauri sandboxing layer)
 
 **Modules**:
 - `commands/transcript.rs` — Implements write_transcript + list_transcripts
 - Handles path validation, directory creation, error reporting
+
+**Removed**:
+- `src-tauri/src/audio/` — No longer needed (SDK handles audio capture)
 
 See [Tauri Integration](./tauri-integration.md) for implementation.
 
@@ -155,32 +149,46 @@ See [Tauri Integration](./tauri-integration.md) for implementation.
 └──────────────────────┬──────────────────────────────────────────┘
                        ↓
 ┌─────────────────────────────────────────────────────────────────┐
-│ useTranslationSession.start()                                   │
-│ ├─ AudioCapture.start()                                        │
-│ └─ SonioxClient.connect()                                       │
+│ useTranslationSession.startRecording()                          │
+│ ├─ Configure useRecording (languages, apiKey)                  │
+│ └─ Configure useMicrophonePermission                           │
 └──────────────────────┬──────────────────────────────────────────┘
                        ↓
 ┌─────────────────────────────────────────────────────────────────┐
-│ SessionStore.setRecording(true)                                 │
-│ SessionStore.setConnected(true)                                 │
+│ SDK requests mic permission (handled by useMicrophonePermission)│
+│ → User grants access → SDK starts audio capture                │
 └──────────────────────┬──────────────────────────────────────────┘
                        ↓
 ┌─────────────────────────────────────────────────────────────────┐
-│ AudioWorklet emits PCM chunks (100ms, 1600 bytes)              │
+│ SDK (useRecording) opens WebSocket to Soniox API               │
+│ → Establishes connection, sends auth + config                 │
 └──────────────────────┬──────────────────────────────────────────┘
                        ↓
 ┌─────────────────────────────────────────────────────────────────┐
-│ SonioxClient sends chunk via WebSocket                          │
+│ Hook state updates: { recordingStatus: 'recording', ... }      │
 └──────────────────────┬──────────────────────────────────────────┘
                        ↓
 ┌─────────────────────────────────────────────────────────────────┐
-│ Soniox responds with token (interim or final)                   │
+│ SDK encodes microphone audio to PCM 16kHz mono (internal)      │
 └──────────────────────┬──────────────────────────────────────────┘
                        ↓
 ┌─────────────────────────────────────────────────────────────────┐
-│ SonioxClient callback fires:                                     │
-│ ├─ onInterimToken(token) → SessionStore.setInterimToken()     │
-│ └─ onFinalToken(src, trans) → SessionStore.addFinalToken()    │
+│ SDK sends PCM chunks via WebSocket                             │
+└──────────────────────┬──────────────────────────────────────────┘
+                       ↓
+┌─────────────────────────────────────────────────────────────────┐
+│ Soniox responds with interim/final transcription + translation │
+└──────────────────────┬──────────────────────────────────────────┘
+                       ↓
+┌─────────────────────────────────────────────────────────────────┐
+│ SDK callback (onResult) fires with result object               │
+└──────────────────────┬──────────────────────────────────────────┘
+                       ↓
+┌─────────────────────────────────────────────────────────────────┐
+│ useTranslationSession handler:                                  │
+│ ├─ Update interimOriginal / interimTranslated (interim)        │
+│ ├─ On final: create TranscriptLine, add to finalLines          │
+│ └─ Trigger TtsService.enqueue(translation) if TTS enabled     │
 └──────────────────────┬──────────────────────────────────────────┘
                        ↓
 ┌─────────────────────────────────────────────────────────────────┐
@@ -195,10 +203,10 @@ See [Tauri Integration](./tauri-integration.md) for implementation.
 └──────────────────────┬──────────────────────────────────────────┘
                        ↓
 ┌─────────────────────────────────────────────────────────────────┐
-│ useTranslationSession.stop()                                    │
-│ ├─ AudioCapture.stop()                                         │
-│ ├─ SonioxClient.disconnect()                                   │
-│ └─ writeTranscript(filename, finalTokens)                      │
+│ useTranslationSession.stopRecording()                           │
+│ ├─ SDK closes WebSocket & stops audio capture                  │
+│ ├─ Build transcript content from finalLines                    │
+│ └─ writeTranscript(filename, content)                          │
 └──────────────────────┬──────────────────────────────────────────┘
                        ↓
 ┌─────────────────────────────────────────────────────────────────┐
@@ -207,8 +215,8 @@ See [Tauri Integration](./tauri-integration.md) for implementation.
 └──────────────────────┬──────────────────────────────────────────┘
                        ↓
 ┌─────────────────────────────────────────────────────────────────┐
-│ SessionStore.reset()                                            │
-│ → Clear tokens, errors; app ready for next recording            │
+│ Hook state resets: finalLines[], interimOriginal = ''          │
+│ → App ready for next recording                                 │
 └─────────────────────────────────────────────────────────────────┘
 ```
 
@@ -216,47 +224,39 @@ See [Tauri Integration](./tauri-integration.md) for implementation.
 
 ## Key Abstractions
 
-### STTProvider Interface
+### Removed: STTProvider Interface
 
-```typescript
-interface STTProvider {
-  connect(): Promise<void>;
-  disconnect(): Promise<void>;
-  send(chunk: Int16Array): Promise<void>;
-  isConnected(): boolean;
-  
-  // Callbacks
-  onInterimToken?: (token: string) => void;
-  onFinalToken?: (token: string, translation: string) => void;
-  onError?: (error: Error) => void;
-}
-```
+**Old Design** (v0.1.0): Pluggable `STTProvider` interface allowed swapping Soniox for Google Cloud, AWS, etc.
 
-**Purpose**: Define contract for pluggable speech recognition providers. Currently only Soniox, but extensible for Google Cloud, AWS, offline models in v0.2.0+.
+**Current State** (v0.2.0): Soniox SDK now directly used via `useRecording` hook. Multi-provider support deferred to future release. If multi-provider support becomes needed, consider:
+- Wrapper hooks (`useSonioxRecording`, `useGoogleRecording`) per provider
+- Conditional hook instantiation based on settings
+- Unified result type for token callbacks
 
 ---
 
 ## Design Decisions
 
-### Why AudioWorklet (not ScriptProcessorNode)?
+### Why @soniox/react SDK (v0.2.0)?
 
-- AudioWorklet runs off main thread → better performance
-- Lower latency (sample-accurate processing)
-- ScriptProcessorNode deprecated; future-proof
+- **Simplicity**: Reduces codebase by ~400 LOC (removed AudioCapture, PCMWorklet, SonioxClient)
+- **Reliability**: SDK handles reconnection, chunk buffering, PCM encoding (battle-tested)
+- **Maintenance**: No custom audio worklet or WebSocket code to maintain
+- **Mobile Support**: SDK optimized for iOS/Android (Tauri constraint removed)
 
-### Why Zustand (not Redux)?
+### Why Hook-Local State (not Zustand SessionStore)?
 
-- Lightweight (5KB vs Redux 50KB+)
-- Simple API (setState, no boilerplate)
-- Persist middleware built-in
-- Good for cross-platform apps
+- **Simpler**: No store boilerplate; state lives where it's used
+- **Sufficient**: Recording is single-instance; no concurrent sessions
+- **Clear Ownership**: useTranslationSession clearly owns session lifecycle
+- **Note**: If complex session features needed (e.g., pause/resume), migrate to store
 
-### Why Soniox (not Google/AWS)?
+### Why Zustand for Settings (not localStorage directly)?
 
-- Real-time streaming (not polling)
-- High accuracy for accents
-- Startup-friendly pricing
-- Simple WebSocket API
+- **Reactivity**: Selectors trigger re-renders on relevant changes only
+- **Persistence**: Built-in `persist` middleware
+- **Type Safety**: Full TypeScript support
+- **Future**: Easy migration to Tauri Keychain (v1.0)
 
 ### Why Tauri (not Electron)?
 
@@ -301,19 +301,39 @@ See [Performance & Scaling](./performance-scaling.md) for detailed analysis.
 
 | Concern | Mitigation |
 |---------|-----------|
-| API key storage | localStorage (v0.1.0) → platform keychain (v1.0) |
+| API key storage | localStorage (v0.2.0) → platform keychain (v1.0) |
 | Audio data persistence | Never saved; transcripts only |
-| WebSocket hijacking | TLS 1.3 only (wss://) |
+| WebSocket hijacking | TLS 1.3 only (wss://, managed by SDK) |
 | Tauri IPC injection | Type-safe Rust commands; no shell execution |
 
 See [Security Architecture](./security-architecture.md) for detailed strategy.
 
 ---
 
+## Migration Notes (v0.1 → v0.2)
+
+**What Changed**:
+- Removed: `src/providers/`, `src/audio/audio-capture.ts`, `src/audio/pcm-worklet-processor.ts`, `src/hooks/use-microphone-permission.ts`, `src/store/session-store.ts`
+- Removed: `src-tauri/src/audio/`, `src-tauri/src/commands/audio.rs`
+- Replaced: Custom WebSocket → SDK `useRecording` hook
+- Replaced: Zustand SessionStore → Hook-local state
+- Moved: `TranscriptLine` type & `buildTranscriptContent` → `src/tauri/transcript-fs.ts`
+
+**What's the Same**:
+- UI components unchanged
+- SettingsStore unchanged
+- Tauri transcript I/O unchanged
+- TTS service unchanged
+- File format unchanged
+
+**Compatibility**: Full backward compatibility with existing transcripts on disk.
+
+---
+
 ## Next Steps
 
 1. **Understanding audio flow?** → [Audio Pipeline](./audio-pipeline.md)
-2. **Implementing multi-provider?** → [Soniox Provider](./soniox-provider.md)
+2. **How state works now?** → [State Management](./state-management.md)
 3. **Debugging connection issues?** → [Connection Resilience](./connection-resilience.md)
 4. **Optimizing performance?** → [Performance & Scaling](./performance-scaling.md)
 5. **Securing API keys?** → [Security Architecture](./security-architecture.md)
@@ -325,3 +345,4 @@ See [Security Architecture](./security-architecture.md) for detailed strategy.
 - [Codebase Summary](../codebase-summary.md) — Module breakdown
 - [Code Standards](../code-standards.md) — Coding conventions
 - [System Architecture Index](./index.md) — All architecture docs
+- [@soniox/react SDK Docs](https://github.com/soniox/soniox-sdk-js) — Official SDK reference

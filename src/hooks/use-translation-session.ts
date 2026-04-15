@@ -1,112 +1,134 @@
-// Orchestrates the full recording session: AudioCapture → SonioxClient → SessionStore → TTS.
-// The only file that holds references to all four layers simultaneously.
-import { useRef, useEffect, useCallback } from 'react';
-import { AudioCapture } from '@/audio/audio-capture';
-import { SonioxClient } from '@/providers/soniox/soniox-client';
-import { TtsService } from '@/audio/tts-service';
-import { useSessionStore } from '@/store/session-store';
+// Orchestrates recording session using @soniox/react SDK.
+// Replaces: SonioxClient, AudioCapture, session-store, use-microphone-permission.
+import { useRef, useState, useCallback } from 'react';
+import { useRecording, useMicrophonePermission } from '@soniox/react';
 import { useSettingsStore } from '@/store/settings-store';
 import { getApiKey } from '@/tauri/secure-storage';
-import { writeTranscript } from '@/tauri/transcript-fs';
-import { buildTranscriptContent } from '@/store/session-store';
+import { writeTranscript, buildTranscriptContent } from '@/tauri/transcript-fs';
+import type { TranscriptLine } from '@/tauri/transcript-fs';
+import { TtsService } from '@/audio/tts-service';
+
+export type RecordingStatus = "idle" | "recording" | "stopping";
+export type ConnectionStatus = "disconnected" | "connecting" | "connected";
+
+// Map SDK recording state string to legacy app status values
+function toRecordingStatus(state: string): RecordingStatus {
+  if (state === 'recording') return 'recording';
+  if (state === 'stopping') return 'stopping';
+  return 'idle';
+}
+
+function toConnectionStatus(state: string): ConnectionStatus {
+  if (state === 'starting' || state === 'connecting') return 'connecting';
+  if (state === 'recording') return 'connected';
+  return 'disconnected';
+}
 
 export function useTranslationSession() {
-  const audioCapture = useRef<AudioCapture | null>(null);
-  const provider = useRef(new SonioxClient());
-  const ttsService = useRef(new TtsService());
+  const { outputMode, sourceLanguage, targetLanguage } = useSettingsStore();
+  const ttsRef = useRef(new TtsService());
   const sessionStartedAt = useRef(0);
 
-  const setRecordingStatus = useSessionStore((s) => s.setRecordingStatus);
-  const setConnectionStatus = useSessionStore((s) => s.setConnectionStatus);
-  const appendToken = useSessionStore((s) => s.appendToken);
-  const resetSession = useSessionStore((s) => s.resetSession);
-  const setError = useSessionStore((s) => s.setError);
+  // Hook-local accumulation state (replaces Zustand session-store)
+  const [finalLines, setFinalLines] = useState<TranscriptLine[]>([]);
+  const [interimOriginal, setInterimOriginal] = useState('');
+  const [interimTranslated, setInterimTranslated] = useState('');
+  // Mutable refs buffer inside onResult to avoid stale closure reads of state
+  const interimOriginalRef = useRef('');
+  const interimTranslatedRef = useRef('');
 
-  const outputMode = useSettingsStore((s) => s.outputMode);
-  const targetLanguage = useSettingsStore((s) => s.targetLanguage);
+  const { status: permissionStatus } = useMicrophonePermission({ autoCheck: true });
 
-  // Wire provider callbacks — re-register if outputMode/targetLanguage change
-  useEffect(() => {
-    provider.current.onStatus(setConnectionStatus);
-    provider.current.onToken((token) => {
-      appendToken(token.text, token.isFinal, token.type, token.endMs);
-      if (token.type === 'translated' && token.isFinal && outputMode === 'tts') {
-        ttsService.current.speak(token.text, targetLanguage);
-      }
-    });
-    provider.current.onError((err) => setError(err.message));
-  }, [outputMode, targetLanguage, setConnectionStatus, appendToken, setError]);
+  const recording = useRecording({
+    model: 'stt-rt-v4',
+    language_hints: [sourceLanguage],
+    language_hints_strict: true,
+    translation: { type: 'one_way', target_language: targetLanguage },
+    apiKey: async () => {
+      const stored = await getApiKey();
+      const mem = useSettingsStore.getState().apiKey;
+      const key = mem || stored;
+      if (!key) throw new Error('API key not configured. Open settings to add your Soniox key.');
+      return key;
+    },
+    onResult: (result) => {
+      result.tokens.forEach((token) => {
+        const status = token.translation_status;
+        // Tokens with 'original' or 'none' are source-language words
+        const isOriginal = status === 'original' || status === 'none' || status == null;
+        const isTranslation = status === 'translation';
+
+        if (isOriginal) {
+          interimOriginalRef.current += token.text;
+          setInterimOriginal(interimOriginalRef.current);
+        } else if (isTranslation) {
+          if (!token.is_final) {
+            interimTranslatedRef.current += token.text;
+            setInterimTranslated(interimTranslatedRef.current);
+          } else {
+            // Commit: pair accumulated original with this final translated text
+            const line: TranscriptLine = {
+              originalText: interimOriginalRef.current,
+              translatedText: interimTranslatedRef.current + token.text,
+              timestampMs: token.end_ms ?? Date.now(),
+            };
+            setFinalLines((prev) => [...prev, line]);
+            interimOriginalRef.current = '';
+            interimTranslatedRef.current = '';
+            setInterimOriginal('');
+            setInterimTranslated('');
+
+            if (outputMode === 'tts') {
+              ttsRef.current.speak(token.text, targetLanguage);
+            }
+          }
+        }
+      });
+    },
+  });
 
   const startSession = useCallback(async () => {
-    // Prefer in-memory key (set on mount); fall back to secure storage
-    const storedKey = await getApiKey();
-    const { apiKey, sourceLanguage, targetLanguage: tgtLang } = useSettingsStore.getState();
-    const key = apiKey || storedKey;
-
-    if (!key) {
-      setError('API key not configured. Open settings to add your Soniox key.');
-      return;
-    }
-
-    resetSession();
+    // Reset accumulation state
+    setFinalLines([]);
+    setInterimOriginal('');
+    setInterimTranslated('');
+    interimOriginalRef.current = '';
+    interimTranslatedRef.current = '';
     sessionStartedAt.current = Date.now();
-    setRecordingStatus('recording');
-    ttsService.current.setEnabled(outputMode === 'tts');
-
-    try {
-      await provider.current.connect({ apiKey: key, sourceLanguage, targetLanguage: tgtLang });
-      audioCapture.current = new AudioCapture((chunk) => {
-        provider.current.sendAudio(chunk);
-      });
-      await audioCapture.current.start();
-    } catch (err) {
-      setError((err as Error).message);
-      setRecordingStatus('idle');
-    }
-  }, [outputMode, resetSession, setRecordingStatus, setError]);
+    ttsRef.current.setEnabled(outputMode === 'tts');
+    await recording.start();
+  }, [outputMode, recording]);
 
   const stopSession = useCallback(async () => {
-    setRecordingStatus('stopping');
-    ttsService.current.stop();
-    audioCapture.current?.stop();
-    audioCapture.current = null;
+    ttsRef.current.stop();
+    // SDK stop() signals graceful stop and drains pending final tokens
+    recording.stop();
 
-    // Drain: allow final tokens to arrive before disconnecting
-    await new Promise<void>((r) => setTimeout(r, 500));
-    provider.current.disconnect();
-
-    // Save transcript if any lines were recorded
-    const { finalLines } = useSessionStore.getState();
-    const { sourceLanguage, targetLanguage: tgtLang } = useSettingsStore.getState();
-    if (finalLines.length > 0) {
-      const content = buildTranscriptContent(finalLines, sourceLanguage, tgtLang, sessionStartedAt.current);
-      const filename =
-        new Date(sessionStartedAt.current).toISOString().replace(/[:.]/g, '-').slice(0, 19) + '.txt';
-      writeTranscript(filename, content).catch((e: unknown) =>
-        console.error('Failed to save transcript:', e)
-      );
-    }
-
-    setRecordingStatus('idle');
-  }, [setRecordingStatus]);
-
-  // Pause/resume audio capture on mobile app backgrounding
-  useEffect(() => {
-    const handleVisibility = () => {
-      const { recordingStatus } = useSessionStore.getState();
-      if (document.hidden && recordingStatus === 'recording') {
-        audioCapture.current?.stop();
-        audioCapture.current = null;
-      } else if (!document.hidden && recordingStatus === 'recording') {
-        audioCapture.current = new AudioCapture((chunk) =>
-          provider.current.sendAudio(chunk)
+    // Save transcript if any lines were finalized — capture state snapshot before async
+    setFinalLines((currentLines) => {
+      if (currentLines.length > 0) {
+        const { sourceLanguage: src, targetLanguage: tgt } = useSettingsStore.getState();
+        const content = buildTranscriptContent(currentLines, src, tgt, sessionStartedAt.current);
+        const filename =
+          new Date(sessionStartedAt.current).toISOString().replace(/[:.]/g, '-').slice(0, 19) + '.txt';
+        writeTranscript(filename, content).catch((e: unknown) =>
+          console.error('Failed to save transcript:', e)
         );
-        audioCapture.current.start().catch((e: Error) => setError(e.message));
       }
-    };
-    document.addEventListener('visibilitychange', handleVisibility);
-    return () => document.removeEventListener('visibilitychange', handleVisibility);
-  }, [setError]);
+      return currentLines; // no mutation
+    });
+  }, [recording]);
 
-  return { startSession, stopSession };
+  return {
+    startSession,
+    stopSession,
+    finalLines,
+    interimOriginal,
+    interimTranslated,
+    recordingStatus: toRecordingStatus(recording.state),
+    connectionStatus: toConnectionStatus(recording.state),
+    error: recording.error?.message ?? null,
+    permissionState: permissionStatus,
+    needsPermission: permissionStatus === 'denied' || permissionStatus === 'unavailable' || permissionStatus === 'unsupported',
+  };
 }

@@ -1,6 +1,6 @@
 // Single finalized translation line: translated text (primary) + original (secondary).
 import React from 'react';
-import type { TranscriptLine as TranscriptLineData } from '@/store/session-store';
+import type { TranscriptLine as TranscriptLineData } from '@/tauri/transcript-fs';
 
 interface Props {
   line: TranscriptLineData;

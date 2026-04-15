@@ -1,10 +1,16 @@
 // Scrollable translation view: live interim tokens + finalized transcript lines.
 import { useEffect, useRef } from 'react';
-import { useSessionStore } from '@/store/session-store';
-import { TranscriptLine } from './transcript-line';
+import type { TranscriptLine } from '@/tauri/transcript-fs';
+import { TranscriptLine as TranscriptLineComponent } from './transcript-line';
 
-export function TranslationDisplay() {
-  const { finalLines, interimOriginal, interimTranslated, recordingStatus } = useSessionStore();
+interface Props {
+  finalLines: TranscriptLine[];
+  interimOriginal: string;
+  interimTranslated: string;
+  recordingStatus: 'idle' | 'recording' | 'stopping';
+}
+
+export function TranslationDisplay({ finalLines, interimOriginal, interimTranslated, recordingStatus }: Props) {
   const bottomRef = useRef<HTMLDivElement>(null);
 
   // Auto-scroll to newest line
@@ -33,7 +39,7 @@ export function TranslationDisplay() {
       ) : (
         <>
           {finalLines.map((line, i) => (
-            <TranscriptLine key={i} line={line} />
+            <TranscriptLineComponent key={i} line={line} />
           ))}
 
           {/* Live interim row — shown while speaking */}

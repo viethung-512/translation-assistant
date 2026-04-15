@@ -1,77 +1,98 @@
 # State Management
 
-**Version**: 0.1.0
+**Version**: 0.2.0 (SDK Migration)  
+**Last Updated**: April 2026
 
-Zustand stores, data flow, and persistence strategy.
+Hook-local state, Zustand stores, and persistence strategy.
 
 ---
 
-## SessionStore (Ephemeral)
+## Session State (Hook-Local, Ephemeral)
 
-Tracks active recording state. Resets when recording stops.
+**v0.1.0**: Centralized Zustand SessionStore  
+**v0.2.0**: Hook-local state within `useTranslationSession`
+
+### Current Implementation
 
 ```typescript
-interface SessionState {
-  recording: boolean;
-  connected: boolean;
-  interimToken: string;
-  finalTokens: TranscriptLine[];
-  error: Error | null;
+export function useTranslationSession() {
+  // Hook-local accumulation state (replaces Zustand session-store)
+  const [finalLines, setFinalLines] = useState<TranscriptLine[]>([]);
+  const [interimOriginal, setInterimOriginal] = useState('');
+  const [interimTranslated, setInterimTranslated] = useState('');
   
-  setRecording(v: boolean): void;
-  setConnected(v: boolean): void;
-  setInterimToken(token: string): void;
-  addFinalToken(line: TranscriptLine): void;
-  setError(err: Error | null): void;
-  reset(): void;
+  // Mutable refs buffer inside onResult to avoid stale closure reads
+  const interimOriginalRef = useRef('');
+  const interimTranslatedRef = useRef('');
+  
+  // ... SDK hook configuration
+  
+  return {
+    // Recording status
+    recordingStatus: toRecordingStatus(recording.status),
+    connectionStatus: toConnectionStatus(recording.status),
+    permissionStatus,
+    
+    // Tokens
+    finalLines,
+    interimOriginal,
+    interimTranslated,
+    
+    // Actions
+    startRecording: async () => { /* ... */ },
+    stopRecording: async () => { /* ... */ },
+    
+    // Error
+    error: recordingError || permissionError,
+  };
 }
-
-export const useSessionStore = create<SessionState>((set) => ({
-  recording: false,
-  connected: false,
-  interimToken: '',
-  finalTokens: [],
-  error: null,
-  
-  setRecording: (recording) => set({ recording }),
-  setConnected: (connected) => set({ connected }),
-  setInterimToken: (interimToken) => set({ interimToken }),
-  addFinalToken: (token) =>
-    set((s) => ({ finalTokens: [...s.finalTokens, token] })),
-  setError: (error) => set({ error }),
-  reset: () => set({
-    recording: false,
-    connected: false,
-    interimToken: '',
-    finalTokens: [],
-    error: null,
-  }),
-}));
 ```
 
-**Lifecycle**:
-- App starts → all false/empty
-- User clicks Record → setRecording(true)
-- WebSocket connects → setConnected(true)
-- Tokens arrive → setInterimToken, addFinalToken
-- User clicks Stop → setRecording(false), reset() on cleanup
+### State Shape
 
-**Why ephemeral?**
-- No need to persist tokens (already saved to disk)
-- Simpler to test (no localStorage mocking)
-- Faster app startup (no hydration)
+| Property | Type | Lifetime | Notes |
+|----------|------|----------|-------|
+| `recordingStatus` | 'idle'\|'recording'\|'stopping' | Per session | Maps SDK status string |
+| `connectionStatus` | 'disconnected'\|'connecting'\|'connected' | Per session | Maps SDK connection state |
+| `permissionStatus` | 'granted'\|'denied'\|'prompt' | App lifetime | From `useMicrophonePermission` |
+| `finalLines` | `TranscriptLine[]` | Per session | Committed transcript lines |
+| `interimOriginal` | string | Per session | Partial transcription (original) |
+| `interimTranslated` | string | Per session | Partial transcription (translated) |
+| `error` | `Error \| null` | Per session | Recording or permission error |
+
+### Lifecycle
+
+- **App starts**: finalLines=[], interim fields empty, error=null
+- **User clicks Record**: recordingStatus='recording', connectionStatus='connecting'
+- **SDK connects**: connectionStatus='connected'
+- **Tokens arrive**: interimOriginal/interimTranslated update rapidly; finalLines updates on complete token
+- **User clicks Stop**: recordingStatus='stopping' → 'idle', hook state resets
+- **Next session**: Clean state, ready to record again
+
+### Why Hook-Local (not Zustand)?
+
+✓ **Simpler**: No store boilerplate; state lives where it's used  
+✓ **Sufficient**: Single recording session at a time  
+✓ **Clear Ownership**: `useTranslationSession` owns the entire session lifecycle  
+✓ **Easier to Test**: No store setup/teardown mocking  
+
+⚠️ **Limitation**: Cannot easily share session state across unrelated components (not needed currently)
+
+**Future Migration Path**: If session features grow (e.g., pause/resume, multiple concurrent recordings), migrate to Zustand store.
 
 ---
 
-## SettingsStore (Persistent)
+## SettingsStore (Persistent via Zustand)
 
 User preferences surviving app restart.
+
+### Current Implementation
 
 ```typescript
 interface SettingsState {
   apiKey: string;
-  sourceLang: string;
-  targetLang: string;
+  sourceLanguage: string;
+  targetLanguage: string;
   outputMode: 'text' | 'tts';
   
   setApiKey(key: string): void;
@@ -83,21 +104,21 @@ export const useSettingsStore = create<SettingsState>()(
   persist(
     (set) => ({
       apiKey: '',
-      sourceLang: 'en',
-      targetLang: 'es',
+      sourceLanguage: 'en',
+      targetLanguage: 'es',
       outputMode: 'text' as const,
       
       setApiKey: (apiKey) => set({ apiKey }),
-      setLanguages: (sourceLang, targetLang) =>
-        set({ sourceLang, targetLang }),
+      setLanguages: (sourceLanguage, targetLanguage) =>
+        set({ sourceLanguage, targetLanguage }),
       setOutputMode: (outputMode) => set({ outputMode }),
     }),
     {
       name: 'translation-assistant-settings',
       partialize: (state) => ({
         apiKey: state.apiKey,
-        sourceLang: state.sourceLang,
-        targetLang: state.targetLang,
+        sourceLanguage: state.sourceLanguage,
+        targetLanguage: state.targetLanguage,
         outputMode: state.outputMode,
       }),
     }
@@ -105,28 +126,39 @@ export const useSettingsStore = create<SettingsState>()(
 );
 ```
 
-**Persistence**:
+### Persistence
+
 - Uses Zustand `persist` middleware
 - Stored in `localStorage` under key `translation-assistant-settings`
 - Auto-hydrates on app start
 
-**Migration Path**:
-- v0.1.0: localStorage (simple, cross-platform)
-- v1.0+: Platform keychain via Tauri plugin (more secure)
+### API Key Handling
 
----
+```typescript
+// settings-store.ts: in-memory field
+apiKey: '',
 
-## Data Dependencies
+// secure-storage.ts: persistent storage (future: Tauri keychain)
+export const getApiKey = async (): Promise<string | null> => {
+  return localStorage.getItem('soniox-api-key');
+};
 
+export const saveApiKey = async (key: string): Promise<void> => {
+  localStorage.setItem('soniox-api-key', key);
+};
+
+// useTranslationSession.ts: dual lookup
+const apiKey = async () => {
+  const stored = await getApiKey();
+  const mem = useSettingsStore.getState().apiKey;
+  return mem || stored; // Prefer in-memory, fallback to persistent
+};
 ```
-App.tsx
-  ├─ useSessionStore (read: recording, connected, interimToken, finalTokens, error)
-  ├─ useSettingsStore (read: apiKey, sourceLang, targetLang, outputMode)
-  └─ useTranslationSession hook (orchestrates both stores)
-      ├─ AudioCapture (dispatch chunks)
-      ├─ SonioxClient (receive tokens via callbacks)
-      └─ Tauri IPC (save transcript on stop)
-```
+
+### Migration Path
+
+- **v0.2.0**: `localStorage` (simple, cross-platform)
+- **v1.0+**: Platform keychain via Tauri Stronghold (more secure)
 
 ---
 
@@ -137,56 +169,71 @@ App.tsx
 Prefer explicit selectors to minimize re-renders:
 
 ```typescript
-// ✓ Good: re-renders only when recording changes
-const recording = useSessionStore((s) => s.recording);
+// ✓ Good: re-renders only when outputMode changes
+const outputMode = useSettingsStore((s) => s.outputMode);
 
 // ✗ Avoid: re-renders on any store change
-const store = useSessionStore();
-const recording = store.recording;
+const store = useSettingsStore();
+const outputMode = store.outputMode;
 ```
 
-### Updating State
+### Hook State from useTranslationSession
 
 ```typescript
-// ✓ Good: dispatch via store method
-useSessionStore.setState({ interimToken: 'Hello' });
+const session = useTranslationSession();
 
-// Or use dedicated method
-useSessionStore.getState().setInterimToken('Hello');
+// All fields available; component re-renders if any field changes
+const {
+  recordingStatus,
+  connectionStatus,
+  finalLines,
+  interimOriginal,
+  error,
+  startRecording,
+  stopRecording,
+} = session;
 ```
 
-### Local vs Store State
+### Local vs Store vs Hook State
 
-Use `useState` for component-local state (settings panel visibility):
+| State Type | When to Use | Example |
+|-----------|------------|---------|
+| `useState` | Component-specific, temporary | Settings panel visibility toggle |
+| `useSettingsStore` | Global app preferences | Language pair, API key, theme |
+| Hook-local (useTranslationSession) | Session-scoped ephemeral | Transcript lines, interim tokens |
 
+**Good Example**:
 ```typescript
-const [isSettingsOpen, setIsSettingsOpen] = useState(false);
-
-// Don't do this:
-// const isOpen = useUIStore().isSettingsOpen; // Overkill for temporary UI state
+const [isSettingsOpen, setIsSettingsOpen] = useState(false); // Local
+const outputMode = useSettingsStore((s) => s.outputMode);     // Persistent
+const { recordingStatus } = useTranslationSession();            // Session
 ```
 
 ---
 
 ## Error State Handling
 
-Errors dispatch to SessionStore for display in ErrorBanner:
+Errors in `useTranslationSession`:
 
 ```typescript
-try {
-  await audioCapture.start();
-} catch (err) {
-  const message = err instanceof Error ? err.message : 'Unknown error';
-  useSessionStore.setState({
-    error: new Error(`Failed to start: ${message}`),
-  });
-}
+// Recording error from SDK
+const recordingError = recording.error ? new Error(String(recording.error)) : null;
+
+// Permission error from SDK
+const permissionError = permissionStatus === 'denied' 
+  ? new Error('Microphone permission denied. Grant in Settings → Privacy.')
+  : null;
+
+// Expose combined error
+return {
+  error: recordingError || permissionError,
+};
 ```
 
-**ErrorBanner** listens to error state:
+**ErrorBanner Component** listens to error state:
 
 ```typescript
-const error = useSessionStore((s) => s.error);
+const { error } = useTranslationSession();
 return error ? <ErrorBanner message={error.message} onDismiss={() => ...} /> : null;
 ```
 
@@ -194,21 +241,25 @@ return error ? <ErrorBanner message={error.message} onDismiss={() => ...} /> : n
 
 ## State Serialization
 
-SessionStore is transient (not serialized). SettingsStore serializes to localStorage:
+### SessionStore (Not Serialized)
+
+Hook-local state is transient; resets on recording stop. No serialization needed.
+
+### SettingsStore (Serialized to localStorage)
 
 ```json
 {
   "state": {
     "apiKey": "sk-...",
-    "sourceLang": "en",
-    "targetLang": "es",
+    "sourceLanguage": "en",
+    "targetLanguage": "es",
     "outputMode": "tts"
   },
   "version": 0
 }
 ```
 
-For future schema migrations:
+**Future Schema Migration**:
 ```typescript
 persist(..., {
   version: 1,
@@ -224,14 +275,45 @@ persist(..., {
 
 ---
 
+## Data Flow Dependencies
+
+```
+App.tsx
+  ├─ useTranslationSession hook (read: all session state, call start/stop)
+  ├─ useSettingsStore (read: outputMode, languages for SDK config)
+  │
+  └─ useTranslationSession internals:
+      ├─ useRecording (SDK hook for STT + audio)
+      ├─ useMicrophonePermission (SDK hook for mic access)
+      ├─ getApiKey / saveApiKey (Tauri secure storage)
+      ├─ writeTranscript (Tauri file I/O)
+      └─ TtsService (Web Speech API)
+```
+
+---
+
+## Removed (v0.1.0)
+
+### Zustand SessionStore
+- Tracked: recording, connected, interimToken, finalTokens, error
+- **Why Removed**: Hook-local state sufficient for single session; eliminates store boilerplate
+- **Code Location**: Was in `src/store/session-store.ts`
+
+### use-microphone-permission Hook
+- Custom permission state + request logic
+- **Why Removed**: SDK provides `useMicrophonePermission`
+- **Code Location**: Was in `src/hooks/use-microphone-permission.ts`
+
+---
+
 ## Future Enhancements
 
-**v0.2.0**:
-- Add transcript history store (paginated list)
-- Separate provider settings (API key per provider)
+**v0.3.0** (If Needed):
+- Add transcript history store (paginated list of past sessions)
+- Separate provider settings (config per STT provider if adding multi-provider)
 
 **v1.0+**:
-- Migrate to platform keychain (more secure)
+- Migrate API key to platform keychain (more secure)
 - Add analytics store (opt-in usage tracking)
 
 ---
@@ -239,4 +321,4 @@ persist(..., {
 ## References
 
 - [System Architecture Overview](./overview.md)
-- [Code Standards — State Management](../code-standards.md#state-management-patterns)
+- [Code Standards — State Management Patterns](../code-standards.md#state-management-patterns)
