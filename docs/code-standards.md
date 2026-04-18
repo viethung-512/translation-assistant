@@ -561,52 +561,71 @@ fn expand_documents_path(filename: &str) -> Result<PathBuf, String> {
 
 ---
 
-## Styling with Tailwind CSS
+## Styling with Radix UI Themes
 
-### Class Organization
+### Component Composition
 
-Order classes: layout → sizing → colors → spacing → effects → responsive.
+All UI uses Radix UI Themes (`@radix-ui/themes`) components. No Tailwind CSS or custom CSS. Layout primitives: `Flex`, `Box`, `Grid`, `ScrollArea`.
 
 ```jsx
-<div className="flex items-center justify-between gap-3 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 sm:flex-col">
-  {/* ... */}
-</div>
+import { Flex, Box, Text, Button } from '@radix-ui/themes';
+
+export const Component = () => (
+  <Box p="4" style={{ maxWidth: 500, margin: '0 auto' }}>
+    <Flex direction="column" gap="3">
+      <Text as="label" size="2" weight="medium">Label</Text>
+      <Button>Submit</Button>
+    </Flex>
+  </Box>
+);
 ```
 
-### Custom CSS Variables
+### Radix Props Over Inline Styles
 
-Use Tailwind-extended CSS custom properties for theme tokens.
+Prefer Radix props (`p`, `px`, `py`, `gap`, `direction`, `align`, `justify`) over inline `style={{}}`. Use inline styles only for:
+- Structural values not mapped to Radix props (e.g., `maxWidth: 500`, `margin: '0 auto'`)
+- Dynamic values computed at runtime (e.g., `color: getSpeakerColor()`)
+- CSS features without Radix equivalents (e.g., `textTransform: 'uppercase'`)
+
+### CSS Modules (Exception)
+
+One CSS module allowed: `src/components/Controls/record-button.module.css` for animations (`@keyframes pulse`).
 
 ```css
-:root[data-theme="light"] {
-  --bg-primary: #ffffff;
-  --text-primary: #0f172a;
-  --accent: #3b82f6;
+/* record-button.module.css */
+@keyframes pulse-ring {
+  0% { box-shadow: 0 0 0 0 rgba(var(--red-9), 0.7); }
+  70% { box-shadow: 0 0 0 10px rgba(var(--red-9), 0); }
+  100% { box-shadow: 0 0 0 0 rgba(var(--red-9), 0); }
 }
 
-:root[data-theme="dark"] {
-  --bg-primary: #0d0d14;
-  --text-primary: #f1f5f9;
-  --accent: #60a5fa;
+.pulse::before {
+  animation: pulse-ring 2s infinite;
 }
 ```
 
-Reference in components:
+### Theme & Appearance
 
-```jsx
-<div className="bg-[var(--bg-primary)] text-[var(--text-primary)]">
-  {/* ... */}
-</div>
-```
+Theme is controlled by `useTheme()` hook → passed to `<Theme appearance={theme}>` in App.tsx.
+- `appearance="light"` or `"dark"` drives all color scales
+- `accentColor="blue"` (primary brand color)
+- `grayColor="slate"` (neutral scale)
+
+Radix CSS variables available globally:
+- Colors: `var(--red-9)`, `var(--green-9)`, `var(--gray-5)`, `var(--accent-9)`, etc.
+- Spacing: `var(--space-1)`, `var(--space-2)`, `var(--space-4)`, etc.
+- Type: `var(--font-family)`, `var(--font-size-2)`, etc.
 
 ### Responsive Design
 
-Mobile-first with Tailwind breakpoints.
+Use CSS media queries sparingly. Radix Themes provides built-in responsive support via component props (e.g., `display` prop accepts responsive arrays). For complex layouts, use `Flex` with conditional rendering or CSS media queries on inline `style`.
 
 ```jsx
-<div className="px-4 sm:px-6 md:px-8 max-w-[500px]">
-  {/* 4px padding on mobile, 6px on sm+, 8px on md+ */}
-</div>
+// ✓ Good: responsive with Radix props
+<Flex direction={{ initial: 'column', sm: 'row' }} gap="4" />
+
+// ✓ Acceptable: media query in style
+<Box style={{ marginLeft: '16px', '@media (max-width: 640px)': { marginLeft: '8px' } }} />
 ```
 
 ---

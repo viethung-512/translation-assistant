@@ -1,8 +1,8 @@
 # Translation Assistant — Project Roadmap
 
 **Version**: 0.1.0  
-**Last Updated**: April 2026  
-**Status**: MVP Complete → Beta Testing Phase
+**Last Updated**: April 18 2026  
+**Status**: MVP Complete → Radix UI Migration Complete → Beta Testing Phase
 
 ---
 
@@ -30,6 +30,8 @@
 - [x] Connection resilience (exponential backoff, 280min preemptive reconnect)
 - [x] ErrorBoundary and error banner
 - [x] Mobile-optimized UI (responsive layout, safe areas)
+- [x] Radix UI Themes migration (zero Tailwind, all components modernized)
+- [x] Recording controls (pause/resume, clear transcript, history delete modal)
 
 #### Known Limitations (By Design)
 
@@ -174,9 +176,10 @@ SELECT * FROM transcripts WHERE created_at > ? ORDER BY created_at DESC LIMIT 20
 
 | Phase | Status | Owner | Notes |
 |-------|--------|-------|-------|
-| Development | ✓ Complete | — | All features implemented |
+| Development | ✓ Complete | — | All features implemented; Radix UI migration complete |
+| Radix UI Migration | ✓ Complete | Dev Team | Zero Tailwind; all 12+ components modernized; tsc --noEmit passes |
 | Testing | ⏳ In Progress | QA | Manual testing on all 5 platforms |
-| Documentation | ✓ Complete | Docs Manager | README, architecture, code standards |
+| Documentation | ✓ Complete | Docs Manager | README, architecture, code standards, Radix Themes guide |
 | Beta Signup | ⏳ Launching Soon | Marketing | Sign-up form for early testers |
 | Bug Fixes | ⏳ Ongoing | Dev Team | Address issues from beta feedback |
 
