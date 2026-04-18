@@ -1,4 +1,5 @@
 // Main app container: wires session hook to all UI sections.
+import { Box, Flex, Text, Theme } from "@radix-ui/themes";
 import { HistorySheet } from "@/components/History/history-sheet";
 import { SettingsPanel } from "@/components/Settings/settings-panel";
 import { Button } from "@/components/ui";
@@ -9,7 +10,7 @@ import { getApiKey } from "@/tauri/secure-storage";
 import { useTheme } from "@/theme/use-theme";
 import { invoke } from "@tauri-apps/api/core";
 import { openUrl } from "@tauri-apps/plugin-opener";
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { BottomControls } from "./bottom-controls";
 import { ErrorBannerSection } from "./error-banner-section";
@@ -58,6 +59,12 @@ export function AppShell() {
   const {
     startSession,
     stopSession,
+    pauseSession,
+    resumeSession,
+    clearTranscript,
+    finalLines,
+    interimOriginal,
+    interimTranslated,
     recordingStatus,
     connectionStatus,
     error,
@@ -66,6 +73,8 @@ export function AppShell() {
     languageATokens,
     languageBTokens,
   } = useTranslationSession();
+
+  const hasContent = finalLines.length > 0 || interimOriginal.length > 0 || interimTranslated.length > 0;
 
   const { t } = useTranslation();
   const setApiKey = useSettingsStore((s) => s.setApiKey);
@@ -85,6 +94,11 @@ export function AppShell() {
     ) {
       window.speechSynthesis.onvoiceschanged = () => {};
     }
+    // Tag the root element with the host OS so CSS can enable
+    // platform-specific effects (e.g. liquid glass on iOS/macOS only).
+    resolveHostOsId().then((os) => {
+      document.documentElement.dataset.platform = os;
+    });
   }, [setApiKey]);
 
   const handleOpenMicSettings = async () => {
@@ -100,133 +114,113 @@ export function AppShell() {
     }
   };
 
-  const handleRecordToggle = useCallback(async () => {
-    if (recordingStatus === "idle") {
-      await startSession();
-    } else if (recordingStatus === "recording") {
-      stopSession();
-    }
-  }, [recordingStatus, startSession, stopSession]);
 
   return (
-    <div
-      style={{
-        maxWidth: 500,
-        margin: "0 auto",
-        height: "100%",
-        display: "flex",
-        flexDirection: "column",
-        background: "var(--bg-primary)",
-        color: "var(--text-primary)",
-      }}
-    >
-      <TopBar
-        connectionStatus={connectionStatus}
-        theme={theme}
-        onToggleTheme={toggleTheme}
-        onHistoryOpen={() => setHistoryOpen(true)}
-        onSettingsOpen={() => setSettingsOpen(true)}
-      />
+    <Theme appearance={theme} accentColor="blue" grayColor="slate">
+      {/* Full-viewport liquid glass layout — background from global.css */}
+      <Box
+        style={{
+          maxWidth: 500,
+          margin: "0 auto",
+          height: "100%",
+          display: "flex",
+          flexDirection: "column",
+          position: "relative",
+        }}
+      >
+        <TopBar
+          connectionStatus={connectionStatus}
+          theme={theme}
+          onToggleTheme={toggleTheme}
+          onHistoryOpen={() => setHistoryOpen(true)}
+          onSettingsOpen={() => setSettingsOpen(true)}
+        />
 
-      <ErrorBannerSection error={error} />
+        <ErrorBannerSection error={error} />
 
-      <ScrollableTranslationArea
-        originalTokens={languageATokens}
-        translatedTokens={languageBTokens}
-      />
+        <ScrollableTranslationArea
+          originalTokens={languageATokens}
+          translatedTokens={languageBTokens}
+          hasContent={hasContent}
+          onClearTranscript={clearTranscript}
+        />
 
-      <BottomControls
-        outputMode={outputMode}
-        recordingStatus={recordingStatus}
-        connectionStatus={connectionStatus}
-        onToggleOutputMode={() =>
-          setOutputMode(outputMode === "tts" ? "text" : "tts")
-        }
-        onRecordToggle={handleRecordToggle}
-      />
+        <BottomControls
+          outputMode={outputMode}
+          recordingStatus={recordingStatus}
+          connectionStatus={connectionStatus}
+          onToggleOutputMode={() =>
+            setOutputMode(outputMode === "tts" ? "text" : "tts")
+          }
+          onStart={startSession}
+          onPause={pauseSession}
+          onResume={resumeSession}
+          onStop={stopSession}
+        />
 
-      <SettingsPanel
-        isOpen={settingsOpen}
-        onClose={() => setSettingsOpen(false)}
-      />
-      <HistorySheet
-        isOpen={historyOpen}
-        onClose={() => setHistoryOpen(false)}
-      />
+        <SettingsPanel
+          isOpen={settingsOpen}
+          onClose={() => setSettingsOpen(false)}
+        />
+        <HistorySheet
+          isOpen={historyOpen}
+          onClose={() => setHistoryOpen(false)}
+        />
 
-      {/* ── Microphone permission sheet ── */}
-      <BottomSheet isOpen={needsPermission} onClose={() => {}}>
-        <div style={{ padding: "16px 24px 8px", textAlign: "center" }}>
-          <div
-            style={{
-              display: "flex",
-              justifyContent: "center",
-              marginBottom: 16,
-            }}
-          >
-            <svg
-              width="48"
-              height="48"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="var(--danger)"
-              strokeWidth="1.5"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              aria-hidden="true"
-            >
-              <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z" />
-              <path d="M19 10v2a7 7 0 0 1-14 0v-2" />
-              <line x1="12" y1="19" x2="12" y2="23" />
-              <line x1="8" y1="23" x2="16" y2="23" />
-              <line x1="2" y1="2" x2="22" y2="22" />
-            </svg>
-          </div>
-
-          {permissionState === "denied" && (
-            <>
-              <p style={{ fontSize: 17, fontWeight: 600, margin: "0 0 8px" }}>
-                {t('mic_denied_title')}
-              </p>
-              <p
-                style={{
-                  fontSize: 14,
-                  color: "var(--text-secondary)",
-                  margin: "0 0 24px",
-                  lineHeight: 1.5,
-                }}
+        {/* ── Microphone permission sheet ── */}
+        <BottomSheet isOpen={needsPermission} onClose={() => {}}>
+          <Box p="4" style={{ textAlign: "center" }}>
+            <Flex justify="center" mb="4">
+              <svg
+                width="48"
+                height="48"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="var(--red-9)"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden="true"
               >
-                {t('mic_denied_body')}
-              </p>
-              <Button style={{ width: "100%" }} onClick={handleOpenMicSettings}>
-                {t('mic_open_settings')}
-              </Button>
-            </>
-          )}
+                <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z" />
+                <path d="M19 10v2a7 7 0 0 1-14 0v-2" />
+                <line x1="12" y1="19" x2="12" y2="23" />
+                <line x1="8" y1="23" x2="16" y2="23" />
+                <line x1="2" y1="2" x2="22" y2="22" />
+              </svg>
+            </Flex>
 
-          {(permissionState === "unavailable" ||
-            permissionState === "unsupported") && (
-            <>
-              <p style={{ fontSize: 17, fontWeight: 600, margin: "0 0 8px" }}>
-                {t('mic_unavailable_title')}
-              </p>
-              <p
-                style={{
-                  fontSize: 14,
-                  color: "var(--text-secondary)",
-                  margin: "0 0 24px",
-                  lineHeight: 1.5,
-                }}
-              >
-                {t('mic_unavailable_body')}
-              </p>
-              <Button style={{ width: "100%" }} onClick={handleOpenMicSettings}>
-                {t('mic_open_settings')}
-              </Button>
-            </>
-          )}
-        </div>
-      </BottomSheet>
-    </div>
+            {permissionState === "denied" && (
+              <>
+                <Text as="p" size="4" weight="bold" mb="2">
+                  {t("mic_denied_title")}
+                </Text>
+                <Text as="p" size="2" color="gray" mb="5">
+                  {t("mic_denied_body")}
+                </Text>
+                <Button style={{ width: "100%" }} onClick={handleOpenMicSettings}>
+                  {t("mic_open_settings")}
+                </Button>
+              </>
+            )}
+
+            {(permissionState === "unavailable" ||
+              permissionState === "unsupported") && (
+              <>
+                <Text as="p" size="4" weight="bold" mb="2">
+                  {t("mic_unavailable_title")}
+                </Text>
+                <Text as="p" size="2" color="gray" mb="5">
+                  {t("mic_unavailable_body")}
+                </Text>
+                <Button style={{ width: "100%" }} onClick={handleOpenMicSettings}>
+                  {t("mic_open_settings")}
+                </Button>
+              </>
+            )}
+          </Box>
+        </BottomSheet>
+      </Box>
+    </Theme>
   );
 }

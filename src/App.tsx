@@ -1,6 +1,7 @@
 // Root entry: error boundary wrapping the main app shell.
 import { Component } from "react";
 import type { ReactNode, ErrorInfo } from "react";
+import { Box, Text } from "@radix-ui/themes";
 import { AppShell } from "@/components/AppShell/app-shell";
 import { SonioxProvider } from "@soniox/react";
 import { getApiKey } from "@/tauri/secure-storage";
@@ -19,42 +20,30 @@ class ErrorBoundary extends Component<
   render() {
     if (this.state.error) {
       return (
-        <div
-          style={{
-            padding: 24,
-            fontFamily: "monospace",
-            fontSize: 13,
-            color: "var(--danger)",
-          }}
-        >
-          <strong>App Error</strong>
-          <pre
-            style={{
-              whiteSpace: "pre-wrap",
-              wordBreak: "break-all",
-              marginTop: 8,
-            }}
-          >
+        <Box p="5">
+          <Text color="red" weight="bold">App Error</Text>
+          <Text as="p" size="1" style={{ whiteSpace: "pre-wrap", wordBreak: "break-all", marginTop: 8 }}>
             {(this.state.error as Error).message}
-          </pre>
-        </div>
+          </Text>
+        </Box>
       );
     }
     return this.props.children;
   }
 }
 
-export default function App() {
-  
+// AppRoot is a functional component so it can call hooks (ErrorBoundary is a class component).
+// <Theme> lives inside AppShell so the same component that owns theme state also drives appearance.
+function AppRoot() {
   return (
     <ErrorBoundary>
       <SonioxProvider
         apiKey={async () => {
-          const result =  await getApiKey();
+          const result = await getApiKey();
           if (result) {
             return result;
           }
-          throw new Error('Please set soniox api-key!')
+          throw new Error("Please set soniox api-key!");
         }}
       >
         <AppShell />
@@ -62,3 +51,5 @@ export default function App() {
     </ErrorBoundary>
   );
 }
+
+export default AppRoot;

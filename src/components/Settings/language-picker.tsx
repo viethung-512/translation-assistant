@@ -1,4 +1,6 @@
 import { useMemo } from "react";
+import { Box, Text } from "@radix-ui/themes";
+import { Select, SelectItem } from "@/components/ui";
 import { ALL_AVAILABLE_LANGUAGES } from "@/constants/languages";
 
 interface Props {
@@ -9,34 +11,21 @@ interface Props {
 }
 
 export function LanguagePicker({ label, value, onChange, exclude }: Props) {
-  const options = useMemo(() =>
-    ALL_AVAILABLE_LANGUAGES.filter((l) => l.code !== exclude),
-  [exclude]);
+  const options = useMemo(
+    () => ALL_AVAILABLE_LANGUAGES.filter((l) => l.code !== exclude),
+    [exclude],
+  );
 
   return (
-    <div style={{ marginBottom: 14 }}>
-      <label style={{ display: 'block', fontSize: 12, color: 'var(--text-muted)', marginBottom: 5, fontWeight: 500 }}>
+    <Box mb="3">
+      <Text as="label" size="1" color="gray" weight="medium" mb="1" style={{ display: "block" }}>
         {label}
-      </label>
-      <select
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        style={{
-          width: '100%',
-          padding: '9px 12px',
-          borderRadius: 10,
-          border: '1px solid var(--border)',
-          fontSize: 15,
-          background: 'var(--bg-secondary)',
-          color: 'var(--text-primary)',
-          cursor: 'pointer',
-          appearance: 'auto',
-        }}
-      >
+      </Text>
+      <Select value={value} onChange={onChange}>
         {options.map((l) => (
-          <option key={l.code} value={l.code}>{l.name}</option>
+          <SelectItem key={l.code} value={l.code}>{l.name}</SelectItem>
         ))}
-      </select>
-    </div>
+      </Select>
+    </Box>
   );
 }

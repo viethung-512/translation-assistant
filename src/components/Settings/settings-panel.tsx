@@ -1,14 +1,15 @@
 // Slide-up settings sheet: API key, language pickers, output mode toggle.
-import { useEffect, useState } from 'react';
-import { useTranslation } from 'react-i18next';
-import { LanguagePicker } from './language-picker';
-import { useSettingsStore } from '@/store/settings-store';
-import { saveApiKey, getApiKey, deleteApiKey } from '@/tauri/secure-storage';
-import { BottomSheet, Button, IconButton } from '@/components/ui';
+import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
+import { Box, Flex, Heading, ScrollArea, SegmentedControl, Text } from "@radix-ui/themes";
+import { LanguagePicker } from "./language-picker";
+import { useSettingsStore } from "@/store/settings-store";
+import { saveApiKey, getApiKey, deleteApiKey } from "@/tauri/secure-storage";
+import { BottomSheet, Button, IconButton, Input } from "@/components/ui";
 
 const UI_LANGUAGES = [
-  { code: 'en', label: 'English' },
-  { code: 'vi', label: 'Tiếng Việt' },
+  { code: "en", label: "English" },
+  { code: "vi", label: "Tiếng Việt" },
 ];
 
 interface Props {
@@ -38,7 +39,7 @@ export function SettingsPanel({ isOpen, onClose }: Props) {
   const { t } = useTranslation();
   const { sourceLanguage, targetLanguage, outputMode, uiLanguage, setApiKey,
           setSourceLanguage, setTargetLanguage, setOutputMode, setUiLanguage } = useSettingsStore();
-  const [keyInput, setKeyInput] = useState('');
+  const [keyInput, setKeyInput] = useState("");
   const [hasStoredKey, setHasStoredKey] = useState(false);
   const [saving, setSaving] = useState(false);
 
@@ -54,7 +55,7 @@ export function SettingsPanel({ isOpen, onClose }: Props) {
       await saveApiKey(keyInput.trim());
       setApiKey(keyInput.trim());
       setHasStoredKey(true);
-      setKeyInput('');
+      setKeyInput("");
     } finally {
       setSaving(false);
     }
@@ -62,123 +63,92 @@ export function SettingsPanel({ isOpen, onClose }: Props) {
 
   const handleDeleteKey = async () => {
     await deleteApiKey();
-    setApiKey('');
+    setApiKey("");
     setHasStoredKey(false);
-    setKeyInput('');
+    setKeyInput("");
   };
 
   return (
     <BottomSheet isOpen={isOpen} onClose={onClose}>
-      <div className="px-5 pb-0 max-h-[72vh] overflow-y-auto">
+      <ScrollArea style={{ maxHeight: "72vh" }}>
+        <Box px="5" pb="4">
 
-        {/* Header */}
-        <div className="flex justify-between items-center mb-[22px]">
-          <h2 className="m-0 text-heading text-text-primary">{t('settings_title')}</h2>
-          <IconButton aria-label={t('aria_close_settings')} onClick={onClose} className="rounded-full bg-bg-tertiary">
-            <IconClose />
-          </IconButton>
-        </div>
+          {/* Header */}
+          <Flex justify="between" align="center" mb="5">
+            <Heading size="4">{t("settings_title")}</Heading>
+            <IconButton aria-label={t("aria_close_settings")} onClick={onClose}>
+              <IconClose />
+            </IconButton>
+          </Flex>
 
-        {/* Interface language */}
-        <div className="mb-5">
-          <label className="block text-label text-text-muted mb-2">
-            {t('settings_ui_language')}
-          </label>
-          <div className="flex gap-2">
-            {UI_LANGUAGES.map(({ code, label }) => {
-              const active = uiLanguage === code;
-              return (
-                <button
-                  key={code}
-                  onClick={() => setUiLanguage(code)}
-                  className={[
-                    'flex-1 py-[10px] rounded-[10px] text-[14px] cursor-pointer min-h-touch',
-                    'border-[1.5px] transition-colors duration-150',
-                    active
-                      ? 'bg-accent-dim text-accent border-accent font-semibold'
-                      : 'bg-bg-secondary text-text-secondary border-border font-normal',
-                  ].join(' ')}
-                >
-                  {label}
-                </button>
-              );
-            })}
-          </div>
-        </div>
+          {/* Interface language */}
+          <Box mb="5">
+            <Text as="label" size="1" color="gray" weight="medium" mb="2" style={{ display: "block" }}>
+              {t("settings_ui_language")}
+            </Text>
+            <SegmentedControl.Root value={uiLanguage} onValueChange={setUiLanguage}>
+              {UI_LANGUAGES.map(({ code, label }) => (
+                <SegmentedControl.Item key={code} value={code}>{label}</SegmentedControl.Item>
+              ))}
+            </SegmentedControl.Root>
+          </Box>
 
-        {/* API Key */}
-        <div className="mb-5">
-          <label className="flex items-center gap-[6px] text-label text-text-muted mb-[6px]">
-            {t('settings_api_key_label')}
-            {hasStoredKey && (
-              <span className="flex items-center gap-[3px] text-success text-[11px]">
-                <IconCheck /> {t('settings_api_key_stored')}
-              </span>
-            )}
-          </label>
-          <input
-            type="password"
-            value={keyInput}
-            onChange={(e) => setKeyInput(e.target.value)}
-            placeholder={hasStoredKey ? t('settings_api_key_placeholder_stored') : t('settings_api_key_placeholder_empty')}
-            autoComplete="off"
-            className="w-full px-3 py-[10px] rounded-[10px] border border-border text-[15px] bg-bg-secondary text-text-primary outline-none focus:border-accent"
-          />
-          <div className="flex gap-2 mt-2">
-            <Button
-              variant="primary"
-              onClick={handleSaveKey}
-              disabled={saving || !keyInput.trim()}
-              className="flex-1 rounded-[10px] text-[14px] font-medium"
-            >
-              {saving ? t('settings_saving') : t('settings_save_key')}
-            </Button>
-            {hasStoredKey && (
+          {/* API Key */}
+          <Box mb="5">
+            <Flex align="center" gap="1" mb="2">
+              <Text as="label" size="1" color="gray" weight="medium">
+                {t("settings_api_key_label")}
+              </Text>
+              {hasStoredKey && (
+                <Flex align="center" gap="1">
+                  <Text size="1" color="green"><IconCheck /></Text>
+                  <Text size="1" color="green">{t("settings_api_key_stored")}</Text>
+                </Flex>
+              )}
+            </Flex>
+            <Input
+              type="password"
+              value={keyInput}
+              onChange={(e) => setKeyInput(e.target.value)}
+              placeholder={hasStoredKey ? t("settings_api_key_placeholder_stored") : t("settings_api_key_placeholder_empty")}
+              autoComplete="off"
+            />
+            <Flex gap="2" mt="2">
               <Button
-                variant="danger"
-                onClick={handleDeleteKey}
-                className="rounded-[10px] text-[14px] font-medium px-4"
+                variant="primary"
+                onClick={handleSaveKey}
+                disabled={saving || !keyInput.trim()}
+                style={{ flex: 1 }}
               >
-                {t('settings_delete_key')}
+                {saving ? t("settings_saving") : t("settings_save_key")}
               </Button>
-            )}
-          </div>
-        </div>
+              {hasStoredKey && (
+                <Button variant="danger" onClick={handleDeleteKey}>
+                  {t("settings_delete_key")}
+                </Button>
+              )}
+            </Flex>
+          </Box>
 
-        {/* Language pickers */}
-        <LanguagePicker label={t('settings_source_lang')} value={sourceLanguage}
-          onChange={setSourceLanguage} exclude={targetLanguage} />
-        <LanguagePicker label={t('settings_target_lang')} value={targetLanguage}
-          onChange={setTargetLanguage} exclude={sourceLanguage} />
+          {/* Language pickers */}
+          <LanguagePicker label={t("settings_source_lang")} value={sourceLanguage}
+            onChange={setSourceLanguage} exclude={targetLanguage} />
+          <LanguagePicker label={t("settings_target_lang")} value={targetLanguage}
+            onChange={setTargetLanguage} exclude={sourceLanguage} />
 
-        {/* Output mode */}
-        <div className="mb-2">
-          <label className="block text-label text-text-muted mb-2">
-            {t('settings_output_mode')}
-          </label>
-          <div className="flex gap-2">
-            {(['text', 'tts'] as const).map((mode) => {
-              const active = outputMode === mode;
-              return (
-                <button
-                  key={mode}
-                  onClick={() => setOutputMode(mode)}
-                  className={[
-                    'flex-1 py-[10px] rounded-[10px] text-[14px] cursor-pointer min-h-touch',
-                    'border-[1.5px] transition-colors duration-150',
-                    active
-                      ? 'bg-accent-dim text-accent border-accent font-semibold'
-                      : 'bg-bg-secondary text-text-secondary border-border font-normal',
-                  ].join(' ')}
-                >
-                  {mode === 'text' ? t('settings_text_only') : t('settings_voice_output')}
-                </button>
-              );
-            })}
-          </div>
-        </div>
+          {/* Output mode */}
+          <Box mb="2">
+            <Text as="label" size="1" color="gray" weight="medium" mb="2" style={{ display: "block" }}>
+              {t("settings_output_mode")}
+            </Text>
+            <SegmentedControl.Root value={outputMode} onValueChange={(v) => setOutputMode(v as "text" | "tts")}>
+              <SegmentedControl.Item value="text">{t("settings_text_only")}</SegmentedControl.Item>
+              <SegmentedControl.Item value="tts">{t("settings_voice_output")}</SegmentedControl.Item>
+            </SegmentedControl.Root>
+          </Box>
 
-      </div>
+        </Box>
+      </ScrollArea>
     </BottomSheet>
   );
 }

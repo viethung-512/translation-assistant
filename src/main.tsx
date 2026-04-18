@@ -2,7 +2,8 @@ import "@/i18n"; // must be first — initializes i18n before any component rend
 import React from "react";
 import ReactDOM from "react-dom/client";
 import App from "./App";
-import "./tailwind.css";
+import "@radix-ui/themes/styles.css";
+import "./global.css";
 
 function clearPreLoad() {
   const el = document.getElementById("pre-load");

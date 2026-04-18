@@ -1,3 +1,4 @@
+import { Flex } from "@radix-ui/themes";
 import { useTranslation } from "react-i18next";
 import { IconButton } from "@/components/ui";
 import { StatusBadge } from "@/components/Controls/status-badge";
@@ -22,32 +23,36 @@ export function TopBar({
   const { t } = useTranslation();
 
   return (
-    <div
+    /* Floating glass pill pinned to top with safe-area padding */
+    <Flex
+      justify="between"
+      align="center"
+      px="4"
       style={{
-        display: "flex",
-        justifyContent: "space-between",
-        alignItems: "center",
-        padding: "12px 16px",
-        borderBottom: "1px solid var(--border)",
-        background: "var(--bg-primary)",
-        minHeight: 52,
+        margin: "16px 16px 0",
+        minHeight: 56,
+        borderRadius: 28,
+        paddingTop: "max(14px, env(safe-area-inset-top))",
+        paddingBottom: 14,
+        flexShrink: 0,
       }}
+      className="float-bar animate-slide-down"
     >
       <StatusBadge status={connectionStatus} />
-      <div className="flex items-center gap-1">
-        <IconButton aria-label={t('aria_view_history')} onClick={onHistoryOpen}>
+      <Flex align="center" gap="2">
+        <IconButton aria-label={t("aria_view_history")} onClick={onHistoryOpen}>
           <IconHistory />
         </IconButton>
         <IconButton
-          aria-label={theme === "dark" ? t('aria_switch_light') : t('aria_switch_dark')}
+          aria-label={theme === "dark" ? t("aria_switch_light") : t("aria_switch_dark")}
           onClick={onToggleTheme}
         >
           <IconTheme isDark={theme === "dark"} />
         </IconButton>
-        <IconButton aria-label={t('aria_open_settings')} onClick={onSettingsOpen}>
+        <IconButton aria-label={t("aria_open_settings")} onClick={onSettingsOpen}>
           <IconSettings />
         </IconButton>
-      </div>
-    </div>
+      </Flex>
+    </Flex>
   );
 }

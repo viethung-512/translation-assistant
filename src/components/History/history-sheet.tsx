@@ -1,16 +1,26 @@
 // Bottom sheet listing past transcript sessions. Fetches on open, refreshes after delete.
-// Share falls back to clipboard if tauri-plugin-share is unavailable (Phase 05).
-import { useState, useEffect, useCallback } from 'react';
-import { useTranslation } from 'react-i18next';
-import { openPath } from '@tauri-apps/plugin-opener';
-import { BottomSheet } from '@/components/ui/bottom-sheet';
-import { listTranscripts } from '@/tauri/transcript-fs';
-import type { TranscriptMeta } from '@/tauri/transcript-fs';
-import { SessionItem } from './session-item';
+import { useState, useEffect, useCallback } from "react";
+import { useTranslation } from "react-i18next";
+import { Box, Flex, ScrollArea, Text } from "@radix-ui/themes";
+import { openPath } from "@tauri-apps/plugin-opener";
+import { BottomSheet } from "@/components/ui/bottom-sheet";
+import { IconButton } from "@/components/ui";
+import { listTranscripts } from "@/tauri/transcript-fs";
+import type { TranscriptMeta } from "@/tauri/transcript-fs";
+import { SessionItem } from "./session-item";
 
 interface Props {
   isOpen: boolean;
   onClose: () => void;
+}
+
+// Close (×) icon
+function IconClose() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" aria-hidden="true">
+      <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+    </svg>
+  );
 }
 
 export function HistorySheet({ isOpen, onClose }: Props) {
@@ -47,39 +57,37 @@ export function HistorySheet({ isOpen, onClose }: Props) {
 
   return (
     <BottomSheet isOpen={isOpen} onClose={onClose}>
-      <div style={{ padding: '16px 0 8px' }}>
+      <Box pt="4" pb="2">
         {/* Sheet header */}
-        <div style={{
-          display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-          padding: '0 16px 12px', borderBottom: '1px solid var(--border)',
-        }}>
-          <span style={{ fontSize: 16, fontWeight: 600 }}>{t('history_title')}</span>
-          <button
-            onClick={onClose}
-            aria-label={t('aria_close_history')}
-            style={{
-              background: 'none', border: 'none', cursor: 'pointer',
-              fontSize: 20, color: 'var(--text-secondary)', lineHeight: 1,
-            }}
-          >
-            ×
-          </button>
-        </div>
+        <Flex
+          justify="between"
+          align="center"
+          px="4"
+          pb="3"
+          style={{ borderBottom: "1px solid var(--gray-5)" }}
+        >
+          <Text size="3" weight="bold">{t("history_title")}</Text>
+          <IconButton aria-label={t("aria_close_history")} onClick={onClose}>
+            <IconClose />
+          </IconButton>
+        </Flex>
 
         {/* Content */}
-        <div style={{ maxHeight: '60vh', overflowY: 'auto' }}>
+        <ScrollArea style={{ maxHeight: "60vh" }}>
           {loading && (
-            <p style={{ padding: '16px', fontSize: 14, color: 'var(--text-secondary)', textAlign: 'center' }}>
-              {t('history_loading')}
-            </p>
+            <Box p="4">
+              <Text as="p" size="2" color="gray" align="center">{t("history_loading")}</Text>
+            </Box>
           )}
           {error && (
-            <p style={{ padding: '16px', fontSize: 14, color: 'var(--danger)' }}>{error}</p>
+            <Box p="4">
+              <Text as="p" size="2" color="red">{error}</Text>
+            </Box>
           )}
           {!loading && !error && sessions.length === 0 && (
-            <p style={{ padding: '24px 16px', fontSize: 14, color: 'var(--text-secondary)', textAlign: 'center' }}>
-              {t('history_empty')}
-            </p>
+            <Box p="4">
+              <Text as="p" size="2" color="gray" align="center">{t("history_empty")}</Text>
+            </Box>
           )}
           {sessions.map((s) => (
             <SessionItem
@@ -89,8 +97,8 @@ export function HistorySheet({ isOpen, onClose }: Props) {
               onShare={handleShare}
             />
           ))}
-        </div>
-      </div>
+        </ScrollArea>
+      </Box>
     </BottomSheet>
   );
 }

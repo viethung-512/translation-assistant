@@ -8,11 +8,13 @@ import { writeTranscript, buildTranscriptContent } from '@/tauri/transcript-fs';
 import type { TranscriptLine } from '@/tauri/transcript-fs';
 import { TtsService } from '@/audio/tts-service';
 
-export type RecordingStatus = "idle" | "recording" | "stopping";
+export type RecordingStatus = "idle" | "recording" | "paused" | "stopping";
 export type ConnectionStatus = "disconnected" | "connecting" | "connected";
 
-// Map SDK recording state string to legacy app status values
-function toRecordingStatus(state: string): RecordingStatus {
+// Map SDK recording state string to app status values.
+// isPaused is tracked locally because the SDK has no pause concept.
+function toRecordingStatus(state: string, isPaused: boolean): RecordingStatus {
+  if (isPaused) return 'paused';
   if (state === 'recording') return 'recording';
   if (state === 'stopping') return 'stopping';
   return 'idle';
@@ -37,6 +39,9 @@ export function useTranslationSession() {
   const interimOriginalRef = useRef('');
   const interimTranslatedRef = useRef('');
 
+  // Pause state is local — SDK has no pause; pause = stop WS, resume = reconnect
+  const [isPaused, setIsPaused] = useState(false);
+
   const { status: permissionStatus } = useMicrophonePermission({ autoCheck: true });
 
   const recording = useRecording({
@@ -45,8 +50,8 @@ export function useTranslationSession() {
     language_hints_strict: true,
     translation: {
       type: "two_way",
-      language_a: 'en',
-      language_b: 'vi'
+      language_a: sourceLanguage,
+      language_b: targetLanguage
     },
     enable_language_identification: true,
     enable_speaker_diarization: true,
@@ -114,9 +119,36 @@ export function useTranslationSession() {
     await recording.start();
   }, [outputMode, recording]);
 
-  const stopSession = useCallback(async () => {
+  // Pause: stop mic + WS without saving transcript. finalLines preserved.
+  const pauseSession = useCallback(() => {
     ttsRef.current.stop();
-    // SDK stop() signals graceful stop and drains pending final tokens
+    recording.stop();
+    setIsPaused(true);
+  }, [recording]);
+
+  // Resume: reconnect as a new WS stream. Transcript continues appending.
+  // isPaused is cleared only after start() succeeds — on failure, UI stays in paused state.
+  const resumeSession = useCallback(async () => {
+    ttsRef.current.setEnabled(outputMode === 'tts');
+    await recording.start();
+    setIsPaused(false);
+  }, [outputMode, recording]);
+
+  // Clear live transcript display without affecting recording state.
+  const clearTranscript = useCallback(() => {
+    setFinalLines([]);
+    setInterimOriginal('');
+    setInterimTranslated('');
+    interimOriginalRef.current = '';
+    interimTranslatedRef.current = '';
+  }, []);
+
+  const stopSession = useCallback(async () => {
+    setIsPaused(false);
+    ttsRef.current.stop();
+    // SDK stop() signals graceful stop and drains pending final tokens.
+    // If called from paused state, recording is already stopped — this is a no-op.
+    // Any interim (uncommitted) tokens are intentionally dropped on stop.
     recording.stop();
 
     // Save transcript if any lines were finalized — capture state snapshot before async
@@ -137,10 +169,13 @@ export function useTranslationSession() {
   return {
     startSession,
     stopSession,
+    pauseSession,
+    resumeSession,
+    clearTranscript,
     finalLines,
     interimOriginal,
     interimTranslated,
-    recordingStatus: toRecordingStatus(recording.state),
+    recordingStatus: toRecordingStatus(recording.state, isPaused),
     connectionStatus: toConnectionStatus(recording.state),
     error: recording.error?.message ?? null,
     permissionState: permissionStatus,
@@ -148,7 +183,7 @@ export function useTranslationSession() {
       permissionStatus === "denied" ||
       permissionStatus === "unavailable" ||
       permissionStatus === "unsupported",
-    languageATokens: allTokens.filter((token) => token.language === "en"),
-    languageBTokens: allTokens.filter((token) => token.language === "vi"),
+    languageATokens: allTokens.filter((token) => token.language === sourceLanguage),
+    languageBTokens: allTokens.filter((token) => token.language === targetLanguage),
   };
 }
