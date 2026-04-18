@@ -1,0 +1,176 @@
+/* ─── Global reset & base ──────────────────────────────────────────────────── */
+
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+html, body, #root {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+/* ─── Background — only on Apple platforms ──────────────────────────────────── */
+/* On Windows/Linux/Android we keep Radix's stock white/dark background.        */
+
+:root[data-platform="ios"] body,
+:root[data-platform="macos"] body {
+  /*
+   * Muted pastels — low saturation, soft contrast.
+   * The blobs provide just enough color for the glass blur to pick up.
+   */
+  background:
+    radial-gradient(ellipse 70% 55% at 15% 12%, rgba(160, 170, 220, 0.18) 0%, transparent 70%),
+    radial-gradient(ellipse 60% 75% at 82% 18%, rgba(130, 170, 230, 0.14) 0%, transparent 65%),
+    radial-gradient(ellipse 80% 45% at 50% 82%, rgba(200, 155, 190, 0.10) 0%, transparent 60%),
+    radial-gradient(ellipse 55% 65% at 88% 78%, rgba(140, 210, 200, 0.10) 0%, transparent 60%),
+    linear-gradient(160deg, #eef2ff 0%, #f5f0ff 45%, #fdf0f8 100%);
+  background-attachment: fixed;
+  min-height: 100%;
+}
+
+/* Dark-mode variant — data-theme="dark" is set on :root by index.html inline script */
+:root[data-platform="ios"][data-theme="dark"] body,
+:root[data-platform="macos"][data-theme="dark"] body {
+  background:
+    radial-gradient(ellipse 70% 55% at 15% 12%, rgba(70, 55, 160, 0.28) 0%, transparent 70%),
+    radial-gradient(ellipse 60% 75% at 82% 18%, rgba(30, 65, 165, 0.22) 0%, transparent 65%),
+    radial-gradient(ellipse 80% 45% at 50% 82%, rgba(120, 35, 100, 0.18) 0%, transparent 60%),
+    linear-gradient(160deg, #0d1124 0%, #150e28 45%, #110920 100%);
+  background-attachment: fixed;
+  min-height: 100%;
+}
+
+/* ─── Glass utilities — Apple platforms only ────────────────────────────────── */
+
+/*
+ * .glass  — strong frosted glass (bars, sheets)
+ * .glass-card — lighter glass for content panels
+ * .float-bar  — alias for .glass used on floating nav/controls
+ *
+ * On non-Apple platforms these classes are transparent no-ops so the
+ * components look like plain Radix surfaces.
+ */
+
+/* ---------- light mode ---------- */
+:root[data-platform="ios"] .glass,
+:root[data-platform="macos"] .glass,
+:root[data-platform="ios"] .float-bar,
+:root[data-platform="macos"] .float-bar {
+  background: rgba(248, 248, 252, 0.72);
+  backdrop-filter: blur(24px) saturate(1.6);
+  -webkit-backdrop-filter: blur(24px) saturate(1.6);
+  border: 1px solid rgba(255, 255, 255, 0.62);
+  box-shadow:
+    0 2px 18px rgba(0, 0, 0, 0.07),
+    inset 0 1px 0 rgba(255, 255, 255, 0.85);
+}
+
+:root[data-platform="ios"] .glass-card,
+:root[data-platform="macos"] .glass-card {
+  background: rgba(250, 250, 254, 0.68);
+  backdrop-filter: blur(18px) saturate(1.5);
+  -webkit-backdrop-filter: blur(18px) saturate(1.5);
+  border: 1px solid rgba(255, 255, 255, 0.60);
+  border-radius: 20px;
+  box-shadow:
+    0 1px 12px rgba(0, 0, 0, 0.05),
+    inset 0 1px 0 rgba(255, 255, 255, 0.80);
+}
+
+/* ---------- dark mode ---------- */
+:root[data-platform="ios"] [data-is-dark-theme] .glass,
+:root[data-platform="macos"] [data-is-dark-theme] .glass,
+:root[data-platform="ios"] [data-is-dark-theme] .float-bar,
+:root[data-platform="macos"] [data-is-dark-theme] .float-bar {
+  background: rgba(22, 22, 40, 0.62);
+  backdrop-filter: blur(24px) saturate(1.6);
+  -webkit-backdrop-filter: blur(24px) saturate(1.6);
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  box-shadow:
+    0 2px 18px rgba(0, 0, 0, 0.35),
+    inset 0 1px 0 rgba(255, 255, 255, 0.07);
+}
+
+:root[data-platform="ios"] [data-is-dark-theme] .glass-card,
+:root[data-platform="macos"] [data-is-dark-theme] .glass-card {
+  background: rgba(18, 18, 36, 0.58);
+  backdrop-filter: blur(18px) saturate(1.5);
+  -webkit-backdrop-filter: blur(18px) saturate(1.5);
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  border-radius: 20px;
+  box-shadow:
+    0 1px 12px rgba(0, 0, 0, 0.28),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+/* ─── Entrance animations ────────────────────────────────────────────────────── */
+
+@keyframes slide-down {
+  from { opacity: 0; transform: translateY(-14px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slide-up {
+  from { opacity: 0; transform: translateY(18px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+/* Utility classes — apply to components */
+.animate-slide-down {
+  animation: slide-down 320ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.animate-slide-up {
+  animation: slide-up 320ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  /* Small delay so it appears after the top bar settles */
+  animation-delay: 60ms;
+}
+
+.animate-fade-in {
+  animation: fade-in 280ms ease-out both;
+  animation-delay: 120ms;
+}
+
+/* ─── Icon button — press scale feedback ─────────────────────────────────────── */
+/*
+ * Radix renders icon buttons as <button class="rt-reset rt-IconButton …">.
+ * We scale only on :active so hover has no layout shift (per UI/UX guidelines).
+ */
+.rt-IconButton {
+  transition: transform 0.12s ease-out, opacity 0.12s ease-out;
+}
+
+.rt-IconButton:active {
+  transform: scale(0.84);
+  opacity: 0.75;
+}
+
+/* ─── Scrollbar — hide on mobile ───────────────────────────────────────────── */
+
+::-webkit-scrollbar {
+  width: 0;
+  background: transparent;
+}
+
+/* ─── Reduced-motion: disable animations and backdrop blur ──────────────────── */
+
+@media (prefers-reduced-motion: reduce) {
+  .glass, .glass-card, .float-bar {
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+  }
+  .animate-slide-down,
+  .animate-slide-up,
+  .animate-fade-in {
+    animation: none !important;
+  }
+  .rt-IconButton {
+    transition: none !important;
+  }
+}
