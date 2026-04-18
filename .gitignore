@@ -24,3 +24,6 @@ dist-ssr
 *.sw?
 
 .env
+
+# Plans (local development notes)
+plans/
