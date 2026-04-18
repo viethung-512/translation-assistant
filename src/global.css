@@ -8,6 +8,12 @@ html, body, #root {
   height: 100%;
   margin: 0;
   padding: 0;
+  overflow: hidden;
+}
+
+/* Radix <Theme> renders a wrapper div.radix-themes — must participate in the height chain */
+.radix-themes {
+  height: 100%;
 }
 
 /* ─── Background — only on Apple platforms ──────────────────────────────────── */

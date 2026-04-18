@@ -1,15 +1,14 @@
-import { Box, Flex, Text } from "@radix-ui/themes";
+import { Box, Flex, SegmentedControl } from "@radix-ui/themes";
 import { useTranslation } from "react-i18next";
-import { Button, IconButton } from "@/components/ui";
+import { IconButton } from "@/components/ui";
 import { RecordButton } from "@/components/Controls/record-button";
-import { IconSpeaker, IconText } from "@/components/icons";
 import type { ConnectionStatus, RecordingStatus } from "@/hooks/use-translation-session";
 
 interface Props {
   outputMode: "tts" | "text";
   recordingStatus: RecordingStatus;
   connectionStatus: ConnectionStatus;
-  onToggleOutputMode: () => void;
+  onSetOutputMode: (mode: "tts" | "text") => void;
   onStart: () => void;
   onPause: () => void;
   onResume: () => void;
@@ -29,7 +28,7 @@ export function BottomControls({
   outputMode,
   recordingStatus,
   connectionStatus,
-  onToggleOutputMode,
+  onSetOutputMode,
   onStart,
   onPause,
   onResume,
@@ -60,19 +59,21 @@ export function BottomControls({
       }}
       className="float-bar animate-slide-up"
     >
-      {/* Output mode row */}
-      <Flex align="center" justify="center" gap="3" mb="5">
-        <Flex align="center" gap="2">
-          <Text size="2" color="gray">
-            {outputMode === "tts" ? <IconSpeaker /> : <IconText />}
-          </Text>
-          <Text size="2" color="gray">
-            {outputMode === "tts" ? t("settings_voice_output") : t("settings_text_only")}
-          </Text>
-        </Flex>
-        <Button variant="outline" size="sm" onClick={onToggleOutputMode}>
-          {t("controls_switch")}
-        </Button>
+      {/* Output mode — full-width segmented control, touch-friendly */}
+      <Flex justify="center" mb="5">
+        <SegmentedControl.Root
+          value={outputMode}
+          onValueChange={(v) => onSetOutputMode(v as "text" | "tts")}
+          size="2"
+          style={{ width: "100%" }}
+        >
+          <SegmentedControl.Item value="text" style={{ flex: 1 }}>
+            {t("settings_text_only")}
+          </SegmentedControl.Item>
+          <SegmentedControl.Item value="tts" style={{ flex: 1 }}>
+            {t("settings_voice_output")}
+          </SegmentedControl.Item>
+        </SegmentedControl.Root>
       </Flex>
 
       {/* Record button row — stop button appears alongside when session is active */}

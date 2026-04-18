@@ -149,9 +149,7 @@ export function AppShell() {
           outputMode={outputMode}
           recordingStatus={recordingStatus}
           connectionStatus={connectionStatus}
-          onToggleOutputMode={() =>
-            setOutputMode(outputMode === "tts" ? "text" : "tts")
-          }
+          onSetOutputMode={setOutputMode}
           onStart={startSession}
           onPause={pauseSession}
           onResume={resumeSession}

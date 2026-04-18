@@ -61,25 +61,55 @@ function TokenBlock({ tokens, textSize, italic, showSpeakerLabel = true }: {
   );
 }
 
+// Dimmed mic icon for the empty state placeholder
+function MicPlaceholderIcon() {
+  return (
+    <svg width="36" height="36" viewBox="0 0 24 24" fill="none" aria-hidden="true"
+      style={{ opacity: 0.25 }}
+    >
+      <rect x="9" y="2" width="6" height="11" rx="3" stroke="currentColor" strokeWidth="1.5" />
+      <path d="M5 11a7 7 0 0 0 14 0" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+      <line x1="12" y1="18" x2="12" y2="22" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+      <line x1="9" y1="22" x2="15" y2="22" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+    </svg>
+  );
+}
+
 // Pretty-displays translated tokens (large) and original tokens (small italic) in a unified view.
 export default function Renderer({ originalTokens, translatedTokens, placeholder }: RendererProps) {
   const isEmpty = originalTokens.length === 0 && translatedTokens.length === 0;
 
   if (isEmpty) {
     return (
-      <Flex align="center" justify="center" height="100%">
-        <Text color="gray" align="center">{placeholder}</Text>
+      <Flex direction="column" align="center" justify="center" height="100%" gap="3"
+        style={{ paddingBottom: 24 }}
+      >
+        <MicPlaceholderIcon />
+        <Text color="gray" align="center" size="2">{placeholder}</Text>
       </Flex>
     );
   }
 
+  const hasBoth = translatedTokens.length > 0 && originalTokens.length > 0;
+
   return (
     <Box>
-      {/* Translated text — primary, larger font, no speaker labels */}
+      {/* Translated text — primary, larger font */}
       {translatedTokens.length > 0 && (
-        <Box mb="2">
+        <Box mb={hasBoth ? "3" : "0"}>
           <TokenBlock tokens={translatedTokens} textSize="4" />
         </Box>
+      )}
+
+      {/* Divider between translated and original */}
+      {hasBoth && (
+        <Box
+          style={{
+            height: 1,
+            background: "var(--gray-4)",
+            marginBottom: 10,
+          }}
+        />
       )}
 
       {/* Original text — secondary, small italic */}
@@ -87,7 +117,7 @@ export default function Renderer({ originalTokens, translatedTokens, placeholder
         <Box>
           <TokenBlock
             tokens={originalTokens}
-            textSize="1"
+            textSize="2"
             italic
             showSpeakerLabel={false}
           />

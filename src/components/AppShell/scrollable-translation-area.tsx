@@ -31,8 +31,6 @@ export function ScrollableTranslationArea({ originalTokens, translatedTokens, ha
   const { t } = useTranslation();
   const bottomRef = useRef<HTMLDivElement>(null);
 
-  console.log({originalTokens, translatedTokens})
-
   // Auto-scroll to latest content whenever tokens update
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
