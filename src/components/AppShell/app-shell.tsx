@@ -1,19 +1,19 @@
 // Main app container: wires session hook to all UI sections.
-import { useState, useCallback, useEffect } from "react";
+import { HistorySheet } from "@/components/History/history-sheet";
+import { SettingsPanel } from "@/components/Settings/settings-panel";
+import { Button } from "@/components/ui";
+import { BottomSheet } from "@/components/ui/bottom-sheet";
 import { useTranslationSession } from "@/hooks/use-translation-session";
 import { useSettingsStore } from "@/store/settings-store";
 import { getApiKey } from "@/tauri/secure-storage";
 import { useTheme } from "@/theme/use-theme";
-import { Button } from "@/components/ui";
-import { BottomSheet } from "@/components/ui/bottom-sheet";
-import { SettingsPanel } from "@/components/Settings/settings-panel";
-import { HistorySheet } from "@/components/History/history-sheet";
 import { invoke } from "@tauri-apps/api/core";
 import { openUrl } from "@tauri-apps/plugin-opener";
-import { TopBar } from "./top-bar";
+import { useCallback, useEffect, useState } from "react";
+import { BottomControls } from "./bottom-controls";
 import { ErrorBannerSection } from "./error-banner-section";
 import { ScrollableTranslationArea } from "./scrollable-translation-area";
-import { BottomControls } from "./bottom-controls";
+import { TopBar } from "./top-bar";
 
 function guessHostOsFromUa(): string {
   if (typeof navigator === "undefined") return "other";
@@ -65,6 +65,8 @@ export function AppShell() {
     error,
     permissionState,
     needsPermission,
+    languageATokens,
+    languageBTokens,
   } = useTranslationSession();
 
   const setApiKey = useSettingsStore((s) => s.setApiKey);
@@ -134,6 +136,8 @@ export function AppShell() {
         interimOriginal={interimOriginal}
         interimTranslated={interimTranslated}
         recordingStatus={recordingStatus}
+        originalTokens={languageATokens}
+        translatedTokens={languageBTokens}
       />
 
       <BottomControls

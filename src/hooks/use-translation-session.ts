@@ -1,6 +1,6 @@
 // Orchestrates recording session using @soniox/react SDK.
 // Replaces: SonioxClient, AudioCapture, session-store, use-microphone-permission.
-import { useRef, useState, useCallback } from 'react';
+import { useRef, useState, useCallback, useMemo } from 'react';
 import { useRecording, useMicrophonePermission } from '@soniox/react';
 import { useSettingsStore } from '@/store/settings-store';
 import { getApiKey } from '@/tauri/secure-storage';
@@ -40,24 +40,34 @@ export function useTranslationSession() {
   const { status: permissionStatus } = useMicrophonePermission({ autoCheck: true });
 
   const recording = useRecording({
-    model: 'stt-rt-v4',
+    model: "stt-rt-v4",
     language_hints: [sourceLanguage],
     language_hints_strict: true,
-    translation: { type: 'one_way', target_language: targetLanguage },
+    translation: {
+      type: "two_way",
+      language_a: 'en',
+      language_b: 'vi'
+    },
+    enable_language_identification: true,
+    enable_speaker_diarization: true,
+    enable_endpoint_detection: true,
     apiKey: async () => {
       const stored = await getApiKey();
       const mem = useSettingsStore.getState().apiKey;
       const key = mem || stored;
-      if (!key) throw new Error('API key not configured. Open settings to add your Soniox key.');
+      if (!key)
+        throw new Error(
+          "API key not configured. Open settings to add your Soniox key.",
+        );
       return key;
     },
     onResult: (result) => {
       result.tokens.forEach((token) => {
         const status = token.translation_status;
         // Tokens with 'original' or 'none' are source-language words
-        const isOriginal = status === 'original' || status === 'none' || status == null;
-        const isTranslation = status === 'translation';
-
+        const isOriginal =
+          status === "original" || status === "none" || status == null;
+        const isTranslation = status === "translation";
         if (isOriginal) {
           interimOriginalRef.current += token.text;
           setInterimOriginal(interimOriginalRef.current);
@@ -73,12 +83,12 @@ export function useTranslationSession() {
               timestampMs: token.end_ms ?? Date.now(),
             };
             setFinalLines((prev) => [...prev, line]);
-            interimOriginalRef.current = '';
-            interimTranslatedRef.current = '';
-            setInterimOriginal('');
-            setInterimTranslated('');
+            interimOriginalRef.current = "";
+            interimTranslatedRef.current = "";
+            setInterimOriginal("");
+            setInterimTranslated("");
 
-            if (outputMode === 'tts') {
+            if (outputMode === "tts") {
               ttsRef.current.speak(token.text, targetLanguage);
             }
           }
@@ -86,6 +96,11 @@ export function useTranslationSession() {
       });
     },
   });
+
+  const allTokens = useMemo(() => [
+    ...recording.finalTokens,
+    ...recording.partialTokens,
+  ], [recording.finalTokens, recording.partialTokens]);
 
   const startSession = useCallback(async () => {
     // Reset accumulation state
@@ -129,6 +144,11 @@ export function useTranslationSession() {
     connectionStatus: toConnectionStatus(recording.state),
     error: recording.error?.message ?? null,
     permissionState: permissionStatus,
-    needsPermission: permissionStatus === 'denied' || permissionStatus === 'unavailable' || permissionStatus === 'unsupported',
+    needsPermission:
+      permissionStatus === "denied" ||
+      permissionStatus === "unavailable" ||
+      permissionStatus === "unsupported",
+    languageATokens: allTokens.filter((token) => token.language === "en"),
+    languageBTokens: allTokens.filter((token) => token.language === "vi"),
   };
 }
