@@ -1,50 +1,42 @@
-// Reusable button variants aligned with the design-system token set.
-// Variants: primary (accent), danger, ghost (text-only), outline.
-import type { ButtonHTMLAttributes, ReactNode } from 'react';
+// Thin wrapper around Radix Button mapping old variant/size names to Radix props.
+import React from "react";
+import { Button as RadixButton } from "@radix-ui/themes";
+import type { ComponentProps } from "react";
 
-type Variant = 'primary' | 'danger' | 'ghost' | 'outline';
-type Size    = 'sm' | 'md';
+type OldVariant = "primary" | "danger" | "ghost" | "outline";
+type OldSize = "sm" | "md";
 
-interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: Variant;
-  size?: Size;
-  children: ReactNode;
+interface ButtonProps extends Omit<ComponentProps<typeof RadixButton>, "variant" | "size"> {
+  variant?: OldVariant;
+  size?: OldSize;
 }
 
-const variantClasses: Record<Variant, string> = {
-  primary: 'bg-accent text-white border-transparent hover:opacity-90 active:opacity-80',
-  danger:  'bg-danger text-white border-transparent hover:opacity-90 active:opacity-80',
-  ghost:   'bg-transparent text-text-secondary border-transparent hover:bg-bg-tertiary active:bg-bg-tertiary',
-  outline: 'bg-bg-secondary text-text-secondary border-border hover:bg-bg-tertiary active:bg-bg-tertiary',
-};
-
-const sizeClasses: Record<Size, string> = {
-  sm: 'text-[11px] px-[10px] py-[3px] min-h-[28px] rounded-[20px]',
-  md: 'text-[13px] px-4 py-2 min-h-touch rounded-lg',
-};
-
-export function Button({
-  variant = 'primary',
-  size = 'md',
-  className = '',
-  disabled,
-  children,
-  ...rest
-}: ButtonProps) {
-  return (
-    <button
-      disabled={disabled}
-      className={[
-        'inline-flex items-center justify-center border cursor-pointer',
-        'transition-opacity duration-150 select-none',
-        'disabled:opacity-40 disabled:cursor-not-allowed',
-        variantClasses[variant],
-        sizeClasses[size],
-        className,
-      ].join(' ')}
-      {...rest}
-    >
-      {children}
-    </button>
-  );
+function mapVariantColor(variant: OldVariant): {
+  variant: ComponentProps<typeof RadixButton>["variant"];
+  color?: ComponentProps<typeof RadixButton>["color"];
+} {
+  switch (variant) {
+    case "primary": return { variant: "solid" };
+    case "danger":  return { variant: "solid", color: "red" };
+    case "ghost":   return { variant: "ghost" };
+    case "outline": return { variant: "outline" };
+  }
 }
+
+export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
+  ({ variant = "primary", size = "md", color: colorProp, ...rest }, ref) => {
+    const { variant: radixVariant, color: derivedColor } = mapVariantColor(variant);
+    const radixSize: ComponentProps<typeof RadixButton>["size"] = size === "sm" ? "1" : "2";
+    return (
+      <RadixButton
+        ref={ref}
+        variant={radixVariant}
+        color={colorProp ?? derivedColor}
+        size={radixSize}
+        {...rest}
+      />
+    );
+  }
+);
+
+Button.displayName = "Button";
