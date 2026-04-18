@@ -1,3 +1,4 @@
+import "@/i18n"; // must be first — initializes i18n before any component renders
 import React from "react";
 import ReactDOM from "react-dom/client";
 import App from "./App";

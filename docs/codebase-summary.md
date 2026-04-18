@@ -50,6 +50,14 @@ Quick reference guide to all modules, their purpose, and size. Use this for modu
 |------|-----|---------|
 | `TranslationDisplay/translation-display.tsx` | 60 | Scrollable container for finalized transcript lines; shows interim token in footer; auto-scroll to newest line |
 | `TranslationDisplay/transcript-line.tsx` | 25 | Single finalized transcript entry; displays source + target; timestamp |
+| `TranslationDisplay/renderer.tsx` | ~20 | Renders token array with placeholder; i18n-aware via `useTranslation()` |
+
+#### AppShell Subdir (New v0.2.0)
+
+| File | LOC | Purpose |
+|------|-----|---------|
+| `AppShell/scrollable-translation-area.tsx` | 18 | Container for dual `Renderer` components (original + translated); uses i18n for placeholder strings |
+| `AppShell/app-shell.tsx` | ~60 | Main layout wrapper; coordinates header, recording section, transcript area |
 
 #### History Subdir (New v0.2.0)
 
@@ -83,7 +91,7 @@ Quick reference guide to all modules, their purpose, and size. Use this for modu
 
 | File | LOC | Purpose |
 |------|-----|---------|
-| `settings-store.ts` | 42 | Zustand store with localStorage persist; languages, output mode, API key; survives app restart |
+| `settings-store.ts` | 50 | Zustand store with localStorage persist; source/target languages, output mode, **uiLanguage** (new v0.2.0), API key; survives app restart; `setUiLanguage()` calls `i18n.changeLanguage()` |
 
 **Removed (v0.2.0)**:
 - `session-store.ts` — Replaced by hook-local state in `useTranslationSession`
@@ -105,6 +113,15 @@ Quick reference guide to all modules, their purpose, and size. Use this for modu
 | File | LOC | Purpose |
 |------|-----|---------|
 | `use-theme.ts` | 30 | Hook for light/dark theme toggle; persists to localStorage via Zustand |
+
+### Internationalization (i18n) — `src/i18n/`
+
+| File | LOC | Purpose |
+|------|-----|---------|
+| `index.ts` | 36 | i18n config (react-i18next); reads persisted `uiLanguage` from localStorage; auto-initializes on app start |
+| `locales/en.ts` | ~60 | English UI strings (~60 keys); exported as named `en` object |
+| `locales/vi.ts` | ~60 | Vietnamese UI strings; typed as `Record<TranslationKeys, string>` for type safety |
+| `i18next.d.ts` | ~20 | Module augmentation for `useTranslation()` type safety; declares `TranslationKeys` type |
 
 ---
 
@@ -147,7 +164,9 @@ All file operations sandboxed to `~/Documents/TranslationAssistant/`:
 
 ```json
 {
-  "@soniox/react": "^0.1.0",     // NEW: Speech-to-text + translation SDK
+  "@soniox/react": "^0.1.0",     // Speech-to-text + translation SDK
+  "react-i18next": "^13.x.x",    // NEW: UI internationalization
+  "i18next": "^23.x.x",          // NEW: i18n framework
   "react": "^18.3.1",
   "zustand": "^4.4.0",
   "@tauri-apps/api": "^2.0.0"

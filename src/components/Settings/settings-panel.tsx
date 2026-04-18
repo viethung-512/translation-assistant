@@ -1,9 +1,15 @@
 // Slide-up settings sheet: API key, language pickers, output mode toggle.
 import { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { LanguagePicker } from './language-picker';
 import { useSettingsStore } from '@/store/settings-store';
 import { saveApiKey, getApiKey, deleteApiKey } from '@/tauri/secure-storage';
 import { BottomSheet, Button, IconButton } from '@/components/ui';
+
+const UI_LANGUAGES = [
+  { code: 'en', label: 'English' },
+  { code: 'vi', label: 'Tiếng Việt' },
+];
 
 interface Props {
   isOpen: boolean;
@@ -29,8 +35,9 @@ function IconCheck() {
 }
 
 export function SettingsPanel({ isOpen, onClose }: Props) {
-  const { sourceLanguage, targetLanguage, outputMode, setApiKey,
-          setSourceLanguage, setTargetLanguage, setOutputMode } = useSettingsStore();
+  const { t } = useTranslation();
+  const { sourceLanguage, targetLanguage, outputMode, uiLanguage, setApiKey,
+          setSourceLanguage, setTargetLanguage, setOutputMode, setUiLanguage } = useSettingsStore();
   const [keyInput, setKeyInput] = useState('');
   const [hasStoredKey, setHasStoredKey] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -66,19 +73,46 @@ export function SettingsPanel({ isOpen, onClose }: Props) {
 
         {/* Header */}
         <div className="flex justify-between items-center mb-[22px]">
-          <h2 className="m-0 text-heading text-text-primary">Settings</h2>
-          <IconButton aria-label="Close settings" onClick={onClose} className="rounded-full bg-bg-tertiary">
+          <h2 className="m-0 text-heading text-text-primary">{t('settings_title')}</h2>
+          <IconButton aria-label={t('aria_close_settings')} onClick={onClose} className="rounded-full bg-bg-tertiary">
             <IconClose />
           </IconButton>
+        </div>
+
+        {/* Interface language */}
+        <div className="mb-5">
+          <label className="block text-label text-text-muted mb-2">
+            {t('settings_ui_language')}
+          </label>
+          <div className="flex gap-2">
+            {UI_LANGUAGES.map(({ code, label }) => {
+              const active = uiLanguage === code;
+              return (
+                <button
+                  key={code}
+                  onClick={() => setUiLanguage(code)}
+                  className={[
+                    'flex-1 py-[10px] rounded-[10px] text-[14px] cursor-pointer min-h-touch',
+                    'border-[1.5px] transition-colors duration-150',
+                    active
+                      ? 'bg-accent-dim text-accent border-accent font-semibold'
+                      : 'bg-bg-secondary text-text-secondary border-border font-normal',
+                  ].join(' ')}
+                >
+                  {label}
+                </button>
+              );
+            })}
+          </div>
         </div>
 
         {/* API Key */}
         <div className="mb-5">
           <label className="flex items-center gap-[6px] text-label text-text-muted mb-[6px]">
-            Soniox API Key
+            {t('settings_api_key_label')}
             {hasStoredKey && (
               <span className="flex items-center gap-[3px] text-success text-[11px]">
-                <IconCheck /> Stored
+                <IconCheck /> {t('settings_api_key_stored')}
               </span>
             )}
           </label>
@@ -86,7 +120,7 @@ export function SettingsPanel({ isOpen, onClose }: Props) {
             type="password"
             value={keyInput}
             onChange={(e) => setKeyInput(e.target.value)}
-            placeholder={hasStoredKey ? '••••••••••••' : 'Enter your API key'}
+            placeholder={hasStoredKey ? t('settings_api_key_placeholder_stored') : t('settings_api_key_placeholder_empty')}
             autoComplete="off"
             className="w-full px-3 py-[10px] rounded-[10px] border border-border text-[15px] bg-bg-secondary text-text-primary outline-none focus:border-accent"
           />
@@ -97,7 +131,7 @@ export function SettingsPanel({ isOpen, onClose }: Props) {
               disabled={saving || !keyInput.trim()}
               className="flex-1 rounded-[10px] text-[14px] font-medium"
             >
-              {saving ? 'Saving…' : 'Save Key'}
+              {saving ? t('settings_saving') : t('settings_save_key')}
             </Button>
             {hasStoredKey && (
               <Button
@@ -105,22 +139,22 @@ export function SettingsPanel({ isOpen, onClose }: Props) {
                 onClick={handleDeleteKey}
                 className="rounded-[10px] text-[14px] font-medium px-4"
               >
-                Delete
+                {t('settings_delete_key')}
               </Button>
             )}
           </div>
         </div>
 
         {/* Language pickers */}
-        <LanguagePicker label="Source language" value={sourceLanguage}
+        <LanguagePicker label={t('settings_source_lang')} value={sourceLanguage}
           onChange={setSourceLanguage} exclude={targetLanguage} />
-        <LanguagePicker label="Target language" value={targetLanguage}
+        <LanguagePicker label={t('settings_target_lang')} value={targetLanguage}
           onChange={setTargetLanguage} exclude={sourceLanguage} />
 
         {/* Output mode */}
         <div className="mb-2">
           <label className="block text-label text-text-muted mb-2">
-            Output mode
+            {t('settings_output_mode')}
           </label>
           <div className="flex gap-2">
             {(['text', 'tts'] as const).map((mode) => {
@@ -137,7 +171,7 @@ export function SettingsPanel({ isOpen, onClose }: Props) {
                       : 'bg-bg-secondary text-text-secondary border-border font-normal',
                   ].join(' ')}
                 >
-                  {mode === 'text' ? 'Text only' : 'Voice output'}
+                  {mode === 'text' ? t('settings_text_only') : t('settings_voice_output')}
                 </button>
               );
             })}

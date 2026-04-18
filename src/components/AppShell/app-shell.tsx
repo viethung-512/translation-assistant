@@ -10,6 +10,7 @@ import { useTheme } from "@/theme/use-theme";
 import { invoke } from "@tauri-apps/api/core";
 import { openUrl } from "@tauri-apps/plugin-opener";
 import { useCallback, useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { BottomControls } from "./bottom-controls";
 import { ErrorBannerSection } from "./error-banner-section";
 import { ScrollableTranslationArea } from "./scrollable-translation-area";
@@ -57,9 +58,6 @@ export function AppShell() {
   const {
     startSession,
     stopSession,
-    finalLines,
-    interimOriginal,
-    interimTranslated,
     recordingStatus,
     connectionStatus,
     error,
@@ -69,6 +67,7 @@ export function AppShell() {
     languageBTokens,
   } = useTranslationSession();
 
+  const { t } = useTranslation();
   const setApiKey = useSettingsStore((s) => s.setApiKey);
   const outputMode = useSettingsStore((s) => s.outputMode);
   const setOutputMode = useSettingsStore((s) => s.setOutputMode);
@@ -132,10 +131,6 @@ export function AppShell() {
       <ErrorBannerSection error={error} />
 
       <ScrollableTranslationArea
-        finalLines={finalLines}
-        interimOriginal={interimOriginal}
-        interimTranslated={interimTranslated}
-        recordingStatus={recordingStatus}
         originalTokens={languageATokens}
         translatedTokens={languageBTokens}
       />
@@ -191,7 +186,7 @@ export function AppShell() {
           {permissionState === "denied" && (
             <>
               <p style={{ fontSize: 17, fontWeight: 600, margin: "0 0 8px" }}>
-                Microphone Access Denied
+                {t('mic_denied_title')}
               </p>
               <p
                 style={{
@@ -201,11 +196,10 @@ export function AppShell() {
                   lineHeight: 1.5,
                 }}
               >
-                Microphone permission was denied. To use this app, enable
-                microphone access in your device settings.
+                {t('mic_denied_body')}
               </p>
               <Button style={{ width: "100%" }} onClick={handleOpenMicSettings}>
-                Open Settings
+                {t('mic_open_settings')}
               </Button>
             </>
           )}
@@ -214,7 +208,7 @@ export function AppShell() {
             permissionState === "unsupported") && (
             <>
               <p style={{ fontSize: 17, fontWeight: 600, margin: "0 0 8px" }}>
-                Microphone Unavailable
+                {t('mic_unavailable_title')}
               </p>
               <p
                 style={{
@@ -224,11 +218,10 @@ export function AppShell() {
                   lineHeight: 1.5,
                 }}
               >
-                No microphone device found. Please connect a microphone and try
-                again.
+                {t('mic_unavailable_body')}
               </p>
               <Button style={{ width: "100%" }} onClick={handleOpenMicSettings}>
-                Open Settings
+                {t('mic_open_settings')}
               </Button>
             </>
           )}

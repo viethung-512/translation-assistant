@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { IconButton } from "@/components/ui";
 import { StatusBadge } from "@/components/Controls/status-badge";
 import { IconSettings, IconHistory, IconTheme } from "@/components/icons";
@@ -18,6 +19,8 @@ export function TopBar({
   onHistoryOpen,
   onSettingsOpen,
 }: Props) {
+  const { t } = useTranslation();
+
   return (
     <div
       style={{
@@ -32,18 +35,16 @@ export function TopBar({
     >
       <StatusBadge status={connectionStatus} />
       <div className="flex items-center gap-1">
-        <IconButton aria-label="View session history" onClick={onHistoryOpen}>
+        <IconButton aria-label={t('aria_view_history')} onClick={onHistoryOpen}>
           <IconHistory />
         </IconButton>
         <IconButton
-          aria-label={
-            theme === "dark" ? "Switch to light mode" : "Switch to dark mode"
-          }
+          aria-label={theme === "dark" ? t('aria_switch_light') : t('aria_switch_dark')}
           onClick={onToggleTheme}
         >
           <IconTheme isDark={theme === "dark"} />
         </IconButton>
-        <IconButton aria-label="Open settings" onClick={onSettingsOpen}>
+        <IconButton aria-label={t('aria_open_settings')} onClick={onSettingsOpen}>
           <IconSettings />
         </IconButton>
       </div>

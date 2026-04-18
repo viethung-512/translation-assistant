@@ -1,5 +1,6 @@
 // Collapsible session row: date header + 80-char preview → expand to full text + actions.
 import { useState, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import { readTranscript, deleteTranscript } from '@/tauri/transcript-fs';
 import type { TranscriptMeta } from '@/tauri/transcript-fs';
 import { Button } from '@/components/ui';
@@ -11,21 +12,22 @@ interface Props {
   onShare: (content: string, path: string) => void;
 }
 
-function formatDate(unixSeconds: string): string {
+function formatDate(unixSeconds: string, fallback: string): string {
   const ts = Number(unixSeconds) * 1000;
-  if (!ts) return 'Unknown date';
+  if (!ts) return fallback;
   return new Intl.DateTimeFormat(undefined, {
     month: 'short', day: 'numeric',
     hour: '2-digit', minute: '2-digit',
   }).format(new Date(ts));
 }
 
-function preview(text: string): string {
+function preview(text: string, emptyFallback: string): string {
   const first = text.split('\n').find((l) => l.trim().length > 0) ?? '';
-  return first.length > 80 ? first.slice(0, 80) + '…' : first || '(empty)';
+  return first.length > 80 ? first.slice(0, 80) + '…' : first || emptyFallback;
 }
 
 export function SessionItem({ session, onDeleted, onShare }: Props) {
+  const { t } = useTranslation();
   const [expanded, setExpanded] = useState(false);
   const [content, setContent] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -84,11 +86,13 @@ export function SessionItem({ session, onDeleted, onShare }: Props) {
         }}
       >
         <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-secondary)', marginBottom: 2 }}>
-          {formatDate(session.createdAt)} {expanded ? '∧' : '∨'}
+          {formatDate(session.createdAt, t('session_unknown_date'))} {expanded ? '∧' : '∨'}
         </div>
         {!expanded && (
           <div style={{ fontSize: 13, color: 'var(--text-secondary)' }}>
-            {content !== null ? preview(content) : preview(session.name.replace('.txt', ''))}
+            {content !== null
+              ? preview(content, t('session_empty_preview'))
+              : preview(session.name.replace('.txt', ''), t('session_empty_preview'))}
           </div>
         )}
       </button>
@@ -97,7 +101,7 @@ export function SessionItem({ session, onDeleted, onShare }: Props) {
       {expanded && (
         <div style={{ padding: '0 16px 12px' }}>
           {loading && (
-            <p style={{ fontSize: 13, color: 'var(--text-secondary)' }}>Loading…</p>
+            <p style={{ fontSize: 13, color: 'var(--text-secondary)' }}>{t('session_loading')}</p>
           )}
           {error && (
             <p style={{ fontSize: 13, color: 'var(--danger)' }}>{error}</p>
@@ -117,10 +121,10 @@ export function SessionItem({ session, onDeleted, onShare }: Props) {
           {content !== null && (
             <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
               <Button size="sm" variant="outline" onClick={handleCopy}>
-                {copied ? 'Copied!' : 'Copy'}
+                {copied ? t('session_copied') : t('session_copy')}
               </Button>
               <Button size="sm" variant="outline" onClick={() => onShare(content, session.path)}>
-                Share
+                {t('session_share')}
               </Button>
               <Button
                 size="sm"
@@ -128,11 +132,11 @@ export function SessionItem({ session, onDeleted, onShare }: Props) {
                 onClick={handleDelete}
                 style={{ color: confirmDelete ? 'var(--danger)' : undefined }}
               >
-                {confirmDelete ? 'Confirm?' : 'Delete'}
+                {confirmDelete ? t('session_confirm') : t('session_delete')}
               </Button>
               {confirmDelete && (
                 <Button size="sm" variant="outline" onClick={() => setConfirmDelete(false)}>
-                  Cancel
+                  {t('session_cancel')}
                 </Button>
               )}
             </div>

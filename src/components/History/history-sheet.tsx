@@ -1,6 +1,7 @@
 // Bottom sheet listing past transcript sessions. Fetches on open, refreshes after delete.
 // Share falls back to clipboard if tauri-plugin-share is unavailable (Phase 05).
 import { useState, useEffect, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import { openPath } from '@tauri-apps/plugin-opener';
 import { BottomSheet } from '@/components/ui/bottom-sheet';
 import { listTranscripts } from '@/tauri/transcript-fs';
@@ -13,6 +14,7 @@ interface Props {
 }
 
 export function HistorySheet({ isOpen, onClose }: Props) {
+  const { t } = useTranslation();
   const [sessions, setSessions] = useState<TranscriptMeta[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -51,10 +53,10 @@ export function HistorySheet({ isOpen, onClose }: Props) {
           display: 'flex', justifyContent: 'space-between', alignItems: 'center',
           padding: '0 16px 12px', borderBottom: '1px solid var(--border)',
         }}>
-          <span style={{ fontSize: 16, fontWeight: 600 }}>Session History</span>
+          <span style={{ fontSize: 16, fontWeight: 600 }}>{t('history_title')}</span>
           <button
             onClick={onClose}
-            aria-label="Close history"
+            aria-label={t('aria_close_history')}
             style={{
               background: 'none', border: 'none', cursor: 'pointer',
               fontSize: 20, color: 'var(--text-secondary)', lineHeight: 1,
@@ -68,7 +70,7 @@ export function HistorySheet({ isOpen, onClose }: Props) {
         <div style={{ maxHeight: '60vh', overflowY: 'auto' }}>
           {loading && (
             <p style={{ padding: '16px', fontSize: 14, color: 'var(--text-secondary)', textAlign: 'center' }}>
-              Loading…
+              {t('history_loading')}
             </p>
           )}
           {error && (
@@ -76,7 +78,7 @@ export function HistorySheet({ isOpen, onClose }: Props) {
           )}
           {!loading && !error && sessions.length === 0 && (
             <p style={{ padding: '24px 16px', fontSize: 14, color: 'var(--text-secondary)', textAlign: 'center' }}>
-              No sessions yet. Start a recording to create one.
+              {t('history_empty')}
             </p>
           )}
           {sessions.map((s) => (

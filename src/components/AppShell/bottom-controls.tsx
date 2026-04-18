@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui";
 import { RecordButton } from "@/components/Controls/record-button";
 import { IconSpeaker, IconText } from "@/components/icons";
@@ -18,6 +19,8 @@ export function BottomControls({
   onToggleOutputMode,
   onRecordToggle,
 }: Props) {
+  const { t } = useTranslation();
+
   return (
     <div
       style={{
@@ -30,10 +33,10 @@ export function BottomControls({
       <div className="flex items-center justify-center gap-[6px] mb-[14px] text-[12px] text-text-secondary">
         <span className="flex items-center gap-1">
           {outputMode === "tts" ? <IconSpeaker /> : <IconText />}
-          {outputMode === "tts" ? "Voice output" : "Text only"}
+          {outputMode === "tts" ? t('settings_voice_output') : t('settings_text_only')}
         </span>
         <Button variant="outline" size="sm" onClick={onToggleOutputMode}>
-          Switch
+          {t('controls_switch')}
         </Button>
       </div>
       <div className="flex justify-center">

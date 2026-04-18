@@ -90,14 +90,17 @@ User preferences surviving app restart.
 
 ```typescript
 interface SettingsState {
-  apiKey: string;
-  sourceLanguage: string;
-  targetLanguage: string;
-  outputMode: 'text' | 'tts';
+  apiKey: string;                  // In-memory only
+  sourceLanguage: string;          // BCP-47 (e.g. 'en')
+  targetLanguage: string;          // BCP-47 (e.g. 'vi')
+  outputMode: 'text' | 'tts';      // Output delivery mode
+  uiLanguage: string;              // NEW v0.2.0: App interface language (e.g. 'en' | 'vi')
   
   setApiKey(key: string): void;
-  setLanguages(source: string, target: string): void;
+  setSourceLanguage(lang: string): void;
+  setTargetLanguage(lang: string): void;
   setOutputMode(mode: 'text' | 'tts'): void;
+  setUiLanguage(lang: string): void;  // NEW v0.2.0: Calls i18n.changeLanguage()
 }
 
 export const useSettingsStore = create<SettingsState>()(
@@ -105,21 +108,27 @@ export const useSettingsStore = create<SettingsState>()(
     (set) => ({
       apiKey: '',
       sourceLanguage: 'en',
-      targetLanguage: 'es',
+      targetLanguage: 'vi',
       outputMode: 'text' as const,
+      uiLanguage: 'en',  // NEW v0.2.0
       
-      setApiKey: (apiKey) => set({ apiKey }),
-      setLanguages: (sourceLanguage, targetLanguage) =>
-        set({ sourceLanguage, targetLanguage }),
-      setOutputMode: (outputMode) => set({ outputMode }),
+      setApiKey: (key) => set({ apiKey: key }),
+      setSourceLanguage: (lang) => set({ sourceLanguage: lang }),
+      setTargetLanguage: (lang) => set({ targetLanguage: lang }),
+      setOutputMode: (mode) => set({ outputMode: mode }),
+      setUiLanguage: (lang) => {  // NEW v0.2.0: syncs with i18n
+        i18n.changeLanguage(lang);
+        set({ uiLanguage: lang });
+      },
     }),
     {
       name: 'translation-assistant-settings',
+      // Exclude apiKey (stored in Tauri secure storage, not localStorage)
       partialize: (state) => ({
-        apiKey: state.apiKey,
         sourceLanguage: state.sourceLanguage,
         targetLanguage: state.targetLanguage,
         outputMode: state.outputMode,
+        uiLanguage: state.uiLanguage,  // NEW v0.2.0
       }),
     }
   )
@@ -162,6 +171,71 @@ const apiKey = async () => {
 
 ---
 
+## UI Internationalization (i18n) — React-i18next
+
+**New in v0.2.0**: Full UI internationalization supporting English (en) and Vietnamese (vi).
+
+### Initialization Pattern
+
+```typescript
+// src/main.tsx — MUST import i18n before any React component
+import '@/i18n';
+import { StrictMode } from 'react';
+import ReactDOM from 'react-dom/client';
+import App from './App';
+
+ReactDOM.createRoot(document.getElementById('root')!).render(
+  <StrictMode>
+    <App />
+  </StrictMode>
+);
+```
+
+### Configuration
+
+Located in `src/i18n/index.ts`:
+- Reads persisted `uiLanguage` from `settings-store` localStorage key
+- Avoids circular imports: i18n config reads localStorage directly, not via settings-store
+- Supports two language resources: `en` (English) and `vi` (Vietnamese)
+- Fallback language: English
+
+### Usage in Components
+
+```typescript
+import { useTranslation } from 'react-i18next';
+
+export function MyComponent() {
+  const { t, i18n } = useTranslation();
+  
+  // Render with translated key
+  return <p>{t('some_key')}</p>;
+  
+  // Access current language
+  const currentLang = i18n.language;
+}
+```
+
+### String Catalog
+
+| File | Keys | Usage |
+|------|------|-------|
+| `src/i18n/locales/en.ts` | ~60 keys | English UI strings (buttons, labels, placeholders) |
+| `src/i18n/locales/vi.ts` | ~60 keys | Vietnamese translations (matches en.ts structure) |
+| `src/i18n/i18next.d.ts` | type defs | Augments `useTranslation()` with `TranslationKeys` type |
+
+### SettingsStore + i18n Sync
+
+When user toggles UI language in Settings:
+1. User clicks EN/VI button in `settings-panel.tsx`
+2. Calls `setUiLanguage(lang)` from `useSettingsStore`
+3. `setUiLanguage` → calls `i18n.changeLanguage(lang)` + updates store
+4. i18n notifies all `useTranslation()` hooks
+5. Components re-render with new language
+
+**Key Design**: `uiLanguage` is persisted in settings store AND synced to i18n state.
+
+---
+
 ## Component Usage Patterns
 
 ### Reading State (Selectors)
@@ -199,8 +273,9 @@ const {
 | State Type | When to Use | Example |
 |-----------|------------|---------|
 | `useState` | Component-specific, temporary | Settings panel visibility toggle |
-| `useSettingsStore` | Global app preferences | Language pair, API key, theme |
+| `useSettingsStore` | Global app preferences | Language pair, API key, theme, uiLanguage |
 | Hook-local (useTranslationSession) | Session-scoped ephemeral | Transcript lines, interim tokens |
+| `useTranslation()` | UI strings (i18n) | Render labels, placeholders, button text |
 
 **Good Example**:
 ```typescript
