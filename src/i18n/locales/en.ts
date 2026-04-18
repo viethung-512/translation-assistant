@@ -32,6 +32,15 @@ export const en = {
 
   // Bottom controls
   controls_switch: 'Switch',
+  controls_pause: 'Pause',
+  controls_resume: 'Resume',
+  controls_stop: 'Stop',
+  controls_clear_transcript: 'Clear transcript',
+  aria_start: 'Start listening',
+  aria_pause: 'Pause listening',
+  aria_resume: 'Resume listening',
+  aria_stop: 'Stop and save',
+  aria_clear_transcript: 'Clear current transcript',
 
   // History sheet
   history_title: 'Session History',
@@ -46,8 +55,10 @@ export const en = {
   session_copied: 'Copied!',
   session_share: 'Share',
   session_delete: 'Delete',
-  session_confirm: 'Confirm?',
   session_cancel: 'Cancel',
+  session_delete_title: 'Delete session?',
+  session_delete_description: 'This will permanently remove this transcript.',
+  session_delete_confirm: 'Delete',
 
   // Translation display placeholders
   renderer_placeholder_original: 'Original language',

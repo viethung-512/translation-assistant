@@ -34,6 +34,15 @@ export const vi: Record<TranslationKeys, string> = {
 
   // Bottom controls
   controls_switch: 'Chuyển',
+  controls_pause: 'Tạm dừng',
+  controls_resume: 'Tiếp tục',
+  controls_stop: 'Dừng',
+  controls_clear_transcript: 'Xóa bản ghi',
+  aria_start: 'Bắt đầu lắng nghe',
+  aria_pause: 'Tạm dừng lắng nghe',
+  aria_resume: 'Tiếp tục lắng nghe',
+  aria_stop: 'Dừng và lưu',
+  aria_clear_transcript: 'Xóa bản ghi hiện tại',
 
   // History sheet
   history_title: 'Lịch sử phiên',
@@ -48,8 +57,10 @@ export const vi: Record<TranslationKeys, string> = {
   session_copied: 'Đã sao chép!',
   session_share: 'Chia sẻ',
   session_delete: 'Xóa',
-  session_confirm: 'Xác nhận?',
   session_cancel: 'Hủy',
+  session_delete_title: 'Xóa phiên?',
+  session_delete_description: 'Thao tác này sẽ xóa vĩnh viễn bản ghi này.',
+  session_delete_confirm: 'Xóa',
 
   // Translation display placeholders
   renderer_placeholder_original: 'Ngôn ngữ gốc',
