@@ -52,13 +52,14 @@ Enable seamless real-time translation for anyone, anywhere—from mobile devices
 | Feature | Description | Status |
 |---------|-------------|--------|
 | Real-time STT | Soniox WebSocket streaming with live token display | ✓ Complete |
-| Translation | Live target language translation via Soniox | ✓ Complete |
+| Translation | Live target language translation via Soniox (both manual and auto-detect modes) | ✓ Complete |
 | Audio Capture | AudioWorklet-based mic input (16kHz PCM) | ✓ Complete |
-| Language Selection | 15+ languages; mutual exclusion (source ≠ target) | ✓ Complete |
+| Language Selection | Manual: 15+ languages; mutual exclusion (source ≠ target). Auto-detect: bidirectional with automatic source language identification | ✓ Complete |
+| Auto-detect Mode | Optional bidirectional translation with automatic source language identification from speech | ✓ Complete |
 | Output Modes | Text-only or TTS voice playback | ✓ Complete |
-| Transcript Save | Atomic file writes to local disk | ✓ Complete |
+| Transcript Save | Atomic file writes to local disk; includes detected language metadata in auto-detect mode | ✓ Complete |
 | Transcript List | View/manage saved transcripts | ✓ Complete |
-| Settings Panel | Configure API key, languages, output mode | ✓ Complete |
+| Settings Panel | Configure API key, language pair, auto-detect toggle, output mode | ✓ Complete |
 | Theme Toggle | Light/dark mode with persistence | ✓ Complete |
 | Accessibility | ARIA labels, 44×44px touch targets, keyboard nav | ✓ Complete |
 

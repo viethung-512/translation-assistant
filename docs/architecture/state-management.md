@@ -52,11 +52,11 @@ export function useTranslationSession() {
 
 | Property | Type | Lifetime | Notes |
 |----------|------|----------|-------|
-| `recordingStatus` | 'idle'\|'recording'\|'stopping' | Per session | Maps SDK status string |
+| `recordingStatus` | 'idle'\|'recording'\|'paused'\|'stopping' | Per session | Maps SDK status string; 'paused' is local-only |
 | `connectionStatus` | 'disconnected'\|'connecting'\|'connected' | Per session | Maps SDK connection state |
 | `permissionStatus` | 'granted'\|'denied'\|'prompt' | App lifetime | From `useMicrophonePermission` |
-| `finalLines` | `TranscriptLine[]` | Per session | Committed transcript lines |
-| `interimOriginal` | string | Per session | Partial transcription (original) |
+| `finalLines` | `TranscriptLine[]` | Per session | Committed transcript lines; includes `detectedLanguage` when autoDetect enabled |
+| `interimOriginal` | string | Per session | Partial transcription (original language) |
 | `interimTranslated` | string | Per session | Partial transcription (translated) |
 | `error` | `Error \| null` | Per session | Recording or permission error |
 
@@ -90,50 +90,73 @@ User preferences surviving app restart.
 
 ```typescript
 interface SettingsState {
-  apiKey: string;                  // In-memory only
-  sourceLanguage: string;          // BCP-47 (e.g. 'en')
-  targetLanguage: string;          // BCP-47 (e.g. 'vi')
+  apiKey: string;                  // In-memory only — never written to localStorage
+  languageA: string;               // BCP-47 e.g. "en" (was sourceLanguage)
+  languageB: string;               // BCP-47 e.g. "vi" (was targetLanguage)
+  autoDetect: boolean;             // true = bidirectional auto-detect mode
   outputMode: 'text' | 'tts';      // Output delivery mode
-  uiLanguage: string;              // NEW v0.2.0: App interface language (e.g. 'en' | 'vi')
+  uiLanguage: string;              // App interface language (e.g. 'en' | 'vi')
   
   setApiKey(key: string): void;
-  setSourceLanguage(lang: string): void;
-  setTargetLanguage(lang: string): void;
+  setLanguageA(lang: string): void;
+  setLanguageB(lang: string): void;
+  setAutoDetect(v: boolean): void;
   setOutputMode(mode: 'text' | 'tts'): void;
-  setUiLanguage(lang: string): void;  // NEW v0.2.0: Calls i18n.changeLanguage()
+  setUiLanguage(lang: string): void;
 }
 
 export const useSettingsStore = create<SettingsState>()(
   persist(
     (set) => ({
       apiKey: '',
-      sourceLanguage: 'en',
-      targetLanguage: 'vi',
+      languageA: 'en',
+      languageB: 'vi',
+      autoDetect: false,
       outputMode: 'text' as const,
-      uiLanguage: 'en',  // NEW v0.2.0
+      uiLanguage: 'en',
       
       setApiKey: (key) => set({ apiKey: key }),
-      setSourceLanguage: (lang) => set({ sourceLanguage: lang }),
-      setTargetLanguage: (lang) => set({ targetLanguage: lang }),
+      setLanguageA: (lang) => set({ languageA: lang }),
+      setLanguageB: (lang) => set({ languageB: lang }),
+      setAutoDetect: (v) => set({ autoDetect: v }),
       setOutputMode: (mode) => set({ outputMode: mode }),
-      setUiLanguage: (lang) => {  // NEW v0.2.0: syncs with i18n
+      setUiLanguage: (lang) => {
         i18n.changeLanguage(lang);
         set({ uiLanguage: lang });
       },
     }),
     {
       name: 'translation-assistant-settings',
-      // Exclude apiKey (stored in Tauri secure storage, not localStorage)
+      version: 1,
+      migrate: (persisted: any, version) => {
+        if (!persisted) return persisted;
+        if (version < 1) {
+          if (persisted.sourceLanguage && !persisted.languageA) {
+            persisted.languageA = persisted.sourceLanguage;
+          }
+          if (persisted.targetLanguage && !persisted.languageB) {
+            persisted.languageB = persisted.targetLanguage;
+          }
+          delete persisted.sourceLanguage;
+          delete persisted.targetLanguage;
+        }
+        return persisted;
+      },
       partialize: (state) => ({
-        sourceLanguage: state.sourceLanguage,
-        targetLanguage: state.targetLanguage,
+        languageA: state.languageA,
+        languageB: state.languageB,
+        autoDetect: state.autoDetect,
         outputMode: state.outputMode,
-        uiLanguage: state.uiLanguage,  // NEW v0.2.0
+        uiLanguage: state.uiLanguage,
       }),
     }
   )
 );
 ```
+
+### Schema Migration
+
+**v0.2.0 → v0.3.0**: SettingsStore renamed `sourceLanguage` → `languageA` and `targetLanguage` → `languageB`, added `autoDetect: boolean` field. Migration is automatic via Zustand persist middleware (version 1 migrate function).
 
 ### Persistence
 
@@ -325,25 +348,34 @@ Hook-local state is transient; resets on recording stop. No serialization needed
 ```json
 {
   "state": {
-    "apiKey": "sk-...",
-    "sourceLanguage": "en",
-    "targetLanguage": "es",
-    "outputMode": "tts"
+    "languageA": "en",
+    "languageB": "es",
+    "autoDetect": false,
+    "outputMode": "tts",
+    "uiLanguage": "en"
   },
-  "version": 0
+  "version": 1
 }
 ```
 
-**Future Schema Migration**:
+**Schema Migration** (v0 → v1):
 ```typescript
 persist(..., {
   version: 1,
-  migrate: (state, version) => {
-    if (version === 0) {
-      // Transform old state format to new
-      return { ...state, newField: 'default' };
+  migrate: (persisted: any, version) => {
+    if (version < 1) {
+      // Transform v0 (sourceLanguage/targetLanguage) to v1 (languageA/languageB)
+      if (persisted.sourceLanguage && !persisted.languageA) {
+        persisted.languageA = persisted.sourceLanguage;
+      }
+      if (persisted.targetLanguage && !persisted.languageB) {
+        persisted.languageB = persisted.targetLanguage;
+      }
+      delete persisted.sourceLanguage;
+      delete persisted.targetLanguage;
+      persisted.autoDetect = persisted.autoDetect ?? false;
     }
-    return state;
+    return persisted;
   },
 })
 ```

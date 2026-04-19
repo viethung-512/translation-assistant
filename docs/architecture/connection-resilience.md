@@ -46,16 +46,25 @@ useTranslationSession callback (onResult) called with new results
 ### From useTranslationSession
 
 ```typescript
+const { languageA, languageB, autoDetect } = useSettingsStore();
+
 const recording = useRecording({
   model: 'stt-rt-v4',
-  language_hints: [sourceLanguage],
-  translation: { type: 'one_way', target_language: targetLanguage },
+  language_hints: autoDetect ? [languageA, languageB] : [languageA],
+  language_hints_strict: !autoDetect,
+  translation: {
+    type: 'two_way',
+    language_a: languageA,
+    language_b: languageB
+  },
+  enable_language_identification: true,
   apiKey: async () => {
     // ... get API key
   },
   onResult: (result) => {
     // Receives results even after automatic reconnection
     // SDK ensures no loss of transcription state
+    // Detects language automatically when enable_language_identification: true
   },
   onError: (err) => {
     // SDK surfaces errors that can't be recovered

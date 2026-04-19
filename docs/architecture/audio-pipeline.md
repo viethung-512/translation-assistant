@@ -194,14 +194,21 @@ SDK's optimized audio processing prevents main thread blocking.
 
 ## SDK Configuration (useRecording)
 
-useTranslationSession configures the SDK hook:
+useTranslationSession configures the SDK hook with dynamic language hints:
 
 ```typescript
+const { languageA, languageB, autoDetect } = useSettingsStore();
+
 const recording = useRecording({
   model: 'stt-rt-v4',
-  language_hints: [sourceLanguage],
-  language_hints_strict: true,
-  translation: { type: 'one_way', target_language: targetLanguage },
+  language_hints: autoDetect ? [languageA, languageB] : [languageA],
+  language_hints_strict: !autoDetect,
+  translation: {
+    type: 'two_way',
+    language_a: languageA,
+    language_b: languageB
+  },
+  enable_language_identification: true,
   apiKey: async () => {
     const stored = await getApiKey();
     const mem = useSettingsStore.getState().apiKey;
@@ -211,6 +218,7 @@ const recording = useRecording({
   },
   onResult: (result) => {
     // Handle interim/final transcription + translation
+    // Filters tokens by translation_status: 'original' or 'none' = source, 'translation' = target
   },
   onError: (err) => {
     // Handle errors

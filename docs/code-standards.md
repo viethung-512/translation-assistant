@@ -220,26 +220,45 @@ export const useSessionStore = create<SessionState>((set) => ({
 
 ### Persisting Settings
 
-Use `persist` middleware for `localStorage` integration (existing in `settings-store.ts`).
+Use `persist` middleware for `localStorage` integration with schema migration support.
 
 ```typescript
 export const useSettingsStore = create<SettingsState>()(
   persist(
     (set) => ({
       apiKey: '',
-      sourceLang: 'en',
-      targetLang: 'es',
+      languageA: 'en',
+      languageB: 'vi',
+      autoDetect: false,
       outputMode: 'text' as const,
       setApiKey: (key) => set({ apiKey: key }),
+      setLanguageA: (lang) => set({ languageA: lang }),
+      setLanguageB: (lang) => set({ languageB: lang }),
+      setAutoDetect: (v) => set({ autoDetect: v }),
       // ...
     }),
     {
       name: 'translation-assistant-settings',
+      version: 1,
+      migrate: (persisted: any, version) => {
+        if (version < 1) {
+          if (persisted.sourceLanguage && !persisted.languageA) {
+            persisted.languageA = persisted.sourceLanguage;
+          }
+          if (persisted.targetLanguage && !persisted.languageB) {
+            persisted.languageB = persisted.targetLanguage;
+          }
+          delete persisted.sourceLanguage;
+          delete persisted.targetLanguage;
+        }
+        return persisted;
+      },
       partialize: (state) => ({
-        apiKey: state.apiKey,
-        sourceLang: state.sourceLang,
-        targetLang: state.targetLang,
+        languageA: state.languageA,
+        languageB: state.languageB,
+        autoDetect: state.autoDetect,
         outputMode: state.outputMode,
+        uiLanguage: state.uiLanguage,
       }),
     }
   )
@@ -371,15 +390,21 @@ Custom `AudioWorklet` and `SonioxClient` have been replaced by SDK hooks:
 import { useRecording, useMicrophonePermission } from '@soniox/react';
 
 export function useTranslationSession() {
+  const { languageA, languageB, autoDetect } = useSettingsStore();
   const { status: permissionStatus } = useMicrophonePermission({ 
     autoCheck: true 
   });
 
   const recording = useRecording({
     model: 'stt-rt-v4',
-    language_hints: [sourceLanguage],
-    language_hints_strict: true,
-    translation: { type: 'one_way', target_language: targetLanguage },
+    language_hints: autoDetect ? [languageA, languageB] : [languageA],
+    language_hints_strict: !autoDetect,
+    translation: {
+      type: 'two_way',
+      language_a: languageA,
+      language_b: languageB
+    },
+    enable_language_identification: true,
     apiKey: async () => {
       const key = await getApiKey();
       if (!key) throw new Error('API key not configured');
@@ -388,6 +413,7 @@ export function useTranslationSession() {
     onResult: (result) => {
       // Handle interim/final transcription + translation
       // SDK handles PCM encoding, chunking, and WebSocket
+      // Filters tokens by translation_status to split source vs translated text
     },
     onError: (err) => {
       // Handle unrecoverable errors
