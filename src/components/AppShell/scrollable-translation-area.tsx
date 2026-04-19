@@ -38,7 +38,17 @@ export function ScrollableTranslationArea({ originalTokens, translatedTokens, ha
 
   return (
     /* Grows to fill space between top bar and bottom controls */
-    <Box className="animate-fade-in" style={{ flex: 1, overflow: "hidden", padding: "10px 16px", display: "flex", flexDirection: "column", gap: 12, position: "relative" }}>
+    <Box
+      className="animate-fade-in"
+      style={{
+        flex: 1,
+        overflow: "hidden",
+        padding: "8px 12px",
+        display: "flex",
+        flexDirection: "column",
+        position: "relative",
+      }}
+    >
       {/* Clear transcript button — top-right corner, only when content exists */}
       {hasContent && (
         <Box style={{ position: "absolute", top: 18, right: 24, zIndex: 10 }}>
@@ -46,6 +56,7 @@ export function ScrollableTranslationArea({ originalTokens, translatedTokens, ha
             aria-label={t("aria_clear_transcript")}
             onClick={onClearTranscript}
             size="1"
+            radius="full"
           >
             <TrashIcon />
           </IconButton>
@@ -55,7 +66,12 @@ export function ScrollableTranslationArea({ originalTokens, translatedTokens, ha
       {/* Combined translation card — translated (large) above original (small italic) */}
       <Box
         className="glass-card"
-        style={{ flex: 1, overflow: "hidden", display: "flex", flexDirection: "column" }}
+        style={{
+          flex: 1,
+          overflow: "hidden",
+          display: "flex",
+          flexDirection: "column",
+        }}
       >
         <ScrollArea style={{ flex: 1 }}>
           <Box p="3">

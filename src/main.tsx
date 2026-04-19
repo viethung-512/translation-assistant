@@ -4,6 +4,7 @@ import ReactDOM from "react-dom/client";
 import App from "./App";
 import "@radix-ui/themes/styles.css";
 import "./global.css";
+import { SafeAreaProvider } from "./components/AppShell/safe-area-provider";
 
 function clearPreLoad() {
   const el = document.getElementById("pre-load");
@@ -12,7 +13,8 @@ function clearPreLoad() {
 
 function showFatalError(err: unknown) {
   clearPreLoad();
-  const msg = err instanceof Error ? `${err.name}: ${err.message}` : String(err);
+  const msg =
+    err instanceof Error ? `${err.name}: ${err.message}` : String(err);
   document.body.innerHTML = `<pre style="padding:24px;color:#dc2626;font-size:12px;white-space:pre-wrap;word-break:break-all;font-family:monospace"><strong>Fatal startup error</strong>\n\n${msg}</pre>`;
 }
 
@@ -20,10 +22,9 @@ try {
   clearPreLoad();
   ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
     <React.StrictMode>
-      
-
-      <App />
-      
+      <SafeAreaProvider>
+        <App />
+      </SafeAreaProvider>
     </React.StrictMode>,
   );
 } catch (err) {

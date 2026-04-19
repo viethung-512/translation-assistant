@@ -4,6 +4,7 @@ import { IconButton } from "@/components/ui";
 import { StatusBadge } from "@/components/Controls/status-badge";
 import { IconSettings, IconHistory, IconTheme } from "@/components/icons";
 import { ConnectionStatus } from "@/hooks/use-translation-session";
+import { useSafeAreaContext } from "./safe-area-provider";
 
 interface Props {
   connectionStatus: ConnectionStatus;
@@ -21,35 +22,48 @@ export function TopBar({
   onSettingsOpen,
 }: Props) {
   const { t } = useTranslation();
+  const { top } = useSafeAreaContext();
 
   return (
-    /* Floating glass pill pinned to top with safe-area padding */
+    /* Full-width glass bar pinned to top edge with safe-area inset */
     <Flex
       justify="between"
       align="center"
-      px="4"
       style={{
-        margin: "16px 16px 0",
+        paddingTop: `calc(16px + ${top}px)`,
+        paddingBottom: 12,
+        paddingLeft: 16,
+        paddingRight: 16,
         minHeight: 56,
-        borderRadius: 28,
-        paddingTop: "max(14px, env(safe-area-inset-top))",
-        paddingBottom: 14,
+        borderRadius: 20,
+        border: "none",
         flexShrink: 0,
       }}
       className="float-bar animate-slide-down"
     >
       <StatusBadge status={connectionStatus} />
-      <Flex align="center" gap="2">
-        <IconButton aria-label={t("aria_view_history")} onClick={onHistoryOpen}>
+      <Flex align="center" gap="5">
+        <IconButton
+          aria-label={t("aria_view_history")}
+          onClick={onHistoryOpen}
+          radius="full"
+        >
           <IconHistory />
         </IconButton>
         <IconButton
-          aria-label={theme === "dark" ? t("aria_switch_light") : t("aria_switch_dark")}
+          aria-label={
+            theme === "dark" ? t("aria_switch_light") : t("aria_switch_dark")
+          }
           onClick={onToggleTheme}
+          radius="full"
         >
           <IconTheme isDark={theme === "dark"} />
         </IconButton>
-        <IconButton aria-label={t("aria_open_settings")} onClick={onSettingsOpen}>
+        <IconButton
+          aria-label={t("aria_open_settings")}
+          onClick={onSettingsOpen}
+          radius="full"
+        >
           <IconSettings />
         </IconButton>
       </Flex>

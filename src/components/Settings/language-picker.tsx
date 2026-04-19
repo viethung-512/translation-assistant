@@ -8,9 +8,10 @@ interface Props {
   value: string;
   onChange: (code: string) => void;
   exclude?: string;
+  disabled?: boolean;
 }
 
-export function LanguagePicker({ label, value, onChange, exclude }: Props) {
+export function LanguagePicker({ label, value, onChange, exclude, disabled }: Props) {
   const options = useMemo(
     () => ALL_AVAILABLE_LANGUAGES.filter((l) => l.code !== exclude),
     [exclude],
@@ -21,7 +22,7 @@ export function LanguagePicker({ label, value, onChange, exclude }: Props) {
       <Text as="label" size="1" color="gray" weight="medium" mb="1" style={{ display: "block" }}>
         {label}
       </Text>
-      <Select value={value} onChange={onChange}>
+      <Select value={value} onChange={onChange} disabled={disabled}>
         {options.map((l) => (
           <SelectItem key={l.code} value={l.code}>{l.name}</SelectItem>
         ))}

@@ -70,8 +70,8 @@ export function AppShell() {
     error,
     permissionState,
     needsPermission,
-    languageATokens,
-    languageBTokens,
+    originalTokens,
+    translatedTokens,
   } = useTranslationSession();
 
   const hasContent = finalLines.length > 0 || interimOriginal.length > 0 || interimTranslated.length > 0;
@@ -122,10 +122,11 @@ export function AppShell() {
         style={{
           maxWidth: 500,
           margin: "0 auto",
-          height: "100%",
+          height: "100vh",
           display: "flex",
           flexDirection: "column",
           position: "relative",
+          overflow: "hidden",
         }}
       >
         <TopBar
@@ -139,8 +140,8 @@ export function AppShell() {
         <ErrorBannerSection error={error} />
 
         <ScrollableTranslationArea
-          originalTokens={languageATokens}
-          translatedTokens={languageBTokens}
+          originalTokens={originalTokens}
+          translatedTokens={translatedTokens}
           hasContent={hasContent}
           onClearTranscript={clearTranscript}
         />
@@ -159,6 +160,7 @@ export function AppShell() {
         <SettingsPanel
           isOpen={settingsOpen}
           onClose={() => setSettingsOpen(false)}
+          recordingStatus={recordingStatus}
         />
         <HistorySheet
           isOpen={historyOpen}

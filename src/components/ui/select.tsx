@@ -6,11 +6,12 @@ interface SelectProps {
   value: string;
   onChange: (value: string) => void;
   children: ReactNode;
+  disabled?: boolean;
 }
 
-export function Select({ value, onChange, children }: SelectProps) {
+export function Select({ value, onChange, children, disabled }: SelectProps) {
   return (
-    <RadixSelect.Root value={value} onValueChange={onChange}>
+    <RadixSelect.Root value={value} onValueChange={onChange} disabled={disabled}>
       <RadixSelect.Trigger style={{ width: "100%" }} />
       <RadixSelect.Content>{children}</RadixSelect.Content>
     </RadixSelect.Root>

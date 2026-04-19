@@ -6,17 +6,18 @@ export interface TranscriptLine {
   originalText: string;
   translatedText: string;
   timestampMs: number;
+  detectedLanguage?: string; // populated in auto-detect mode from token.language
 }
 
 /** Build a human-readable transcript string from finalized lines. */
 export function buildTranscriptContent(
   lines: TranscriptLine[],
-  sourceLang: string,
-  targetLang: string,
+  langA: string,
+  langB: string,
   startedAt: number
 ): string {
   const date = new Date(startedAt).toISOString().replace('T', ' ').slice(0, 19);
-  const header = `[${date}] Session: ${sourceLang.toUpperCase()} → ${targetLang.toUpperCase()}\n${'─'.repeat(50)}\n`;
+  const header = `[${date}] Session: ${langA.toUpperCase()} ↔ ${langB.toUpperCase()}\n${'─'.repeat(50)}\n`;
   const body = lines
     .map((l) => {
       const t = new Date(l.timestampMs).toISOString().slice(11, 19);

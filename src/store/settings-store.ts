@@ -7,14 +7,16 @@ export type OutputMode = 'text' | 'tts';
 
 interface SettingsState {
   apiKey: string; // In-memory only — never written to localStorage
-  sourceLanguage: string; // BCP-47 e.g. "en"
-  targetLanguage: string; // BCP-47 e.g. "vi"
+  languageA: string; // BCP-47 e.g. "en" (was sourceLanguage)
+  languageB: string; // BCP-47 e.g. "vi" (was targetLanguage)
+  autoDetect: boolean; // true = bidirectional auto-detect
   outputMode: OutputMode;
   uiLanguage: string; // App interface language, BCP-47 e.g. "en" | "vi"
   // Actions
   setApiKey: (key: string) => void;
-  setSourceLanguage: (lang: string) => void;
-  setTargetLanguage: (lang: string) => void;
+  setLanguageA: (lang: string) => void;
+  setLanguageB: (lang: string) => void;
+  setAutoDetect: (v: boolean) => void;
   setOutputMode: (mode: OutputMode) => void;
   setUiLanguage: (lang: string) => void;
 }
@@ -23,13 +25,15 @@ export const useSettingsStore = create<SettingsState>()(
   persist(
     (set) => ({
       apiKey: '',
-      sourceLanguage: 'en',
-      targetLanguage: 'vi',
+      languageA: 'en',
+      languageB: 'vi',
+      autoDetect: false,
       outputMode: 'text',
       uiLanguage: 'en',
       setApiKey: (key) => set({ apiKey: key }),
-      setSourceLanguage: (lang) => set({ sourceLanguage: lang }),
-      setTargetLanguage: (lang) => set({ targetLanguage: lang }),
+      setLanguageA: (lang) => set({ languageA: lang }),
+      setLanguageB: (lang) => set({ languageB: lang }),
+      setAutoDetect: (v) => set({ autoDetect: v }),
       setOutputMode: (mode) => set({ outputMode: mode }),
       setUiLanguage: (lang) => {
         i18n.changeLanguage(lang);
@@ -38,10 +42,25 @@ export const useSettingsStore = create<SettingsState>()(
     }),
     {
       name: 'translation-assistant-settings',
-      // Exclude apiKey — it lives in Tauri stronghold, not localStorage
+      version: 1,
+      migrate: (persisted: any, version) => {
+        if (!persisted) return persisted;
+        if (version < 1) {
+          if (persisted.sourceLanguage && !persisted.languageA) {
+            persisted.languageA = persisted.sourceLanguage;
+          }
+          if (persisted.targetLanguage && !persisted.languageB) {
+            persisted.languageB = persisted.targetLanguage;
+          }
+          delete persisted.sourceLanguage;
+          delete persisted.targetLanguage;
+        }
+        return persisted;
+      },
       partialize: (state) => ({
-        sourceLanguage: state.sourceLanguage,
-        targetLanguage: state.targetLanguage,
+        languageA: state.languageA,
+        languageB: state.languageB,
+        autoDetect: state.autoDetect,
         outputMode: state.outputMode,
         uiLanguage: state.uiLanguage,
       }),

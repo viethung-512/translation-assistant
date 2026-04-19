@@ -27,7 +27,7 @@ function toConnectionStatus(state: string): ConnectionStatus {
 }
 
 export function useTranslationSession() {
-  const { outputMode, sourceLanguage, targetLanguage } = useSettingsStore();
+  const { outputMode, languageA, languageB, autoDetect } = useSettingsStore();
   const ttsRef = useRef(new TtsService());
   const sessionStartedAt = useRef(0);
 
@@ -38,6 +38,8 @@ export function useTranslationSession() {
   // Mutable refs buffer inside onResult to avoid stale closure reads of state
   const interimOriginalRef = useRef('');
   const interimTranslatedRef = useRef('');
+  // Tracks detected source language from the most recent original token
+  const detectedLangRef = useRef<string | undefined>(undefined);
 
   // Pause state is local — SDK has no pause; pause = stop WS, resume = reconnect
   const [isPaused, setIsPaused] = useState(false);
@@ -46,12 +48,12 @@ export function useTranslationSession() {
 
   const recording = useRecording({
     model: "stt-rt-v4",
-    language_hints: [sourceLanguage],
-    language_hints_strict: true,
+    language_hints: autoDetect ? [languageA, languageB] : [languageA],
+    language_hints_strict: !autoDetect,
     translation: {
       type: "two_way",
-      language_a: sourceLanguage,
-      language_b: targetLanguage
+      language_a: languageA,
+      language_b: languageB
     },
     enable_language_identification: true,
     enable_speaker_diarization: true,
@@ -75,26 +77,36 @@ export function useTranslationSession() {
         const isTranslation = status === "translation";
         if (isOriginal) {
           interimOriginalRef.current += token.text;
+          if (token.language) detectedLangRef.current = token.language;
           setInterimOriginal(interimOriginalRef.current);
         } else if (isTranslation) {
           if (!token.is_final) {
             interimTranslatedRef.current += token.text;
             setInterimTranslated(interimTranslatedRef.current);
           } else {
+            // Capture detected source language before resetting refs
+            const detectedSrc = detectedLangRef.current;
+
             // Commit: pair accumulated original with this final translated text
             const line: TranscriptLine = {
               originalText: interimOriginalRef.current,
               translatedText: interimTranslatedRef.current + token.text,
               timestampMs: token.end_ms ?? Date.now(),
+              detectedLanguage: autoDetect ? detectedSrc : undefined,
             };
             setFinalLines((prev) => [...prev, line]);
             interimOriginalRef.current = "";
             interimTranslatedRef.current = "";
+            detectedLangRef.current = undefined;
             setInterimOriginal("");
             setInterimTranslated("");
 
             if (outputMode === "tts") {
-              ttsRef.current.speak(token.text, targetLanguage);
+              // Use detected source language to speak in the opposite language
+              const ttsLang = autoDetect
+                ? (detectedSrc === languageA ? languageB : detectedSrc === languageB ? languageA : languageB)
+                : languageB;
+              ttsRef.current.speak(token.text, ttsLang);
             }
           }
         }
@@ -107,6 +119,17 @@ export function useTranslationSession() {
     ...recording.partialTokens,
   ], [recording.finalTokens, recording.partialTokens]);
 
+  // Split tokens by translation_status — works correctly in both manual and auto-detect modes
+  const originalTokens = useMemo(() => allTokens.filter((t) => {
+    const s = t.translation_status;
+    return s === 'original' || s === 'none' || s == null;
+  }), [allTokens]);
+
+  const translatedTokens = useMemo(() =>
+    allTokens.filter((t) => t.translation_status === 'translation'),
+    [allTokens]
+  );
+
   const startSession = useCallback(async () => {
     // Reset accumulation state
     setFinalLines([]);
@@ -114,6 +137,7 @@ export function useTranslationSession() {
     setInterimTranslated('');
     interimOriginalRef.current = '';
     interimTranslatedRef.current = '';
+    detectedLangRef.current = undefined;
     sessionStartedAt.current = Date.now();
     ttsRef.current.setEnabled(outputMode === 'tts');
     await recording.start();
@@ -141,6 +165,7 @@ export function useTranslationSession() {
     setInterimTranslated('');
     interimOriginalRef.current = '';
     interimTranslatedRef.current = '';
+    detectedLangRef.current = undefined;
   }, []);
 
   const stopSession = useCallback(async () => {
@@ -154,8 +179,8 @@ export function useTranslationSession() {
     // Save transcript if any lines were finalized — capture state snapshot before async
     setFinalLines((currentLines) => {
       if (currentLines.length > 0) {
-        const { sourceLanguage: src, targetLanguage: tgt } = useSettingsStore.getState();
-        const content = buildTranscriptContent(currentLines, src, tgt, sessionStartedAt.current);
+        const { languageA: la, languageB: lb } = useSettingsStore.getState();
+        const content = buildTranscriptContent(currentLines, la, lb, sessionStartedAt.current);
         const filename =
           new Date(sessionStartedAt.current).toISOString().replace(/[:.]/g, '-').slice(0, 19) + '.txt';
         writeTranscript(filename, content).catch((e: unknown) =>
@@ -183,7 +208,7 @@ export function useTranslationSession() {
       permissionStatus === "denied" ||
       permissionStatus === "unavailable" ||
       permissionStatus === "unsupported",
-    languageATokens: allTokens.filter((token) => token.language === sourceLanguage),
-    languageBTokens: allTokens.filter((token) => token.language === targetLanguage),
+    originalTokens,
+    translatedTokens,
   };
 }
