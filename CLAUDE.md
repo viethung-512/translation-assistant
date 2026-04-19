@@ -72,3 +72,9 @@ Mic → AudioCapture → SonioxClient (WebSocket) → SessionStore → Translati
 ### Path alias
 
 `@/` maps to `src/` (configured in both `tsconfig.json` and `vite.config.ts`).
+
+## Icon conventions
+
+All SVG icons live in `src/components/icons/index.tsx`. **Before writing any inline `<svg>` element:**
+1. Check `components/icons/index.tsx` for an existing icon that fits.
+2. Only create a new export there if nothing suitable exists — never define local SVG functions inside component files.

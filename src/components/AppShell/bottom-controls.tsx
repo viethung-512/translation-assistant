@@ -1,4 +1,5 @@
 import { RecordButton } from "@/components/Controls/record-button";
+import { IconStop } from "@/components/icons";
 import { IconButton } from "@/components/ui";
 import type {
   ConnectionStatus,
@@ -6,6 +7,7 @@ import type {
 } from "@/hooks/use-translation-session";
 import { Box, Flex, SegmentedControl } from "@radix-ui/themes";
 import { useTranslation } from "react-i18next";
+import { useSafeAreaContext } from "./safe-area-provider";
 
 interface Props {
   outputMode: "tts" | "text";
@@ -16,21 +18,6 @@ interface Props {
   onPause: () => void;
   onResume: () => void;
   onStop: () => void;
-}
-
-// Square stop icon
-function StopIcon() {
-  return (
-    <svg
-      width="18"
-      height="18"
-      viewBox="0 0 24 24"
-      fill="currentColor"
-      aria-hidden="true"
-    >
-      <rect x="3" y="3" width="18" height="18" rx="2" />
-    </svg>
-  );
 }
 
 export function BottomControls({
@@ -44,6 +31,7 @@ export function BottomControls({
   onStop,
 }: Props) {
   const { t } = useTranslation();
+  const { bottom } = useSafeAreaContext();
 
   const isSessionActive =
     recordingStatus === "recording" || recordingStatus === "paused";
@@ -61,7 +49,7 @@ export function BottomControls({
     <Box
       style={{
         paddingTop: 16,
-        paddingBottom: 16,
+        paddingBottom: `calc(${bottom}px + 50px)`,
         paddingLeft: 20,
         paddingRight: 20,
         borderRadius: 20,
@@ -109,7 +97,7 @@ export function BottomControls({
             disabled={isDisabled}
             style={{ width: 44, height: 44 }}
           >
-            <StopIcon />
+            <IconStop />
           </IconButton>
         ) : (
           <Box style={{ width: 44 }} />

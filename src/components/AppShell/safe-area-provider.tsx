@@ -21,6 +21,7 @@ export const SafeAreaProvider = ({
           paddingLeft: insets.left,
           paddingRight: insets.right,
           minHeight: "100dvh",
+          maxHeight: "100dvh",
           boxSizing: "border-box",
         }}
       >

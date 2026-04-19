@@ -10,6 +10,7 @@ import { getApiKey } from "@/tauri/secure-storage";
 import { useTheme } from "@/theme/use-theme";
 import { invoke } from "@tauri-apps/api/core";
 import { openUrl } from "@tauri-apps/plugin-opener";
+import { IconMicDisabled } from "@/components/icons";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { BottomControls } from "./bottom-controls";
@@ -61,10 +62,6 @@ export function AppShell() {
     stopSession,
     pauseSession,
     resumeSession,
-    clearTranscript,
-    finalLines,
-    interimOriginal,
-    interimTranslated,
     recordingStatus,
     connectionStatus,
     error,
@@ -73,8 +70,6 @@ export function AppShell() {
     originalTokens,
     translatedTokens,
   } = useTranslationSession();
-
-  const hasContent = finalLines.length > 0 || interimOriginal.length > 0 || interimTranslated.length > 0;
 
   const { t } = useTranslation();
   const setApiKey = useSettingsStore((s) => s.setApiKey);
@@ -114,7 +109,6 @@ export function AppShell() {
     }
   };
 
-
   return (
     <Theme appearance={theme} accentColor="blue" grayColor="slate">
       {/* Full-viewport liquid glass layout — background from global.css */}
@@ -122,11 +116,11 @@ export function AppShell() {
         style={{
           maxWidth: 500,
           margin: "0 auto",
-          height: "100vh",
+          height: "100dvh",
           display: "flex",
           flexDirection: "column",
-          position: "relative",
-          overflow: "hidden",
+          justifyContent: "space-between",
+          gap: 12,
         }}
       >
         <TopBar
@@ -137,14 +131,17 @@ export function AppShell() {
           onSettingsOpen={() => setSettingsOpen(true)}
         />
 
-        <ErrorBannerSection error={error} />
-
-        <ScrollableTranslationArea
-          originalTokens={originalTokens}
-          translatedTokens={translatedTokens}
-          hasContent={hasContent}
-          onClearTranscript={clearTranscript}
-        />
+        <Flex direction={"column"} style={{ flex: 1 }} gap={"12px"}>
+          {error && (
+            <Box>
+              <ErrorBannerSection error={error} />
+            </Box>
+          )}
+          <ScrollableTranslationArea
+            originalTokens={originalTokens}
+            translatedTokens={translatedTokens}
+          />
+        </Flex>
 
         <BottomControls
           outputMode={outputMode}
@@ -171,23 +168,7 @@ export function AppShell() {
         <BottomSheet isOpen={needsPermission} onClose={() => {}}>
           <Box p="4" style={{ textAlign: "center" }}>
             <Flex justify="center" mb="4">
-              <svg
-                width="48"
-                height="48"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="var(--red-9)"
-                strokeWidth="1.5"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                aria-hidden="true"
-              >
-                <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z" />
-                <path d="M19 10v2a7 7 0 0 1-14 0v-2" />
-                <line x1="12" y1="19" x2="12" y2="23" />
-                <line x1="8" y1="23" x2="16" y2="23" />
-                <line x1="2" y1="2" x2="22" y2="22" />
-              </svg>
+              <IconMicDisabled />
             </Flex>
 
             {permissionState === "denied" && (
@@ -198,7 +179,10 @@ export function AppShell() {
                 <Text as="p" size="2" color="gray" mb="5">
                   {t("mic_denied_body")}
                 </Text>
-                <Button style={{ width: "100%" }} onClick={handleOpenMicSettings}>
+                <Button
+                  style={{ width: "100%" }}
+                  onClick={handleOpenMicSettings}
+                >
                   {t("mic_open_settings")}
                 </Button>
               </>
@@ -213,7 +197,10 @@ export function AppShell() {
                 <Text as="p" size="2" color="gray" mb="5">
                   {t("mic_unavailable_body")}
                 </Text>
-                <Button style={{ width: "100%" }} onClick={handleOpenMicSettings}>
+                <Button
+                  style={{ width: "100%" }}
+                  onClick={handleOpenMicSettings}
+                >
                   {t("mic_open_settings")}
                 </Button>
               </>

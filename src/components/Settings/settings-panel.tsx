@@ -13,6 +13,7 @@ import {
 import { LanguagePicker } from "./language-picker";
 import { useSettingsStore } from "@/store/settings-store";
 import { saveApiKey, getApiKey, deleteApiKey } from "@/tauri/secure-storage";
+import { IconCheck, IconClose } from "@/components/icons";
 import { BottomSheet, Button, IconButton, Input } from "@/components/ui";
 import type { RecordingStatus } from "@/hooks/use-translation-session";
 
@@ -25,44 +26,6 @@ interface Props {
   isOpen: boolean;
   onClose: () => void;
   recordingStatus: RecordingStatus;
-}
-
-// Close (X) icon
-function IconClose() {
-  return (
-    <svg
-      width="18"
-      height="18"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2.5"
-      strokeLinecap="round"
-      aria-hidden="true"
-    >
-      <line x1="18" y1="6" x2="6" y2="18" />
-      <line x1="6" y1="6" x2="18" y2="18" />
-    </svg>
-  );
-}
-
-// Check icon for "stored" indicator
-function IconCheck() {
-  return (
-    <svg
-      width="13"
-      height="13"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="3"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-    >
-      <polyline points="20 6 9 17 4 12" />
-    </svg>
-  );
 }
 
 export function SettingsPanel({ isOpen, onClose, recordingStatus }: Props) {
@@ -113,7 +76,7 @@ export function SettingsPanel({ isOpen, onClose, recordingStatus }: Props) {
 
   return (
     <BottomSheet isOpen={isOpen} onClose={onClose}>
-      <ScrollArea style={{ maxHeight: "72vh" }}>
+      <ScrollArea style={{ maxHeight: "72dvh" }}>
         <Box px="5" py="4">
           {/* Header */}
           <Flex justify="between" align="center" mb="5">

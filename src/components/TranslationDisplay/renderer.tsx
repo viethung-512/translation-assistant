@@ -1,5 +1,6 @@
 import React from "react";
 import { Box, Flex, Text } from "@radix-ui/themes";
+import { IconMicPlaceholder } from "@/components/icons";
 import { Badge } from "@/components/ui";
 import SpeakerLabel from "../speaker-label";
 import { getLanguage } from "@/utils/speaker-colors";
@@ -61,20 +62,6 @@ function TokenBlock({ tokens, textSize, italic, showSpeakerLabel = true }: {
   );
 }
 
-// Dimmed mic icon for the empty state placeholder
-function MicPlaceholderIcon() {
-  return (
-    <svg width="36" height="36" viewBox="0 0 24 24" fill="none" aria-hidden="true"
-      style={{ opacity: 0.25 }}
-    >
-      <rect x="9" y="2" width="6" height="11" rx="3" stroke="currentColor" strokeWidth="1.5" />
-      <path d="M5 11a7 7 0 0 0 14 0" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-      <line x1="12" y1="18" x2="12" y2="22" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-      <line x1="9" y1="22" x2="15" y2="22" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-    </svg>
-  );
-}
-
 // Pretty-displays translated tokens (large) and original tokens (small italic) in a unified view.
 export default function Renderer({ originalTokens, translatedTokens, placeholder }: RendererProps) {
   const isEmpty = originalTokens.length === 0 && translatedTokens.length === 0;
@@ -84,7 +71,7 @@ export default function Renderer({ originalTokens, translatedTokens, placeholder
       <Flex direction="column" align="center" justify="center" height="100%" gap="3"
         style={{ paddingBottom: 24 }}
       >
-        <MicPlaceholderIcon />
+        <IconMicPlaceholder />
         <Text color="gray" align="center" size="2">{placeholder}</Text>
       </Flex>
     );

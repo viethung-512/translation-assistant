@@ -3,6 +3,7 @@ import { useState, useEffect, useCallback } from "react";
 import { useTranslation } from "react-i18next";
 import { Box, Flex, ScrollArea, Text } from "@radix-ui/themes";
 import { openPath } from "@tauri-apps/plugin-opener";
+import { IconClose } from "@/components/icons";
 import { BottomSheet } from "@/components/ui/bottom-sheet";
 import { IconButton } from "@/components/ui";
 import { listTranscripts } from "@/tauri/transcript-fs";
@@ -12,15 +13,6 @@ import { SessionItem } from "./session-item";
 interface Props {
   isOpen: boolean;
   onClose: () => void;
-}
-
-// Close (×) icon
-function IconClose() {
-  return (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" aria-hidden="true">
-      <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
-    </svg>
-  );
 }
 
 export function HistorySheet({ isOpen, onClose }: Props) {
@@ -66,27 +58,35 @@ export function HistorySheet({ isOpen, onClose }: Props) {
           pb="3"
           style={{ borderBottom: "1px solid var(--gray-5)" }}
         >
-          <Text size="3" weight="bold">{t("history_title")}</Text>
+          <Text size="3" weight="bold">
+            {t("history_title")}
+          </Text>
           <IconButton aria-label={t("aria_close_history")} onClick={onClose}>
-            <IconClose />
+            <IconClose size={16} />
           </IconButton>
         </Flex>
 
         {/* Content */}
-        <ScrollArea style={{ maxHeight: "60vh" }}>
+        <ScrollArea style={{ maxHeight: "60dvh" }}>
           {loading && (
             <Box p="4">
-              <Text as="p" size="2" color="gray" align="center">{t("history_loading")}</Text>
+              <Text as="p" size="2" color="gray" align="center">
+                {t("history_loading")}
+              </Text>
             </Box>
           )}
           {error && (
             <Box p="4">
-              <Text as="p" size="2" color="red">{error}</Text>
+              <Text as="p" size="2" color="red">
+                {error}
+              </Text>
             </Box>
           )}
           {!loading && !error && sessions.length === 0 && (
             <Box p="4">
-              <Text as="p" size="2" color="gray" align="center">{t("history_empty")}</Text>
+              <Text as="p" size="2" color="gray" align="center">
+                {t("history_empty")}
+              </Text>
             </Box>
           )}
           {sessions.map((s) => (
