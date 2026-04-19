@@ -1,10 +1,9 @@
+import { StatusBadge } from "@/components/Controls/status-badge";
+import { IconHistory, IconSettings, IconTheme } from "@/components/icons";
+import { IconButton } from "@/components/ui";
+import { ConnectionStatus } from "@/hooks/use-translation-session";
 import { Flex } from "@radix-ui/themes";
 import { useTranslation } from "react-i18next";
-import { IconButton } from "@/components/ui";
-import { StatusBadge } from "@/components/Controls/status-badge";
-import { IconSettings, IconHistory, IconTheme } from "@/components/icons";
-import { ConnectionStatus } from "@/hooks/use-translation-session";
-import { useSafeAreaContext } from "./safe-area-provider";
 
 interface Props {
   connectionStatus: ConnectionStatus;
@@ -22,7 +21,6 @@ export function TopBar({
   onSettingsOpen,
 }: Props) {
   const { t } = useTranslation();
-  const { top } = useSafeAreaContext();
 
   return (
     /* Full-width glass bar pinned to top edge with safe-area inset */
@@ -30,7 +28,7 @@ export function TopBar({
       justify="between"
       align="center"
       style={{
-        paddingTop: `calc(16px + ${top}px)`,
+        paddingTop: 16,
         paddingBottom: 12,
         paddingLeft: 16,
         paddingRight: 16,

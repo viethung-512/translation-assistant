@@ -15,8 +15,15 @@ interface Props {
 // Trash icon for clearing the live transcript
 function TrashIcon() {
   return (
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
-      stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+    <svg
+      width="14"
+      height="14"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
       aria-hidden="true"
     >
       <polyline points="3 6 5 6 21 6" />
@@ -27,7 +34,12 @@ function TrashIcon() {
   );
 }
 
-export function ScrollableTranslationArea({ originalTokens, translatedTokens, hasContent, onClearTranscript }: Props) {
+export function ScrollableTranslationArea({
+  originalTokens,
+  translatedTokens,
+  hasContent,
+  onClearTranscript,
+}: Props) {
   const { t } = useTranslation();
   const bottomRef = useRef<HTMLDivElement>(null);
 
@@ -41,8 +53,7 @@ export function ScrollableTranslationArea({ originalTokens, translatedTokens, ha
     <Box
       className="animate-fade-in"
       style={{
-        flex: 1,
-        overflow: "hidden",
+        overflowY: "scroll",
         padding: "8px 12px",
         display: "flex",
         flexDirection: "column",

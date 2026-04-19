@@ -1,7 +1,6 @@
 // iOS-style bottom sheet using Radix Dialog — provides overlay, focus trap, Escape dismiss.
 import { Dialog, Flex } from "@radix-ui/themes";
 import type { ReactNode } from "react";
-import { useSafeAreaContext } from "../AppShell/safe-area-provider";
 
 interface BottomSheetProps {
   isOpen: boolean;
@@ -10,7 +9,6 @@ interface BottomSheetProps {
 }
 
 export function BottomSheet({ isOpen, onClose, children }: BottomSheetProps) {
-  const { bottom } = useSafeAreaContext();
   return (
     <Dialog.Root open={isOpen} onOpenChange={(open) => !open && onClose()}>
       <Dialog.Content
@@ -28,7 +26,7 @@ export function BottomSheet({ isOpen, onClose, children }: BottomSheetProps) {
           /* Rounded top corners only — flat at bottom edge of screen */
           borderRadius: "28px 28px 0 0",
           borderBottom: "none",
-          paddingBottom: `max(28px, ${bottom}px)`,
+          paddingBottom: "28px",
           transform: "none",
         }}
       >

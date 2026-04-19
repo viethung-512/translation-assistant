@@ -1,12 +1,11 @@
-import { Box, Flex, SegmentedControl } from "@radix-ui/themes";
-import { useTranslation } from "react-i18next";
-import { IconButton } from "@/components/ui";
 import { RecordButton } from "@/components/Controls/record-button";
+import { IconButton } from "@/components/ui";
 import type {
   ConnectionStatus,
   RecordingStatus,
 } from "@/hooks/use-translation-session";
-import { useSafeAreaContext } from "./safe-area-provider";
+import { Box, Flex, SegmentedControl } from "@radix-ui/themes";
+import { useTranslation } from "react-i18next";
 
 interface Props {
   outputMode: "tts" | "text";
@@ -45,7 +44,6 @@ export function BottomControls({
   onStop,
 }: Props) {
   const { t } = useTranslation();
-  const { bottom } = useSafeAreaContext();
 
   const isSessionActive =
     recordingStatus === "recording" || recordingStatus === "paused";
@@ -63,7 +61,7 @@ export function BottomControls({
     <Box
       style={{
         paddingTop: 16,
-        paddingBottom: `calc(16px + ${bottom}px)`,
+        paddingBottom: 16,
         paddingLeft: 20,
         paddingRight: 20,
         borderRadius: 20,
