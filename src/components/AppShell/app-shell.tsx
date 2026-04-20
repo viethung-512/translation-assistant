@@ -131,7 +131,11 @@ export function AppShell() {
           onSettingsOpen={() => setSettingsOpen(true)}
         />
 
-        <Flex direction={"column"} style={{ flex: 1 }} gap={"12px"}>
+        <Flex
+          direction={"column"}
+          style={{ flex: 1, overflowY: "scroll" }}
+          gap={"12px"}
+        >
           {error && (
             <Box>
               <ErrorBannerSection error={error} />

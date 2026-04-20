@@ -25,8 +25,6 @@ export function ScrollableTranslationArea({
     <Box
       className="glass-card animate-fade-in"
       style={{
-        overflow: "hidden",
-        overflowY: "scroll",
         display: "flex",
         flexDirection: "column",
         flex: 1,
