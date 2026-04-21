@@ -3,24 +3,38 @@
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-    <title>Translation Assistant</title>
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, viewport-fit=cover"
+    />
+    <title>Hey Gracie</title>
     <script>
       // Apply saved theme before paint to avoid flash
-      (function() {
-        var t = localStorage.getItem('theme');
-        if (!t) t = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-        document.documentElement.setAttribute('data-theme', t);
+      (function () {
+        var t = localStorage.getItem("theme");
+        if (!t)
+          t = window.matchMedia("(prefers-color-scheme: dark)").matches
+            ? "dark"
+            : "light";
+        document.documentElement.setAttribute("data-theme", t);
       })();
     </script>
   </head>
 
   <body>
     <!-- Pre-React loading indicator -->
-    <div id="pre-load" style="
-      display:flex; align-items:center; justify-content:center;
-      height:100%; color:var(--text-muted);
-      font-family:-apple-system,system-ui,sans-serif; font-size:14px;">
+    <div
+      id="pre-load"
+      style="
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        height: 100%;
+        color: var(--text-muted);
+        font-family: -apple-system, system-ui, sans-serif;
+        font-size: 14px;
+      "
+    >
       Loading…
     </div>
     <div id="root"></div>
