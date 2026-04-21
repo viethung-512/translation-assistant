@@ -2,5 +2,5 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 fn main() {
-    translation_assistant_lib::run()
+    hey_gracie_lib::run()
 }

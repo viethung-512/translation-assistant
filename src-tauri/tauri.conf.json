@@ -1,8 +1,8 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "translation-assistant",
+  "productName": "hey-gracie",
   "version": "0.1.0",
-  "identifier": "com.ngoviethung.translation-assistant.app",
+  "identifier": "com.ngoviethung.hey-gracie.app",
   "build": {
     "beforeDevCommand": "npm run dev",
     "devUrl": "http://localhost:1420",
@@ -12,7 +12,7 @@
   "app": {
     "windows": [
       {
-        "title": "translation-assistant",
+        "title": "hey-gracie",
         "width": 800,
         "height": 600
       }

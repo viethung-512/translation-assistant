@@ -13,7 +13,7 @@ pub struct TranscriptMeta {
 
 fn transcript_dir(app: &tauri::AppHandle) -> Result<std::path::PathBuf, String> {
     let docs = app.path().document_dir().map_err(|e| e.to_string())?;
-    Ok(docs.join("TranslationAssistant"))
+    Ok(docs.join("HeyGracie"))
 }
 
 /// Write transcript content atomically to the documents dir.
