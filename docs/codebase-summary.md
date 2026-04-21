@@ -1,7 +1,7 @@
 # Translation Assistant — Codebase Summary
 
-**Version**: 0.2.0 (SDK Migration)  
-**Last Updated**: April 2026
+**Version**: 0.2.0 (SDK Migration + UI v2 Wireframe)  
+**Last Updated**: April 20, 2026
 
 Quick reference guide to all modules, their purpose, and size. Use this for module discovery and understanding data flow.
 
@@ -9,20 +9,36 @@ Quick reference guide to all modules, their purpose, and size. Use this for modu
 
 ## Frontend (React/TypeScript) — `src/`
 
+### UI Versions
+
+This project maintains **two parallel UI implementations**:
+
+| Version | Location  | Status        | Purpose                                            |
+| ------- | --------- | ------------- | -------------------------------------------------- |
+| v1      | `src/`    | **Active**    | Production UI (real app with Soniox integration)   |
+| v2      | `src/v2/` | **Wireframe** | Static preview UI (6-screen demo with preview nav) |
+
+**Switching**: Set `VITE_UI_VERSION=v2` in `.env.local` and restart `npm run dev`. Default is v1.
+
+---
+
+## Frontend (React/TypeScript) — `src/` (Production v1)
+
 ### Root Components
 
-| File | LOC | Purpose |
-|------|-----|---------|
-| `App.tsx` | 189 | Root layout component; renders header (theme + settings buttons), recording section, transcript display, error banner |
-| `main.tsx` | 27 | Bootstrap: React root mount, fatal error handler, TTS service init |
+| File       | LOC | Purpose                                                                                                               |
+| ---------- | --- | --------------------------------------------------------------------------------------------------------------------- |
+| `App.tsx`  | 189 | Root layout component; renders header (theme + settings buttons), recording section, transcript display, error banner |
+| `main.tsx` | 27  | Bootstrap: React root mount, fatal error handler, TTS service init                                                    |
 
 ### Audio Subsystem — `src/audio/`
 
-| File | LOC | Purpose |
-|------|-----|---------|
-| `tts-service.ts` | 50 | Web Speech API wrapper; maintains 3-utterance queue to prevent lag; auto-dequeue on speech end |
+| File             | LOC | Purpose                                                                                        |
+| ---------------- | --- | ---------------------------------------------------------------------------------------------- |
+| `tts-service.ts` | 50  | Web Speech API wrapper; maintains 3-utterance queue to prevent lag; auto-dequeue on speech end |
 
 **Removed (v0.2.0)**:
+
 - `audio-capture.ts` — Replaced by SDK's audio capture
 - `pcm-worklet-processor.ts` — Replaced by SDK's PCM encoding
 
@@ -32,96 +48,165 @@ Quick reference guide to all modules, their purpose, and size. Use this for modu
 
 #### Controls Subdir
 
-| File | LOC | Purpose |
-|------|-----|---------|
-| `Controls/record-button.tsx` | 60 | Large 76×76px record/stop button; shows pulse animation while recording; semantic colors (accent/danger) |
-| `Controls/status-badge.tsx` | 37 | Connection status indicator (disconnected/connecting/connected); colored dot + text |
+| File                         | LOC | Purpose                                                                                                  |
+| ---------------------------- | --- | -------------------------------------------------------------------------------------------------------- |
+| `Controls/record-button.tsx` | 60  | Large 76×76px record/stop button; shows pulse animation while recording; semantic colors (accent/danger) |
+| `Controls/status-badge.tsx`  | 37  | Connection status indicator (disconnected/connecting/connected); colored dot + text                      |
 
 #### Settings Subdir
 
-| File | LOC | Purpose |
-|------|-----|---------|
-| `Settings/settings-panel.tsx` | 150 | Bottom sheet modal; contains API key input, language pickers, output mode toggle, theme button |
-| `Settings/language-picker.tsx` | 57 | Select dropdown for source/target languages; enforces mutual exclusion via validation logic |
+| File                           | LOC | Purpose                                                                                        |
+| ------------------------------ | --- | ---------------------------------------------------------------------------------------------- |
+| `Settings/settings-panel.tsx`  | 150 | Bottom sheet modal; contains API key input, language pickers, output mode toggle, theme button |
+| `Settings/language-picker.tsx` | 57  | Select dropdown for source/target languages; enforces mutual exclusion via validation logic    |
 
 #### TranslationDisplay Subdir
 
-| File | LOC | Purpose |
-|------|-----|---------|
-| `TranslationDisplay/translation-display.tsx` | 60 | Scrollable container for finalized transcript lines; shows interim token in footer; auto-scroll to newest line |
-| `TranslationDisplay/transcript-line.tsx` | 25 | Single finalized transcript entry; displays source + target; timestamp |
-| `TranslationDisplay/renderer.tsx` | ~20 | Renders token array with placeholder; i18n-aware via `useTranslation()` |
+| File                                         | LOC | Purpose                                                                                                        |
+| -------------------------------------------- | --- | -------------------------------------------------------------------------------------------------------------- |
+| `TranslationDisplay/translation-display.tsx` | 60  | Scrollable container for finalized transcript lines; shows interim token in footer; auto-scroll to newest line |
+| `TranslationDisplay/transcript-line.tsx`     | 25  | Single finalized transcript entry; displays source + target; timestamp                                         |
+| `TranslationDisplay/renderer.tsx`            | ~20 | Renders token array with placeholder; i18n-aware via `useTranslation()`                                        |
 
 #### AppShell Subdir (New v0.2.0)
 
-| File | LOC | Purpose |
-|------|-----|---------|
-| `AppShell/scrollable-translation-area.tsx` | 18 | Container for dual `Renderer` components (original + translated); uses i18n for placeholder strings |
-| `AppShell/app-shell.tsx` | ~60 | Main layout wrapper; coordinates header, recording section, transcript area |
+| File                                       | LOC | Purpose                                                                                             |
+| ------------------------------------------ | --- | --------------------------------------------------------------------------------------------------- |
+| `AppShell/scrollable-translation-area.tsx` | 18  | Container for dual `Renderer` components (original + translated); uses i18n for placeholder strings |
+| `AppShell/app-shell.tsx`                   | ~60 | Main layout wrapper; coordinates header, recording section, transcript area                         |
 
 #### History Subdir (New v0.2.0)
 
-| File | LOC | Purpose |
-|------|-----|---------|
-| `History/history-sheet.tsx` | ~80 | Bottom sheet modal showing past transcripts; list fetched via Tauri `list_transcripts` |
-| `History/session-item.tsx` | ~40 | Single transcript entry in history list; shows filename, size, created date; click to view |
+| File                        | LOC | Purpose                                                                                    |
+| --------------------------- | --- | ------------------------------------------------------------------------------------------ |
+| `History/history-sheet.tsx` | ~80 | Bottom sheet modal showing past transcripts; list fetched via Tauri `list_transcripts`     |
+| `History/session-item.tsx`  | ~40 | Single transcript entry in history list; shows filename, size, created date; click to view |
 
 #### UI Library — `src/components/ui/`
 
-| File | LOC | Purpose |
-|------|-----|---------|
-| `button.tsx` | 51 | Reusable button component; supports variants (primary, secondary, danger, ghost) and sizes |
-| `bottom-sheet.tsx` | 46 | iOS-style bottom sheet modal; drag handle, backdrop, smooth animation |
-| `error-banner.tsx` | 24 | Dismissible error alert; shows error message with close button; semantic danger color |
-| `icon-button.tsx` | 27 | 44×44px icon button; used for settings, theme toggle; includes ARIA label |
-| `index.ts` | 5 | Barrel export of all UI components |
+| File               | LOC | Purpose                                                                                    |
+| ------------------ | --- | ------------------------------------------------------------------------------------------ |
+| `button.tsx`       | 51  | Reusable button component; supports variants (primary, secondary, danger, ghost) and sizes |
+| `bottom-sheet.tsx` | 46  | iOS-style bottom sheet modal; drag handle, backdrop, smooth animation                      |
+| `error-banner.tsx` | 24  | Dismissible error alert; shows error message with close button; semantic danger color      |
+| `icon-button.tsx`  | 27  | 44×44px icon button; used for settings, theme toggle; includes ARIA label                  |
+| `index.ts`         | 5   | Barrel export of all UI components                                                         |
 
 ### Hooks — `src/hooks/`
 
-| File | LOC | Purpose |
-|------|-----|---------|
+| File                         | LOC  | Purpose                                                                                                                                                     |
+| ---------------------------- | ---- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `use-translation-session.ts` | ~120 | Main orchestration hook; manages session lifecycle (start/stop), integrates @soniox/react SDK hooks, handles token processing, error handling, TTS dispatch |
 
 **Replaced (v0.1.0)**:
+
 - `use-microphone-permission.ts` — Replaced by SDK's `useMicrophonePermission`
 
 **Used by**: `App.tsx` (primary consumer)
 
 ### State Management — `src/store/`
 
-| File | LOC | Purpose |
-|------|-----|---------|
-| `settings-store.ts` | 50 | Zustand store with localStorage persist; source/target languages, output mode, **uiLanguage** (new v0.2.0), API key; survives app restart; `setUiLanguage()` calls `i18n.changeLanguage()` |
+| File                | LOC | Purpose                                                                                                                                                                                    |
+| ------------------- | --- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `settings-store.ts` | 50  | Zustand store with localStorage persist; source/target languages, output mode, **uiLanguage** (new v0.2.0), API key; survives app restart; `setUiLanguage()` calls `i18n.changeLanguage()` |
 
 **Removed (v0.2.0)**:
+
 - `session-store.ts` — Replaced by hook-local state in `useTranslationSession`
 
 ### Tauri Integration — `src/tauri/`
 
-| File | LOC | Purpose |
-|------|-----|---------|
-| `secure-storage.ts` | 17 | Wrapper for localStorage-based API key; read/write with encryption consideration (future: Tauri keychain) |
-| `transcript-fs.ts` | ~50 | Wrapper for Tauri commands; `write_transcript()`, `list_transcripts()`, `read_transcript()`, `deleteTranscript()` calls to Rust backend; **also owns `TranscriptLine` type and `buildTranscriptContent` helper** |
+| File                | LOC | Purpose                                                                                                                                                                                                          |
+| ------------------- | --- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `secure-storage.ts` | 17  | Wrapper for localStorage-based API key; read/write with encryption consideration (future: Tauri keychain)                                                                                                        |
+| `transcript-fs.ts`  | ~50 | Wrapper for Tauri commands; `write_transcript()`, `list_transcripts()`, `read_transcript()`, `deleteTranscript()` calls to Rust backend; **also owns `TranscriptLine` type and `buildTranscriptContent` helper** |
 
 **Changes (v0.2.0)**:
+
 - Added `TranscriptLine` type (moved from session-store)
 - Added `buildTranscriptContent` function (moved from session-store)
 - Added `readTranscript` and `deleteTranscript` commands
 
 ### Theme — `src/theme/`
 
-| File | LOC | Purpose |
-|------|-----|---------|
-| `use-theme.ts` | 30 | Hook for light/dark theme toggle; persists to localStorage via Zustand |
+| File           | LOC | Purpose                                                                |
+| -------------- | --- | ---------------------------------------------------------------------- |
+| `use-theme.ts` | 30  | Hook for light/dark theme toggle; persists to localStorage via Zustand |
 
 ### Internationalization (i18n) — `src/i18n/`
 
-| File | LOC | Purpose |
-|------|-----|---------|
-| `index.ts` | 36 | i18n config (react-i18next); reads persisted `uiLanguage` from localStorage; auto-initializes on app start |
-| `locales/en.ts` | ~60 | English UI strings (~60 keys); exported as named `en` object |
-| `locales/vi.ts` | ~60 | Vietnamese UI strings; typed as `Record<TranslationKeys, string>` for type safety |
-| `i18next.d.ts` | ~20 | Module augmentation for `useTranslation()` type safety; declares `TranslationKeys` type |
+| File            | LOC | Purpose                                                                                                    |
+| --------------- | --- | ---------------------------------------------------------------------------------------------------------- |
+| `index.ts`      | 36  | i18n config (react-i18next); reads persisted `uiLanguage` from localStorage; auto-initializes on app start |
+| `locales/en.ts` | ~60 | English UI strings (~60 keys); exported as named `en` object                                               |
+| `locales/vi.ts` | ~60 | Vietnamese UI strings; typed as `Record<TranslationKeys, string>` for type safety                          |
+| `i18next.d.ts`  | ~20 | Module augmentation for `useTranslation()` type safety; declares `TranslationKeys` type                    |
+
+---
+
+## Frontend (React/TypeScript) — `src/v2/` (Wireframe v2)
+
+Static UI preview with no business logic. Useful for design review, prototyping, and stakeholder demos.
+
+**Note**: v2 is **tree-shaken from v1 builds**. Only loaded when `VITE_UI_VERSION=v2`.
+
+### Structure
+
+```
+src/v2/
+├── tokens/
+│   └── tokens.ts           — Design tokens (Theme interface, VT colors, ThemeProvider context)
+├── components/
+│   ├── icons/
+│   │   └── index.tsx       — Icon library (18 SVG icons with typed props)
+│   ├── ui/
+│   │   └── primitives.tsx  — Shared primitives (Card, Toggle, StatusBar, SpeakerAvatar, LangTag)
+│   ├── screens/
+│   │   ├── main-screen.tsx + helpers
+│   │   ├── lang-sheet-screen.tsx
+│   │   ├── history-screen.tsx
+│   │   ├── detail-screen.tsx
+│   │   ├── settings-screen.tsx
+│   │   └── dialog-screen.tsx
+│   └── AppShell/
+│       └── app-shell-v2.tsx — Shell + floating preview nav (6 tabs)
+└── app-v2.tsx             — Root component (ThemeProvider wrapper)
+```
+
+### Key Files
+
+| File                                   | LOC    | Purpose                                                               |
+| -------------------------------------- | ------ | --------------------------------------------------------------------- |
+| `tokens/tokens.ts`                     | ~150   | Theme interface, VT constants, ThemeProvider, useT hook               |
+| `components/icons/index.tsx`           | ~350   | 18 SVG icon components with typed `IconProps`                         |
+| `components/ui/primitives.tsx`         | ~200   | 5 shared primitives (Card, Toggle, StatusBar, SpeakerAvatar, LangTag) |
+| `components/screens/*.tsx`             | 50–150 | 6 static screen components (each with screen-local helpers)           |
+| `components/AppShell/app-shell-v2.tsx` | ~100   | App shell + PreviewNav floating pill                                  |
+| `app-v2.tsx`                           | ~20    | Root entry with ThemeProvider                                         |
+
+### Design Tokens
+
+**Location**: `src/v2/tokens/tokens.ts`
+
+```typescript
+export const VT = {
+  colors: { /* cyan, navy, red, green, etc. */ },
+  speakerPalette: [ /* 8 colors for speaker avatars */ ],
+  fontStack: { /* font families */ },
+};
+export const VT_W = 375;  // Design width
+export const VT_H = 812;  // Design height
+export const makeTheme(dark: boolean): Theme { /* light/dark variants */ }
+```
+
+### No Business Logic
+
+All screens are **100% static**:
+
+- Click handlers are `() => {}`
+- No `useState`, `useEffect`, or `useContext`
+- Prop-based styling only (active/inactive states)
+- Safe for design review and demo purposes
 
 ---
 
@@ -129,28 +214,31 @@ Quick reference guide to all modules, their purpose, and size. Use this for modu
 
 ### Root Module
 
-| File | LOC | Purpose |
-|------|-----|---------|
+| File     | LOC | Purpose                                                                             |
+| -------- | --- | ----------------------------------------------------------------------------------- |
 | `lib.rs` | ~50 | Tauri builder entry point; registers commands, initializes plugins (none currently) |
 
 ### Commands
 
-| File | LOC | Purpose |
-|------|-----|---------|
-| `commands/mod.rs` | ~20 | Module re-exports; exposes `transcript` command module |
+| File                     | LOC  | Purpose                                                                                                                                             |
+| ------------------------ | ---- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `commands/mod.rs`        | ~20  | Module re-exports; exposes `transcript` command module                                                                                              |
 | `commands/transcript.rs` | ~100 | Tauri commands: `write_transcript`, `list_transcripts`, `read_transcript`, `delete_transcript`; path validation, atomic writes, metadata collection |
 
 **Changes (v0.2.0)**:
+
 - Added `read_transcript` command
 - Added `delete_transcript` command
 
 **Removed (v0.2.0)**:
+
 - `src-tauri/src/audio/` — Audio layer no longer needed (SDK handles audio capture)
 - `commands/audio.rs` — Audio commands no longer needed
 
 ### Path Handling
 
 All file operations sandboxed to `~/Documents/TranslationAssistant/`:
+
 - **macOS/Linux**: `~/Documents/TranslationAssistant/`
 - **Windows**: `C:\Users\{user}\Documents\TranslationAssistant\`
 - **iOS**: App Documents directory
@@ -164,9 +252,9 @@ All file operations sandboxed to `~/Documents/TranslationAssistant/`:
 
 ```json
 {
-  "@soniox/react": "^0.1.0",     // Speech-to-text + translation SDK
-  "react-i18next": "^13.x.x",    // NEW: UI internationalization
-  "i18next": "^23.x.x",          // NEW: i18n framework
+  "@soniox/react": "^0.1.0", // Speech-to-text + translation SDK
+  "react-i18next": "^13.x.x", // NEW: UI internationalization
+  "i18next": "^23.x.x", // NEW: i18n framework
   "react": "^18.3.1",
   "zustand": "^4.4.0",
   "@tauri-apps/api": "^2.0.0"
@@ -223,7 +311,9 @@ dirs = "5.0"  // For document_dir()
 ## Data Types
 
 ### TranscriptLine (v0.2.0)
+
 Located in `src/tauri/transcript-fs.ts`:
+
 ```typescript
 export interface TranscriptLine {
   originalText: string;
@@ -235,6 +325,7 @@ export interface TranscriptLine {
 Used to represent a single finalized statement (source + translation).
 
 ### TranscriptMeta
+
 ```typescript
 export interface TranscriptMeta {
   name: string;
@@ -251,19 +342,21 @@ Metadata for transcript files (from `list_transcripts`).
 
 All files meet target LOC limits:
 
-| Category | Max LOC | Largest File | Status |
-|----------|---------|------|--------|
-| React components | 150 | `settings-panel.tsx` (150 LOC) | ✓ Met |
-| Custom hooks | 120 | `use-translation-session.ts` (~120 LOC) | ✓ Met |
-| Stores (Zustand) | 100 | `settings-store.ts` (42 LOC) | ✓ Met |
-| Services | 100 | `tts-service.ts` (50 LOC) | ✓ Met |
-| Rust commands | 100 | `transcript.rs` (~100 LOC) | ✓ Met |
+| Category         | Max LOC | Largest File                            | Status |
+| ---------------- | ------- | --------------------------------------- | ------ |
+| React components | 150     | `settings-panel.tsx` (150 LOC)          | ✓ Met  |
+| Custom hooks     | 120     | `use-translation-session.ts` (~120 LOC) | ✓ Met  |
+| Stores (Zustand) | 100     | `settings-store.ts` (42 LOC)            | ✓ Met  |
+| Services         | 100     | `tts-service.ts` (50 LOC)               | ✓ Met  |
+| Rust commands    | 100     | `transcript.rs` (~100 LOC)              | ✓ Met  |
 
 ---
 
 ## Module Discovery Index
 
 ### If you need to...
+
+**Switch UI versions**: Set `VITE_UI_VERSION=v2` in `.env.local` and restart `npm run dev`
 
 **Understand the recording flow**: Start with `App.tsx` → `useTranslationSession` → `@soniox/react` hooks
 
@@ -286,12 +379,14 @@ All files meet target LOC limits:
 ## Version History
 
 ### v0.2.0 (Current)
+
 - Migrated to @soniox/react SDK
 - Removed: SonioxClient, AudioCapture, PCMWorklet, session-store
 - Added: Hook-local state, History components
 - Moved: TranscriptLine to transcript-fs.ts
 
 ### v0.1.0 (Legacy)
+
 - Custom WebSocket client
 - AudioWorklet PCM encoding
 - Zustand SessionStore
@@ -300,14 +395,14 @@ All files meet target LOC limits:
 
 ## Performance Metrics
 
-| Metric | Target | Actual | Notes |
-|--------|--------|--------|-------|
-| App startup | <2s | ~1.2s | React + Zustand hydration |
-| Bundle (gzipped) | <300KB | ~200KB | React + Zustand + UI lib |
-| Memory (idle) | <100MB | ~90MB | Safari/Chrome measured |
-| Memory (recording) | <200MB | ~150MB | Peak during active session |
-| STT latency | 300–500ms | 400ms (p50) | Soniox dependent |
-| TTS latency | <1s | ~800ms | Browser-dependent |
+| Metric             | Target    | Actual      | Notes                      |
+| ------------------ | --------- | ----------- | -------------------------- |
+| App startup        | <2s       | ~1.2s       | React + Zustand hydration  |
+| Bundle (gzipped)   | <300KB    | ~200KB      | React + Zustand + UI lib   |
+| Memory (idle)      | <100MB    | ~90MB       | Safari/Chrome measured     |
+| Memory (recording) | <200MB    | ~150MB      | Peak during active session |
+| STT latency        | 300–500ms | 400ms (p50) | Soniox dependent           |
+| TTS latency        | <1s       | ~800ms      | Browser-dependent          |
 
 ---
 
@@ -317,3 +412,4 @@ All files meet target LOC limits:
 - **Standards**: See `docs/code-standards.md` for coding conventions
 - **Roadmap**: See `docs/project-roadmap.md` for planned features
 - **API Docs**: See `docs/architecture/tauri-integration.md` for command specs
+- **UI v2 Plan**: See `plans/260420-1028-ui-v2-wireframe/` for wireframe implementation details

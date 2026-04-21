@@ -12,12 +12,12 @@ Reconnection strategies, chunk buffering, and error recovery (now SDK-managed).
 **v0.1.0**: Custom `SonioxClient` class managed all reconnection logic.  
 **v0.2.0**: @soniox/react SDK manages WebSocket connection, reconnection, and buffering internally.
 
-| Responsibility | v0.1.0 | v0.2.0 |
-|---|---|---|
-| WebSocket connection | Custom `SonioxClient` | SDK `useRecording` hook |
-| Exponential backoff | Custom implementation | SDK (internal) |
-| Chunk buffering | Custom `pendingChunks` array | SDK (internal) |
-| Error handling | Custom error callbacks | SDK callbacks |
+| Responsibility       | v0.1.0                       | v0.2.0                  |
+| -------------------- | ---------------------------- | ----------------------- |
+| WebSocket connection | Custom `SonioxClient`        | SDK `useRecording` hook |
+| Exponential backoff  | Custom implementation        | SDK (internal)          |
+| Chunk buffering      | Custom `pendingChunks` array | SDK (internal)          |
+| Error handling       | Custom error callbacks       | SDK callbacks           |
 
 **Benefit**: ~150 LOC removed; SDK handles battle-tested resilience patterns.
 
@@ -49,13 +49,13 @@ useTranslationSession callback (onResult) called with new results
 const { languageA, languageB, autoDetect } = useSettingsStore();
 
 const recording = useRecording({
-  model: 'stt-rt-v4',
+  model: "stt-rt-v4",
   language_hints: autoDetect ? [languageA, languageB] : [languageA],
   language_hints_strict: !autoDetect,
   translation: {
-    type: 'two_way',
+    type: "two_way",
     language_a: languageA,
-    language_b: languageB
+    language_b: languageB,
   },
   enable_language_identification: true,
   apiKey: async () => {
@@ -73,8 +73,8 @@ const recording = useRecording({
 });
 
 // Hook exposes status
-recording.status // 'idle' | 'starting' | 'connecting' | 'recording' | 'stopping'
-recording.error  // null or error if unrecoverable
+recording.status; // 'idle' | 'starting' | 'connecting' | 'recording' | 'stopping'
+recording.error; // null or error if unrecoverable
 ```
 
 ---
@@ -83,14 +83,14 @@ recording.error  // null or error if unrecoverable
 
 Different error types handled by SDK:
 
-| Error | Recovery | User Feedback |
-|-------|----------|---------------|
-| Network timeout | Auto-reconnect (exponential backoff) | Status shows "connecting" |
-| Server 5xx | Auto-reconnect (exponential backoff) | Status shows "connecting" |
-| Connection drops | Auto-reconnect (exponential backoff) | Status shows "connecting" |
-| Invalid API key | No retry | Error banner: "API key invalid" |
-| Auth failure | No retry | Error banner: "Authentication failed" |
-| Mic permission denied | No retry | Error banner: "Permission denied" |
+| Error                 | Recovery                             | User Feedback                         |
+| --------------------- | ------------------------------------ | ------------------------------------- |
+| Network timeout       | Auto-reconnect (exponential backoff) | Status shows "connecting"             |
+| Server 5xx            | Auto-reconnect (exponential backoff) | Status shows "connecting"             |
+| Connection drops      | Auto-reconnect (exponential backoff) | Status shows "connecting"             |
+| Invalid API key       | No retry                             | Error banner: "API key invalid"       |
+| Auth failure          | No retry                             | Error banner: "Authentication failed" |
+| Mic permission denied | No retry                             | Error banner: "Permission denied"     |
 
 ---
 
@@ -99,24 +99,22 @@ Different error types handled by SDK:
 ### Removed: Custom SonioxClient Class
 
 **Old Code** (`src/providers/soniox/soniox-client.ts`):
+
 ```typescript
 export class SonioxClient implements STTProvider {
   private ws: WebSocket | null = null;
   private retryCount = 0;
   private maxRetries = 10;
   private pendingChunks: Int16Array[] = [];
-  
+
   // Exponential backoff logic
   private scheduleReconnect() {
-    const delay = Math.min(
-      1000 * Math.pow(2, this.retryCount),
-      30000
-    );
+    const delay = Math.min(1000 * Math.pow(2, this.retryCount), 30000);
     const jitter = Math.random() * 100;
     setTimeout(() => this.connect(), delay + jitter);
     this.retryCount++;
   }
-  
+
   // Chunk buffering logic
   async send(chunk: Int16Array): Promise<void> {
     if (this.ws?.readyState === WebSocket.OPEN) {
@@ -125,7 +123,7 @@ export class SonioxClient implements STTProvider {
       this.pendingChunks.push(chunk);
     }
   }
-  
+
   // ... more connection handling
 }
 ```
@@ -135,6 +133,7 @@ export class SonioxClient implements STTProvider {
 ### Removed: Pending Chunk Buffer
 
 **Old Code**:
+
 ```typescript
 private pendingChunks: Int16Array[] = [];
 
@@ -152,6 +151,7 @@ private onConnected() {
 ### Removed: Preemptive 280-Minute Reconnection
 
 **Old Code** (handled 300min Soniox stream limit):
+
 ```typescript
 const STREAM_TIMEOUT_MS = 280 * 60 * 1000;
 
@@ -174,23 +174,27 @@ onConnected() {
 
 ```typescript
 // In useTranslationSession
-const recording = useRecording({ /* ... */ });
+const recording = useRecording({
+  /* ... */
+});
 
 // Status values
-recording.status === 'idle'       // Not recording
-recording.status === 'starting'   // Initializing (getting permission)
-recording.status === 'connecting' // Opening WebSocket
-recording.status === 'recording'  // Connected & streaming audio
-recording.status === 'stopping'   // Closing session
+recording.status === "idle"; // Not recording
+recording.status === "starting"; // Initializing (getting permission)
+recording.status === "connecting"; // Opening WebSocket
+recording.status === "recording"; // Connected & streaming audio
+recording.status === "stopping"; // Closing session
 
 // useTranslationSession exposes friendly status
 export function useTranslationSession() {
-  function toConnectionStatus(state: string): 'disconnected' | 'connecting' | 'connected' {
-    if (state === 'starting' || state === 'connecting') return 'connecting';
-    if (state === 'recording') return 'connected';
-    return 'disconnected';
+  function toConnectionStatus(
+    state: string,
+  ): "disconnected" | "connecting" | "connected" {
+    if (state === "starting" || state === "connecting") return "connecting";
+    if (state === "recording") return "connected";
+    return "disconnected";
   }
-  
+
   return {
     connectionStatus: toConnectionStatus(recording.status),
     // ...
@@ -199,11 +203,12 @@ export function useTranslationSession() {
 ```
 
 **Component Usage**:
+
 ```typescript
 const { connectionStatus } = useTranslationSession();
 
 return (
-  <StatusBadge 
+  <StatusBadge
     status={connectionStatus}
     // 'disconnected' → gray dot
     // 'connecting' → yellow pulse
@@ -236,6 +241,7 @@ Else if unrecoverable (invalid API key):
 ```
 
 **In useTranslationSession**:
+
 ```typescript
 return {
   error: recordingError || permissionError,
@@ -280,18 +286,19 @@ return {
 
 **Metrics to track** (future):
 
-| Metric | Target | Tool |
-|--------|--------|------|
-| Connection uptime | >99% | Log reconnects per session |
-| Reconnect latency (p95) | <5s | Measure time to 'connected' |
-| Chunk loss during reconnect | 0% | Compare chunks sent vs received |
-| Error rate | <1% | Count unrecoverable errors per 100 sessions |
+| Metric                      | Target | Tool                                        |
+| --------------------------- | ------ | ------------------------------------------- |
+| Connection uptime           | >99%   | Log reconnects per session                  |
+| Reconnect latency (p95)     | <5s    | Measure time to 'connected'                 |
+| Chunk loss during reconnect | 0%     | Compare chunks sent vs received             |
+| Error rate                  | <1%    | Count unrecoverable errors per 100 sessions |
 
 **Logging** (currently minimal):
+
 ```typescript
 // SDK may log internally; app should also log for debugging:
-console.log('[useTranslationSession] Recording started');
-console.error('[useTranslationSession] Recording error:', error);
+console.log("[useTranslationSession] Recording started");
+console.error("[useTranslationSession] Recording error:", error);
 ```
 
 ---
@@ -309,6 +316,7 @@ console.error('[useTranslationSession] Recording error:', error);
 ## SDK Documentation
 
 For detailed resilience behavior, refer to:
+
 - [@soniox/react SDK Docs](https://github.com/soniox/soniox-sdk-js)
 - [useRecording Hook API](https://github.com/soniox/soniox-sdk-js#userecording)
 

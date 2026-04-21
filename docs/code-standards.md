@@ -12,38 +12,44 @@ Coding conventions, architectural patterns, and quality guidelines for this proj
 ### TypeScript/JavaScript
 
 **Files**: kebab-case (e.g., `audio-capture.ts`, `use-translation-session.ts`)
+
 - Components: `{component-name}.tsx`
 - Hooks: `use-{hook-name}.ts`
 - Utilities: `{utility-name}.ts`
 - Services: `{service-name}-service.ts`
 
 **Variables & Functions**: camelCase
+
 ```typescript
-const recordingStatus = 'active';
-function getTranscriptMetadata() { }
+const recordingStatus = "active";
+function getTranscriptMetadata() {}
 ```
 
 **Constants**: UPPER_SNAKE_CASE (only if truly immutable)
+
 ```typescript
-const API_KEY_STORAGE_KEY = 'soniox-api-key';
-const DEFAULT_LANGUAGE_PAIR = { source: 'en', target: 'es' };
+const API_KEY_STORAGE_KEY = "soniox-api-key";
+const DEFAULT_LANGUAGE_PAIR = { source: "en", target: "es" };
 ```
 
 **React Components**: PascalCase
+
 ```typescript
-export const RecordButton = () => { };
-export const TranslationDisplay = () => { };
+export const RecordButton = () => {};
+export const TranslationDisplay = () => {};
 ```
 
 **Zustand Stores**: descriptive, camelCase file; exports named `{Store}Store`
+
 ```typescript
 // session-store.ts
 export const useSessionStore = create(...)
 ```
 
 **Types/Interfaces**: PascalCase
+
 ```typescript
-interface STTProvider { }
+interface STTProvider {}
 type TranscriptLine = { source: string; translation: string };
 ```
 
@@ -52,17 +58,20 @@ type TranscriptLine = { source: string; translation: string };
 **Files**: snake_case (e.g., `soniox_client.rs`, `transcript.rs`)
 
 **Functions/Methods**: snake_case
+
 ```rust
 fn write_transcript(filename: &str, content: &str) -> Result<(), Error> { }
 ```
 
 **Types/Structs**: PascalCase
+
 ```rust
 struct TranscriptMetadata { }
 impl TranscriptWriter { }
 ```
 
 **Constants**: UPPER_SNAKE_CASE
+
 ```rust
 const MAX_CHUNK_SIZE: usize = 32000;
 ```
@@ -71,15 +80,17 @@ const MAX_CHUNK_SIZE: usize = 32000;
 
 ## File Size Limits
 
-| Category | Max LOC | Rationale |
-|----------|---------|-----------|
-| React components | 150 | Readability; consider splitting if 2+ major features |
-| Custom hooks | 120 | Single responsibility; split if orchestrating multiple providers |
-| Stores (Zustand) | 100 | State cohesion; one store per domain |
-| Services/Utilities | 100 | Testability; encourage composition |
-| Rust commands | 100 | Clarity; split complex I/O across modules |
+| Category           | Max LOC | Rationale                                                        |
+| ------------------ | ------- | ---------------------------------------------------------------- |
+| React components   | 150     | Readability; consider splitting if 2+ major features             |
+| Custom hooks       | 120     | Single responsibility; split if orchestrating multiple providers |
+| Stores (Zustand)   | 100     | State cohesion; one store per domain                             |
+| Services/Utilities | 100     | Testability; encourage composition                               |
+| Rust commands      | 100     | Clarity; split complex I/O across modules                        |
 
-**Current Compliance**: All files meet limits (largest: `settings-panel.tsx` at 150 LOC, `use-translation-session.ts` at 112 LOC).
+**Current Compliance**: All files meet limits (v1 and v2). Largest: `settings-panel.tsx` (150 LOC), `use-translation-session.ts` (112 LOC), v2 icon library (~350 LOC, acceptable for icon definitions).
+
+**Note**: `src/v2/` is a wireframe-only UI; LOC limits relaxed slightly for icon definitions (no business logic).
 
 ---
 
@@ -123,7 +134,7 @@ export const TranslationDisplay: React.FC<TranslationDisplayProps> = ({
   transcripts,
   isLoading = false,
   onDelete,
-}) => { };
+}) => {};
 ```
 
 ### Hook Usage
@@ -186,7 +197,7 @@ Create one store per domain. Use slices for large stores (not applicable to curr
 
 ```typescript
 // session-store.ts
-import { create } from 'zustand';
+import { create } from "zustand";
 
 interface SessionState {
   recording: boolean;
@@ -203,7 +214,7 @@ interface SessionState {
 const initialState: Omit<SessionState, keyof Actions> = {
   recording: false,
   connected: false,
-  interimToken: '',
+  interimToken: "",
   finalTokens: [],
   error: null,
 };
@@ -212,8 +223,7 @@ export const useSessionStore = create<SessionState>((set) => ({
   ...initialState,
   setRecording: (recording) => set({ recording }),
   setConnected: (connected) => set({ connected }),
-  addToken: (token) =>
-    set((s) => ({ finalTokens: [...s.finalTokens, token] })),
+  addToken: (token) => set((s) => ({ finalTokens: [...s.finalTokens, token] })),
   reset: () => set(initialState),
 }));
 ```
@@ -226,11 +236,11 @@ Use `persist` middleware for `localStorage` integration with schema migration su
 export const useSettingsStore = create<SettingsState>()(
   persist(
     (set) => ({
-      apiKey: '',
-      languageA: 'en',
-      languageB: 'vi',
+      apiKey: "",
+      languageA: "en",
+      languageB: "vi",
       autoDetect: false,
-      outputMode: 'text' as const,
+      outputMode: "text" as const,
       setApiKey: (key) => set({ apiKey: key }),
       setLanguageA: (lang) => set({ languageA: lang }),
       setLanguageB: (lang) => set({ languageB: lang }),
@@ -238,7 +248,7 @@ export const useSettingsStore = create<SettingsState>()(
       // ...
     }),
     {
-      name: 'translation-assistant-settings',
+      name: "translation-assistant-settings",
       version: 1,
       migrate: (persisted: any, version) => {
         if (version < 1) {
@@ -260,8 +270,8 @@ export const useSettingsStore = create<SettingsState>()(
         outputMode: state.outputMode,
         uiLanguage: state.uiLanguage,
       }),
-    }
-  )
+    },
+  ),
 );
 ```
 
@@ -293,7 +303,7 @@ async function startRecording() {
     await sonioxClient.connect();
     useSessionStore.setState({ connected: true, error: null });
   } catch (err) {
-    const errorMsg = err instanceof Error ? err.message : 'Unknown error';
+    const errorMsg = err instanceof Error ? err.message : "Unknown error";
     useSessionStore.setState({
       error: new Error(`Failed to start: ${errorMsg}`),
     });
@@ -307,10 +317,10 @@ Keep error messages concise and actionable.
 
 ```typescript
 // ✓ Good
-'Microphone permission denied. Grant in Settings → Privacy.'
+"Microphone permission denied. Grant in Settings → Privacy.";
 
 // ✗ Avoid
-'PermissionDeniedError: NotAllowedError: Permission denied'
+"PermissionDeniedError: NotAllowedError: Permission denied";
 ```
 
 ### Logging
@@ -318,7 +328,7 @@ Keep error messages concise and actionable.
 Use `console.error()` for debugging; remove or set log level in production.
 
 ```typescript
-console.error('[AudioCapture] Failed to initialize:', err);
+console.error("[AudioCapture] Failed to initialize:", err);
 ```
 
 ---
@@ -331,7 +341,7 @@ Create TypeScript wrapper functions in `src/tauri/` for type safety.
 
 ```typescript
 // tauri/transcript-fs.ts
-import { invoke } from '@tauri-apps/api/core';
+import { invoke } from "@tauri-apps/api/core";
 
 interface TranscriptMetadata {
   filename: string;
@@ -342,13 +352,13 @@ interface TranscriptMetadata {
 
 export async function writeTranscript(
   filename: string,
-  content: string
+  content: string,
 ): Promise<void> {
-  return await invoke('write_transcript', { filename, content });
+  return await invoke("write_transcript", { filename, content });
 }
 
 export async function listTranscripts(): Promise<TranscriptMetadata[]> {
-  return await invoke('list_transcripts');
+  return await invoke("list_transcripts");
 }
 ```
 
@@ -380,6 +390,7 @@ async function saveTranscript(data: string) {
 Custom `AudioWorklet` and `SonioxClient` have been replaced by SDK hooks:
 
 **Removed**:
+
 - `AudioWorklet` setup (replaced by SDK's `useRecording` hook)
 - PCM Float32 → Int16 conversion (handled by SDK internally)
 - Custom WebSocket connection (replaced by SDK's connection management)
@@ -387,27 +398,27 @@ Custom `AudioWorklet` and `SonioxClient` have been replaced by SDK hooks:
 **Current Pattern** (`src/hooks/use-translation-session.ts`):
 
 ```typescript
-import { useRecording, useMicrophonePermission } from '@soniox/react';
+import { useRecording, useMicrophonePermission } from "@soniox/react";
 
 export function useTranslationSession() {
   const { languageA, languageB, autoDetect } = useSettingsStore();
-  const { status: permissionStatus } = useMicrophonePermission({ 
-    autoCheck: true 
+  const { status: permissionStatus } = useMicrophonePermission({
+    autoCheck: true,
   });
 
   const recording = useRecording({
-    model: 'stt-rt-v4',
+    model: "stt-rt-v4",
     language_hints: autoDetect ? [languageA, languageB] : [languageA],
     language_hints_strict: !autoDetect,
     translation: {
-      type: 'two_way',
+      type: "two_way",
       language_a: languageA,
-      language_b: languageB
+      language_b: languageB,
     },
     enable_language_identification: true,
     apiKey: async () => {
       const key = await getApiKey();
-      if (!key) throw new Error('API key not configured');
+      if (!key) throw new Error("API key not configured");
       return key;
     },
     onResult: (result) => {
@@ -430,6 +441,7 @@ export function useTranslationSession() {
 ```
 
 **Benefits**:
+
 - SDK handles PCM encoding internally (no manual Float32→Int16 conversion)
 - SDK manages WebSocket lifecycle and reconnection
 - Simplified error handling
@@ -462,8 +474,8 @@ Use `unknown` or specific types instead.
 ```typescript
 // ✓ Good
 function parseResponse(data: unknown): TranscriptLine {
-  if (typeof data !== 'object' || data === null) {
-    throw new Error('Invalid response');
+  if (typeof data !== "object" || data === null) {
+    throw new Error("Invalid response");
   }
   // Type guard and parse
 }
@@ -481,19 +493,19 @@ Use type guards and exhaustive checks.
 ```typescript
 // ✓ Good
 if (error instanceof Error) {
-  console.error('Error message:', error.message);
+  console.error("Error message:", error.message);
 } else {
-  console.error('Unknown error:', error);
+  console.error("Unknown error:", error);
 }
 
 // Exhaustive check with discriminated union
-type Event = { type: 'connect' } | { type: 'disconnect' };
+type Event = { type: "connect" } | { type: "disconnect" };
 function handle(event: Event) {
   switch (event.type) {
-    case 'connect':
+    case "connect":
       // ...
       break;
-    case 'disconnect':
+    case "disconnect":
       // ...
       break;
     // TS will error if case missing
@@ -587,6 +599,34 @@ fn expand_documents_path(filename: &str) -> Result<PathBuf, String> {
 
 ---
 
+## Feature Flags & Environment Variables
+
+### UI Version Selection
+
+Toggle between production v1 and wireframe v2 via `VITE_UI_VERSION`:
+
+```bash
+# .env (committed)
+VITE_UI_VERSION=v1
+
+# .env.local (git-ignored for local testing)
+VITE_UI_VERSION=v2
+```
+
+**Implementation** (`src/App.tsx`):
+
+- Uses `import.meta.env.VITE_UI_VERSION` (evaluated at build time by Vite)
+- `React.lazy()` + `React.Suspense` for tree-shaking v2 code in v1 builds
+- Zero runtime cost for v2 when using v1
+
+**Adding New Flags**:
+
+1. Define in `.env` with comment
+2. Extend `ImportMetaEnv` in `src/vite-env.d.ts`
+3. Use `import.meta.env.{FLAG_NAME}` in code
+
+---
+
 ## Styling with Radix UI Themes
 
 ### Component Composition
@@ -594,12 +634,14 @@ fn expand_documents_path(filename: &str) -> Result<PathBuf, String> {
 All UI uses Radix UI Themes (`@radix-ui/themes`) components. No Tailwind CSS or custom CSS. Layout primitives: `Flex`, `Box`, `Grid`, `ScrollArea`.
 
 ```jsx
-import { Flex, Box, Text, Button } from '@radix-ui/themes';
+import { Flex, Box, Text, Button } from "@radix-ui/themes";
 
 export const Component = () => (
-  <Box p="4" style={{ maxWidth: 500, margin: '0 auto' }}>
+  <Box p="4" style={{ maxWidth: 500, margin: "0 auto" }}>
     <Flex direction="column" gap="3">
-      <Text as="label" size="2" weight="medium">Label</Text>
+      <Text as="label" size="2" weight="medium">
+        Label
+      </Text>
       <Button>Submit</Button>
     </Flex>
   </Box>
@@ -609,6 +651,7 @@ export const Component = () => (
 ### Radix Props Over Inline Styles
 
 Prefer Radix props (`p`, `px`, `py`, `gap`, `direction`, `align`, `justify`) over inline `style={{}}`. Use inline styles only for:
+
 - Structural values not mapped to Radix props (e.g., `maxWidth: 500`, `margin: '0 auto'`)
 - Dynamic values computed at runtime (e.g., `color: getSpeakerColor()`)
 - CSS features without Radix equivalents (e.g., `textTransform: 'uppercase'`)
@@ -620,9 +663,15 @@ One CSS module allowed: `src/components/Controls/record-button.module.css` for a
 ```css
 /* record-button.module.css */
 @keyframes pulse-ring {
-  0% { box-shadow: 0 0 0 0 rgba(var(--red-9), 0.7); }
-  70% { box-shadow: 0 0 0 10px rgba(var(--red-9), 0); }
-  100% { box-shadow: 0 0 0 0 rgba(var(--red-9), 0); }
+  0% {
+    box-shadow: 0 0 0 0 rgba(var(--red-9), 0.7);
+  }
+  70% {
+    box-shadow: 0 0 0 10px rgba(var(--red-9), 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(var(--red-9), 0);
+  }
 }
 
 .pulse::before {
@@ -633,11 +682,13 @@ One CSS module allowed: `src/components/Controls/record-button.module.css` for a
 ### Theme & Appearance
 
 Theme is controlled by `useTheme()` hook → passed to `<Theme appearance={theme}>` in App.tsx.
+
 - `appearance="light"` or `"dark"` drives all color scales
 - `accentColor="blue"` (primary brand color)
 - `grayColor="slate"` (neutral scale)
 
 Radix CSS variables available globally:
+
 - Colors: `var(--red-9)`, `var(--green-9)`, `var(--gray-5)`, `var(--accent-9)`, etc.
 - Spacing: `var(--space-1)`, `var(--space-2)`, `var(--space-4)`, etc.
 - Type: `var(--font-family)`, `var(--font-size-2)`, etc.
@@ -675,15 +726,15 @@ Before pushing, ensure:
 
 ## Common Pitfalls
 
-| Pitfall | Solution |
-|---------|----------|
-| Updating Zustand state imperatively | Always use `set()` callback; never mutate |
-| Missing error handling in async code | Wrap in try-catch; dispatch to error store |
-| Creating new objects in render | Use `useMemo()` to prevent re-renders |
-| Passing entire store as prop | Use selectors; pass only needed values |
-| WebSocket not reconnecting | Implement exponential backoff (done in SonioxClient) |
-| TTS blocking audio input | Use queue; emit non-blocking on finalize |
-| Transcript not saved on stop | Always call `writeTranscript()` in stop handler |
+| Pitfall                              | Solution                                             |
+| ------------------------------------ | ---------------------------------------------------- |
+| Updating Zustand state imperatively  | Always use `set()` callback; never mutate            |
+| Missing error handling in async code | Wrap in try-catch; dispatch to error store           |
+| Creating new objects in render       | Use `useMemo()` to prevent re-renders                |
+| Passing entire store as prop         | Use selectors; pass only needed values               |
+| WebSocket not reconnecting           | Implement exponential backoff (done in SonioxClient) |
+| TTS blocking audio input             | Use queue; emit non-blocking on finalize             |
+| Transcript not saved on stop         | Always call `writeTranscript()` in stop handler      |
 
 ---
 
@@ -739,7 +790,7 @@ Document functions exported from modules.
  */
 export async function saveTranscript(
   filename: string,
-  content: string
+  content: string,
 ): Promise<void> {
   // ...
 }

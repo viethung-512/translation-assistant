@@ -81,6 +81,7 @@ SONIOX_API_KEY=your-api-key-here
 Location: `src-tauri/tauri.conf.json`
 
 Key settings:
+
 - **Window**: 800×600 fixed size
 - **CSP**: Disabled (`null`) for AudioWorklet and Web Audio API
 - **Capabilities**: `core:default` only
@@ -116,6 +117,7 @@ Abstracted `STTProvider` interface allows future multi-provider support (current
 ### Tauri Backend (Rust 2021)
 
 Two commands:
+
 1. `write_transcript(filename: string, content: string)` — Atomic file write to `~/Documents/TranslationAssistant/`
 2. `list_transcripts()` — Returns metadata array (filename, size, created, modified) sorted newest-first
 
@@ -171,14 +173,14 @@ translation-assistant/
 
 ## Key Dependencies
 
-| Package | Version | Purpose |
-|---------|---------|---------|
-| React | 18.3.1 | UI framework |
-| TypeScript | 5.6.2 | Type safety |
-| Tauri | 2.x | Desktop/mobile runtime |
-| Zustand | 5.0.12 | State management |
-| Tailwind CSS | 3.4.19 | Styling |
-| Vite | 6.0.3 | Build tool |
+| Package      | Version | Purpose                |
+| ------------ | ------- | ---------------------- |
+| React        | 18.3.1  | UI framework           |
+| TypeScript   | 5.6.2   | Type safety            |
+| Tauri        | 2.x     | Desktop/mobile runtime |
+| Zustand      | 5.0.12  | State management       |
+| Tailwind CSS | 3.4.19  | Styling                |
+| Vite         | 6.0.3   | Build tool             |
 
 ---
 
@@ -241,18 +243,19 @@ Currently no automated tests. Refer to [Code Standards](./docs/code-standards.md
 
 ## Troubleshooting
 
-| Issue | Solution |
-|-------|----------|
-| Microphone permission denied | Grant in OS settings; reload app |
-| WebSocket connection fails | Check API key; verify network connectivity |
-| TTS not playing | Enable audio output; check browser speaker permissions |
-| Theme not persisting | Check localStorage support in browser |
+| Issue                        | Solution                                               |
+| ---------------------------- | ------------------------------------------------------ |
+| Microphone permission denied | Grant in OS settings; reload app                       |
+| WebSocket connection fails   | Check API key; verify network connectivity             |
+| TTS not playing              | Enable audio output; check browser speaker permissions |
+| Theme not persisting         | Check localStorage support in browser                  |
 
 ---
 
 ## Support
 
 For bugs, feature requests, or questions:
+
 - Check [Project Roadmap](./docs/project-roadmap.md) for planned features
 - Refer to [System Architecture](./docs/system-architecture.md) for technical details
 - See [Code Standards](./docs/code-standards.md) for development guidelines

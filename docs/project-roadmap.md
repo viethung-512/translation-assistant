@@ -61,16 +61,16 @@
 
 #### Planned Features
 
-| Feature | Priority | Effort | Notes |
-|---------|----------|--------|-------|
-| Multi-provider support | High | Large | Add Google Cloud Speech-to-Text, AWS Transcribe options |
-| Transcript history UI | High | Small | Search, filter, delete transcripts within app (not file manager) |
-| Platform keychain integration | High | Small | Replace localStorage with Tauri `tauri-plugin-keychain` |
-| Custom vocabulary | Medium | Medium | User-defined terms for improved STT accuracy |
-| Batch processing queue | Medium | Large | Drag-drop audio files; process multiple at once |
-| Export formats | Medium | Medium | PDF, SRT subtitles, Markdown transcripts |
-| Recording quality indicator | Low | Small | Show confidence score and audio level meter |
-| Transcript timestamp markers | Low | Small | Click to replay audio from specific timestamp |
+| Feature                       | Priority | Effort | Notes                                                            |
+| ----------------------------- | -------- | ------ | ---------------------------------------------------------------- |
+| Multi-provider support        | High     | Large  | Add Google Cloud Speech-to-Text, AWS Transcribe options          |
+| Transcript history UI         | High     | Small  | Search, filter, delete transcripts within app (not file manager) |
+| Platform keychain integration | High     | Small  | Replace localStorage with Tauri `tauri-plugin-keychain`          |
+| Custom vocabulary             | Medium   | Medium | User-defined terms for improved STT accuracy                     |
+| Batch processing queue        | Medium   | Large  | Drag-drop audio files; process multiple at once                  |
+| Export formats                | Medium   | Medium | PDF, SRT subtitles, Markdown transcripts                         |
+| Recording quality indicator   | Low      | Small  | Show confidence score and audio level meter                      |
+| Transcript timestamp markers  | Low      | Small  | Click to replay audio from specific timestamp                    |
 
 #### Architecture Changes
 
@@ -82,6 +82,7 @@
 #### Database (If Needed)
 
 Consider adding local SQLite via Tauri if transcript history becomes complex:
+
 ```rust
 // tauri-plugin-sql: query transcripts by date, language, provider
 SELECT * FROM transcripts WHERE created_at > ? ORDER BY created_at DESC LIMIT 20;
@@ -97,14 +98,14 @@ SELECT * FROM transcripts WHERE created_at > ? ORDER BY created_at DESC LIMIT 20
 
 #### Planned Features
 
-| Feature | Priority | Effort | Notes |
-|---------|----------|--------|-------|
-| Offline transcription | High | Large | Embed local Whisper model; fallback if no internet |
-| Scheduled recording | Medium | Medium | Record at specific times (meetings, events) |
-| Noise reduction | Medium | Medium | Web Audio API filters; improve audio quality |
-| Voice activity detection (VAD) | Medium | Medium | Auto-stop when silence detected |
-| Transcript diff viewer | Low | Small | Compare two transcripts; highlight changes |
-| Export to external services | Low | Medium | Send to Google Docs, Notion, Slack |
+| Feature                        | Priority | Effort | Notes                                              |
+| ------------------------------ | -------- | ------ | -------------------------------------------------- |
+| Offline transcription          | High     | Large  | Embed local Whisper model; fallback if no internet |
+| Scheduled recording            | Medium   | Medium | Record at specific times (meetings, events)        |
+| Noise reduction                | Medium   | Medium | Web Audio API filters; improve audio quality       |
+| Voice activity detection (VAD) | Medium   | Medium | Auto-stop when silence detected                    |
+| Transcript diff viewer         | Low      | Small  | Compare two transcripts; highlight changes         |
+| Export to external services    | Low      | Medium | Send to Google Docs, Notion, Slack                 |
 
 #### Technical Approach
 
@@ -147,16 +148,16 @@ SELECT * FROM transcripts WHERE created_at > ? ORDER BY created_at DESC LIMIT 20
 
 ### High-Value, Lower-Priority
 
-| Feature | Rationale | Estimated Effort |
-|---------|-----------|------------------|
-| Transcript summarization | Help users quickly grasp long conversations | Large |
-| Real-time speaker diarization | Identify who is speaking (multi-speaker support) | Large |
-| Custom accent models | Improve accuracy for regional accents | Medium |
-| Transcript sentiment analysis | Gauge emotional tone of conversation | Small |
-| Time-based transcript statistics | Show word count, speaking time, language distribution | Medium |
-| Mobile offline recording | Record audio offline, transcribe later | Medium |
-| Stronghold keychain (advanced) | Tauri Stronghold for encrypted storage | Small |
-| Streaming to cloud storage | Auto-backup transcripts to S3, OneDrive, Dropbox | Medium |
+| Feature                          | Rationale                                             | Estimated Effort |
+| -------------------------------- | ----------------------------------------------------- | ---------------- |
+| Transcript summarization         | Help users quickly grasp long conversations           | Large            |
+| Real-time speaker diarization    | Identify who is speaking (multi-speaker support)      | Large            |
+| Custom accent models             | Improve accuracy for regional accents                 | Medium           |
+| Transcript sentiment analysis    | Gauge emotional tone of conversation                  | Small            |
+| Time-based transcript statistics | Show word count, speaking time, language distribution | Medium           |
+| Mobile offline recording         | Record audio offline, transcribe later                | Medium           |
+| Stronghold keychain (advanced)   | Tauri Stronghold for encrypted storage                | Small            |
+| Streaming to cloud storage       | Auto-backup transcripts to S3, OneDrive, Dropbox      | Medium           |
 
 ### Lower-Priority, Nice-to-Have
 
@@ -174,25 +175,25 @@ SELECT * FROM transcripts WHERE created_at > ? ORDER BY created_at DESC LIMIT 20
 
 **Goal**: v0.1.0 MVP release and beta testing
 
-| Phase | Status | Owner | Notes |
-|-------|--------|-------|-------|
-| Development | ✓ Complete | — | All features implemented; Radix UI migration complete |
-| Radix UI Migration | ✓ Complete | Dev Team | Zero Tailwind; all 12+ components modernized; tsc --noEmit passes |
-| Testing | ⏳ In Progress | QA | Manual testing on all 5 platforms |
-| Documentation | ✓ Complete | Docs Manager | README, architecture, code standards, Radix Themes guide |
-| Beta Signup | ⏳ Launching Soon | Marketing | Sign-up form for early testers |
-| Bug Fixes | ⏳ Ongoing | Dev Team | Address issues from beta feedback |
+| Phase              | Status            | Owner        | Notes                                                             |
+| ------------------ | ----------------- | ------------ | ----------------------------------------------------------------- |
+| Development        | ✓ Complete        | —            | All features implemented; Radix UI migration complete             |
+| Radix UI Migration | ✓ Complete        | Dev Team     | Zero Tailwind; all 12+ components modernized; tsc --noEmit passes |
+| Testing            | ⏳ In Progress    | QA           | Manual testing on all 5 platforms                                 |
+| Documentation      | ✓ Complete        | Docs Manager | README, architecture, code standards, Radix Themes guide          |
+| Beta Signup        | ⏳ Launching Soon | Marketing    | Sign-up form for early testers                                    |
+| Bug Fixes          | ⏳ Ongoing        | Dev Team     | Address issues from beta feedback                                 |
 
 ### Next Sprint (Q3 2026)
 
 **Goal**: v0.2.0 planning and design
 
-| Phase | Status | Owner | Timeline |
-|-------|--------|-------|----------|
-| Requirements | ⏳ Pending | Product | Review user feedback from v0.1.0 beta |
-| Design | ⏳ Pending | Design | Multi-provider UI mockups |
-| Architecture Review | ⏳ Pending | Tech Lead | Keychain plugin integration |
-| Development Kickoff | ⏳ Pending | Dev Team | Week of June 2026 |
+| Phase               | Status     | Owner     | Timeline                              |
+| ------------------- | ---------- | --------- | ------------------------------------- |
+| Requirements        | ⏳ Pending | Product   | Review user feedback from v0.1.0 beta |
+| Design              | ⏳ Pending | Design    | Multi-provider UI mockups             |
+| Architecture Review | ⏳ Pending | Tech Lead | Keychain plugin integration           |
+| Development Kickoff | ⏳ Pending | Dev Team  | Week of June 2026                     |
 
 ---
 
@@ -200,21 +201,21 @@ SELECT * FROM transcripts WHERE created_at > ? ORDER BY created_at DESC LIMIT 20
 
 ### High-Risk Items
 
-| Risk | Probability | Impact | Mitigation |
-|------|-------------|--------|-----------|
-| Soniox API deprecation | Low | High | Monitor changelog; maintain SDK version | 
-| Multi-provider integration complexity | Medium | High | Spike research in v0.2.0 planning phase |
-| iOS app store rejection | Low | High | Involve Apple compliance early; test with reviewers |
-| User data privacy concerns | Low | High | Clear privacy policy; no telemetry without opt-in |
+| Risk                                  | Probability | Impact | Mitigation                                          |
+| ------------------------------------- | ----------- | ------ | --------------------------------------------------- |
+| Soniox API deprecation                | Low         | High   | Monitor changelog; maintain SDK version             |
+| Multi-provider integration complexity | Medium      | High   | Spike research in v0.2.0 planning phase             |
+| iOS app store rejection               | Low         | High   | Involve Apple compliance early; test with reviewers |
+| User data privacy concerns            | Low         | High   | Clear privacy policy; no telemetry without opt-in   |
 
 ### Dependency Risks
 
-| Dependency | Version | Risk | Mitigation |
-|-----------|---------|------|-----------|
-| Soniox API | Proprietary | API changes, cost increases | Monitor pricing; plan fallback provider |
-| Tauri | 2.x | Framework bugs, security issues | Track releases; security patches on day 1 |
-| React | 18.3.1 | Deprecated features, breaking changes | Follow React RFC; test majors before upgrade |
-| Rust ecosystem | 1.70+ | crate instability, dependency conflicts | Audit dependencies quarterly; lock versions |
+| Dependency     | Version     | Risk                                    | Mitigation                                   |
+| -------------- | ----------- | --------------------------------------- | -------------------------------------------- |
+| Soniox API     | Proprietary | API changes, cost increases             | Monitor pricing; plan fallback provider      |
+| Tauri          | 2.x         | Framework bugs, security issues         | Track releases; security patches on day 1    |
+| React          | 18.3.1      | Deprecated features, breaking changes   | Follow React RFC; test majors before upgrade |
+| Rust ecosystem | 1.70+       | crate instability, dependency conflicts | Audit dependencies quarterly; lock versions  |
 
 ---
 
@@ -351,29 +352,29 @@ Old versions supported for 6 months after next major release. Users encouraged t
 
 ### User Adoption
 
-| Milestone | Target | Timeline |
-|-----------|--------|----------|
-| Beta testers | 100+ | End of April 2026 |
-| Public beta users | 500+ | June 2026 |
-| GA users | 1,000+ | August 2026 |
-| 10k users | — | Q4 2026 |
+| Milestone         | Target | Timeline          |
+| ----------------- | ------ | ----------------- |
+| Beta testers      | 100+   | End of April 2026 |
+| Public beta users | 500+   | June 2026         |
+| GA users          | 1,000+ | August 2026       |
+| 10k users         | —      | Q4 2026           |
 
 ### Engagement
 
-| Metric | Target | Measurement |
-|--------|--------|-------------|
-| Daily active users | 40% of installs | Via Soniox API calls |
-| Avg session length | 15+ min | UI telemetry |
-| Transcript save frequency | 2+ per week | File system API calls |
+| Metric                    | Target          | Measurement           |
+| ------------------------- | --------------- | --------------------- |
+| Daily active users        | 40% of installs | Via Soniox API calls  |
+| Avg session length        | 15+ min         | UI telemetry          |
+| Transcript save frequency | 2+ per week     | File system API calls |
 
 ### Quality
 
-| Metric | Target | Measurement |
-|--------|--------|-------------|
-| Crash rate | <1% | Sentry or similar |
-| STT accuracy | >95% on clear audio | User feedback |
-| App store rating | 4.5+ stars | App stores |
-| Bug resolution time | <1 week | Issue tracker |
+| Metric              | Target              | Measurement       |
+| ------------------- | ------------------- | ----------------- |
+| Crash rate          | <1%                 | Sentry or similar |
+| STT accuracy        | >95% on clear audio | User feedback     |
+| App store rating    | 4.5+ stars          | App stores        |
+| Bug resolution time | <1 week             | Issue tracker     |
 
 ---
 
@@ -426,23 +427,23 @@ Old versions supported for 6 months after next major release. Users encouraged t
 
 ### Supported Languages (v0.1.0)
 
-| Code | Language | STT | Translation |
-|------|----------|-----|-------------|
-| en | English | ✓ | ✓ |
-| es | Spanish | ✓ | ✓ |
-| fr | French | ✓ | ✓ |
-| de | German | ✓ | ✓ |
-| it | Italian | ✓ | ✓ |
-| pt | Portuguese | ✓ | ✓ |
-| ja | Japanese | ✓ | ✓ |
-| ko | Korean | ✓ | ✓ |
-| zh | Mandarin | ✓ | ✓ |
-| ru | Russian | ✓ | ✓ |
-| ar | Arabic | ✓ | ✓ |
-| hi | Hindi | ✓ | ✓ |
-| vi | Vietnamese | ✓ | ✓ |
-| th | Thai | ✓ | ✓ |
-| pl | Polish | ✓ | ✓ |
+| Code | Language   | STT | Translation |
+| ---- | ---------- | --- | ----------- |
+| en   | English    | ✓   | ✓           |
+| es   | Spanish    | ✓   | ✓           |
+| fr   | French     | ✓   | ✓           |
+| de   | German     | ✓   | ✓           |
+| it   | Italian    | ✓   | ✓           |
+| pt   | Portuguese | ✓   | ✓           |
+| ja   | Japanese   | ✓   | ✓           |
+| ko   | Korean     | ✓   | ✓           |
+| zh   | Mandarin   | ✓   | ✓           |
+| ru   | Russian    | ✓   | ✓           |
+| ar   | Arabic     | ✓   | ✓           |
+| hi   | Hindi      | ✓   | ✓           |
+| vi   | Vietnamese | ✓   | ✓           |
+| th   | Thai       | ✓   | ✓           |
+| pl   | Polish     | ✓   | ✓           |
 
 **Total**: 15 languages (v0.1.0), expandable to 50+ via Soniox
 
@@ -450,23 +451,23 @@ Old versions supported for 6 months after next major release. Users encouraged t
 
 ## Contact & Ownership
 
-| Role | Owner | Contact |
-|------|-------|---------|
-| Product Manager | — | (TBD) |
-| Technical Lead | — | (TBD) |
-| Documentation | — | (TBD) |
-| QA | — | (TBD) |
+| Role            | Owner | Contact |
+| --------------- | ----- | ------- |
+| Product Manager | —     | (TBD)   |
+| Technical Lead  | —     | (TBD)   |
+| Documentation   | —     | (TBD)   |
+| QA              | —     | (TBD)   |
 
 ---
 
 ## Version History
 
-| Version | Date | Notes |
-|---------|------|-------|
-| 0.1.0 | April 2026 | MVP release; Soniox integration |
-| 0.2.0 | (Planned) Q3 2026 | Multi-provider, transcript history, keychain |
-| 0.3.0 | (Planned) Q4 2026 | Offline, VAD, batch processing |
-| 1.0.0 | (Planned) 2027 | Production release; plugin marketplace |
+| Version | Date              | Notes                                        |
+| ------- | ----------------- | -------------------------------------------- |
+| 0.1.0   | April 2026        | MVP release; Soniox integration              |
+| 0.2.0   | (Planned) Q3 2026 | Multi-provider, transcript history, keychain |
+| 0.3.0   | (Planned) Q4 2026 | Offline, VAD, batch processing               |
+| 1.0.0   | (Planned) 2027    | Production release; plugin marketplace       |
 
 ---
 

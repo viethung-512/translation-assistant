@@ -35,6 +35,7 @@ Session Stop
 ### Client → Server (Audio)
 
 Binary frames containing Int16 PCM data:
+
 ```
 [1600 samples × 2 bytes per sample] = 3200 bytes per 100ms chunk
 ```
@@ -42,6 +43,7 @@ Binary frames containing Int16 PCM data:
 ### Client → Server (Config)
 
 Initial configuration sent on connect:
+
 ```json
 {
   "config": {
@@ -60,6 +62,7 @@ Initial configuration sent on connect:
 ### Server → Client (Tokens)
 
 JSON response on each token:
+
 ```json
 {
   "result": {
@@ -81,16 +84,16 @@ export class SonioxClient implements STTProvider {
   private retryCount = 0;
   private maxRetries = 10; // 2^10 = 1024s max backoff
   private pendingChunks: Int16Array[] = [];
-  
+
   onInterimToken?: (token: string) => void;
   onFinalToken?: (token: string, translation: string) => void;
   onError?: (error: Error) => void;
-  
+
   async connect(): Promise<void> {
     try {
-      this.ws = new WebSocket('wss://api.soniox.com/v1/listen');
-      this.ws.binaryType = 'arraybuffer';
-      
+      this.ws = new WebSocket("wss://api.soniox.com/v1/listen");
+      this.ws.binaryType = "arraybuffer";
+
       this.ws.onopen = () => this.onConnected();
       this.ws.onmessage = (event) => this.handleMessage(event);
       this.ws.onerror = (event) => this.handleError(event);
@@ -99,33 +102,33 @@ export class SonioxClient implements STTProvider {
       this.scheduleReconnect();
     }
   }
-  
+
   private onConnected() {
     this.sendAuth();
     this.retryCount = 0;
-    
+
     // Flush pending chunks
     while (this.pendingChunks.length > 0) {
       const chunk = this.pendingChunks.shift();
       this.ws?.send(chunk!.buffer);
     }
   }
-  
+
   private handleMessage(event: MessageEvent) {
     const message = JSON.parse(event.data);
     const interim = message.result?.interim_transcription;
     const final = message.result?.final_transcription;
     const translation = message.result?.final_translation;
-    
+
     if (interim && this.onInterimToken) {
       this.onInterimToken(interim);
     }
-    
+
     if (final && translation && this.onFinalToken) {
       this.onFinalToken(final, translation);
     }
   }
-  
+
   async send(chunk: Int16Array): Promise<void> {
     if (this.ws?.readyState === WebSocket.OPEN) {
       this.ws.send(chunk.buffer);
@@ -134,26 +137,26 @@ export class SonioxClient implements STTProvider {
       this.pendingChunks.push(chunk);
     }
   }
-  
+
   private scheduleReconnect() {
     const delay = Math.min(
       1000 * Math.pow(2, this.retryCount),
-      30000 // 30s max
+      30000, // 30s max
     );
     const jitter = Math.random() * 100;
     setTimeout(() => this.connect(), delay + jitter);
     this.retryCount++;
   }
-  
+
   async disconnect(): Promise<void> {
     this.ws?.close();
     this.ws = null;
   }
-  
+
   isConnected(): boolean {
     return this.ws?.readyState === WebSocket.OPEN;
   }
-  
+
   private sendAuth() {
     const apiKey = useSettingsStore.getState().apiKey;
     const authMsg = {
@@ -167,9 +170,9 @@ export class SonioxClient implements STTProvider {
     };
     this.ws?.send(JSON.stringify(authMsg));
   }
-  
+
   private handleError(event: Event) {
-    const error = new Error('Soniox WebSocket error');
+    const error = new Error("Soniox WebSocket error");
     if (this.onError) this.onError(error);
   }
 }
@@ -179,19 +182,20 @@ export class SonioxClient implements STTProvider {
 
 ## Error Scenarios
 
-| Scenario | Action |
-|----------|--------|
-| Invalid API key | Show error banner; do not retry |
-| Network timeout | Exponential backoff (2^n, max 30s) |
-| Server 5xx | Retry with backoff |
-| Connection drops mid-stream | Auto-reconnect; buffer chunks |
-| Stream exceeds 300min | Pre-emptive reconnect at 280min (see Connection Resilience) |
+| Scenario                    | Action                                                      |
+| --------------------------- | ----------------------------------------------------------- |
+| Invalid API key             | Show error banner; do not retry                             |
+| Network timeout             | Exponential backoff (2^n, max 30s)                          |
+| Server 5xx                  | Retry with backoff                                          |
+| Connection drops mid-stream | Auto-reconnect; buffer chunks                               |
+| Stream exceeds 300min       | Pre-emptive reconnect at 280min (see Connection Resilience) |
 
 ---
 
 ## API Key Handling
 
 API key sent in initial WebSocket message:
+
 ```json
 {
   "auth": {
@@ -219,6 +223,7 @@ API key sent in initial WebSocket message:
 Single WebSocket connection per app instance (no concurrent sessions).
 
 **Thread Safety**:
+
 - WebSocket callbacks run on browser event loop
 - State updates via Zustand (atomic)
 - Audio chunks buffered in pendingChunks array (FIFO)
@@ -235,10 +240,10 @@ To support additional providers (Google Cloud, AWS):
 4. In `useTranslationSession`, instantiate appropriate provider based on settings
 
 **Example** (future):
+
 ```typescript
-const provider = settings.provider === 'soniox'
-  ? new SonioxClient()
-  : new GoogleCloudClient();
+const provider =
+  settings.provider === "soniox" ? new SonioxClient() : new GoogleCloudClient();
 await provider.connect();
 ```
 
@@ -247,6 +252,7 @@ await provider.connect();
 ## Monitoring
 
 **Metrics to track** (future):
+
 - Connection uptime (% connected)
 - Token latency (p50, p95, p99)
 - Error rate by type

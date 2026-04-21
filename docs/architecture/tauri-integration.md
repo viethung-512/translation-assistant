@@ -18,25 +18,29 @@ Four Tauri commands expose transcript file I/O to the React frontend.
 Saves transcript to disk atomically.
 
 **TypeScript** (`src/tauri/transcript-fs.ts`):
+
 ```typescript
-import { invoke } from '@tauri-apps/api/core';
+import { invoke } from "@tauri-apps/api/core";
 
 export async function writeTranscript(
   filename: string,
-  content: string
+  content: string,
 ): Promise<void> {
-  return await invoke('write_transcript', { filename, content });
+  return await invoke("write_transcript", { filename, content });
 }
 ```
 
 **Usage** (from `useTranslationSession`):
+
 ```typescript
-await writeTranscript('transcript-2026-04-12T15-30-45.txt',
-  buildTranscriptContent(finalLines, sourceLang, targetLang, startedAt)
+await writeTranscript(
+  "transcript-2026-04-12T15-30-45.txt",
+  buildTranscriptContent(finalLines, sourceLang, targetLang, startedAt),
 );
 ```
 
 **Rust** (`src-tauri/src/commands/transcript.rs`):
+
 ```rust
 #[tauri::command]
 pub fn write_transcript(
@@ -51,6 +55,7 @@ pub fn write_transcript(
 ```
 
 **Error Handling**:
+
 - `expand_documents_path` fails → permission denied, Documents dir not found
 - `fs::write` fails → disk full, file permission denied
 - Errors returned as `Result<(), String>` → user sees message in UI
@@ -62,6 +67,7 @@ pub fn write_transcript(
 Fetches transcript metadata sorted newest-first.
 
 **TypeScript**:
+
 ```typescript
 export interface TranscriptMeta {
   name: string;
@@ -70,11 +76,12 @@ export interface TranscriptMeta {
 }
 
 export async function listTranscripts(): Promise<TranscriptMeta[]> {
-  return await invoke<TranscriptMeta[]>('list_transcripts');
+  return await invoke<TranscriptMeta[]>("list_transcripts");
 }
 ```
 
 **Usage** (from History component):
+
 ```typescript
 const transcripts = await listTranscripts();
 transcripts.forEach((t) => {
@@ -83,6 +90,7 @@ transcripts.forEach((t) => {
 ```
 
 **Rust**:
+
 ```rust
 #[derive(Serialize, Deserialize)]
 pub struct TranscriptMeta {
@@ -96,7 +104,7 @@ pub fn list_transcripts() -> Result<Vec<TranscriptMeta>, String> {
   let path = expand_documents_path("")?;
   let entries = std::fs::read_dir(&path)
     .map_err(|e| format!("Cannot list: {}", e))?;
-  
+
   let mut transcripts = vec![];
   for entry in entries {
     let entry = entry.map_err(|e| e.to_string())?;
@@ -107,14 +115,14 @@ pub fn list_transcripts() -> Result<Vec<TranscriptMeta>, String> {
       .and_then(|t| t.duration_since(UNIX_EPOCH).ok())
       .map(|d| DateTime::<Utc>::from(UNIX_EPOCH + d).to_rfc3339())
       .unwrap_or_default();
-    
+
     transcripts.push(TranscriptMeta {
       name: entry.file_name().into_string().unwrap_or_default(),
       path: entry.path().to_string_lossy().to_string(),
       createdAt: created,
     });
   }
-  
+
   // Sort newest first
   transcripts.sort_by(|a, b| b.createdAt.cmp(&a.createdAt));
   Ok(transcripts)
@@ -128,19 +136,22 @@ pub fn list_transcripts() -> Result<Vec<TranscriptMeta>, String> {
 Reads full transcript content by filename.
 
 **TypeScript**:
+
 ```typescript
 export async function readTranscript(filename: string): Promise<string> {
-  return await invoke<string>('read_transcript', { filename });
+  return await invoke<string>("read_transcript", { filename });
 }
 ```
 
 **Usage** (from History detail view):
+
 ```typescript
-const content = await readTranscript('transcript-2026-04-12T15-30-45.txt');
+const content = await readTranscript("transcript-2026-04-12T15-30-45.txt");
 // Display in modal or detail view
 ```
 
 **Rust**:
+
 ```rust
 #[tauri::command]
 pub fn read_transcript(filename: String) -> Result<String, String> {
@@ -157,19 +168,22 @@ pub fn read_transcript(filename: String) -> Result<String, String> {
 Deletes a transcript file.
 
 **TypeScript**:
+
 ```typescript
 export async function deleteTranscript(filename: string): Promise<void> {
-  return await invoke('delete_transcript', { filename });
+  return await invoke("delete_transcript", { filename });
 }
 ```
 
 **Usage** (from History item):
+
 ```typescript
-await deleteTranscript('transcript-2026-04-12T15-30-45.txt');
+await deleteTranscript("transcript-2026-04-12T15-30-45.txt");
 // Refresh transcript list
 ```
 
 **Rust**:
+
 ```rust
 #[tauri::command]
 pub fn delete_transcript(filename: String) -> Result<(), String> {
@@ -190,27 +204,28 @@ fn expand_documents_path(filename: &str) -> Result<PathBuf, String> {
   // Resolve user's Documents directory
   let docs = dirs::document_dir()
     .ok_or_else(|| "Documents directory not found".to_string())?;
-  
+
   // App-specific subdirectory
   let app_dir = docs.join("TranslationAssistant");
-  
+
   // Create directory if missing
   std::fs::create_dir_all(&app_dir)
     .map_err(|e| format!("Cannot create directory: {}", e))?;
-  
+
   // Join filename (no path traversal allowed)
   let full_path = app_dir.join(filename);
-  
+
   // Validate path is within app_dir (security check)
   if !full_path.starts_with(&app_dir) {
     return Err("Invalid path: traversal attempted".to_string());
   }
-  
+
   Ok(full_path)
 }
 ```
 
 **Platforms**:
+
 - **macOS**: `~/Documents/TranslationAssistant/`
 - **Windows**: `C:\Users\{user}\Documents\TranslationAssistant\`
 - **Linux**: `~/Documents/TranslationAssistant/`
@@ -252,23 +267,24 @@ export function buildTranscriptContent(
   lines: TranscriptLine[],
   sourceLang: string,
   targetLang: string,
-  startedAt: number
+  startedAt: number,
 ): string {
-  const date = new Date(startedAt).toISOString().replace('T', ' ').slice(0, 19);
-  const header = `[${date}] Session: ${sourceLang.toUpperCase()} → ${targetLang.toUpperCase()}\n${'─'.repeat(50)}\n`;
-  
+  const date = new Date(startedAt).toISOString().replace("T", " ").slice(0, 19);
+  const header = `[${date}] Session: ${sourceLang.toUpperCase()} → ${targetLang.toUpperCase()}\n${"─".repeat(50)}\n`;
+
   const body = lines
     .map((l) => {
       const t = new Date(l.timestampMs).toISOString().slice(11, 19);
       return `[${t}] ${l.translatedText}\n         ${l.originalText}`;
     })
-    .join('\n');
-  
+    .join("\n");
+
   return header + body;
 }
 ```
 
 **Benefits**:
+
 - Human-readable (can open in any text editor)
 - Portable (no vendor lock-in)
 - Easily searchable
@@ -276,6 +292,7 @@ export function buildTranscriptContent(
 - Timestamps allow chronological reconstruction
 
 **Filename Format**: `transcript-YYYY-MM-DDTHH-MM-SS.txt`
+
 - Example: `transcript-2026-04-12T15-30-45.txt`
 - ISO 8601 format (sortable by name)
 
@@ -288,6 +305,7 @@ Commands use Rust types that serialize/deserialize to TypeScript.
 ### TranscriptMeta Type
 
 **Rust**:
+
 ```rust
 #[derive(Serialize, Deserialize)]
 pub struct TranscriptMeta {
@@ -298,6 +316,7 @@ pub struct TranscriptMeta {
 ```
 
 **TypeScript**:
+
 ```typescript
 interface TranscriptMeta {
   name: string;
@@ -311,6 +330,7 @@ interface TranscriptMeta {
 All Tauri commands return `Result<T, String>`:
 
 **Rust**:
+
 ```rust
 pub fn write_transcript(...) -> Result<(), String> {
   // Success: Ok(())
@@ -319,6 +339,7 @@ pub fn write_transcript(...) -> Result<(), String> {
 ```
 
 **TypeScript** (via `invoke`):
+
 ```typescript
 try {
   await writeTranscript(filename, content);
@@ -336,6 +357,7 @@ try {
 Tauri capability system restricts file I/O:
 
 **Declared in `src-tauri/capabilities/default.json`**:
+
 ```json
 {
   "permissions": [
@@ -348,6 +370,7 @@ Tauri capability system restricts file I/O:
 ```
 
 **Restrictions**:
+
 - Can only access `~/Documents/TranslationAssistant/`
 - Cannot execute files
 - Cannot access system directories or sensitive files (`.env`, credentials)
@@ -373,25 +396,25 @@ All transcripts in single flat directory (no subdirectories).
 
 ## Error Scenarios
 
-| Scenario | Error | Recovery |
-|----------|-------|----------|
-| Documents dir doesn't exist | "Documents directory not found" | Tauri creates it on first write |
-| Disk full | "Failed to write: No space left" | User must free disk space |
-| File permission denied | "Failed to write: Permission denied" | User must grant permissions in OS settings |
-| Invalid filename (traversal) | "Invalid path: traversal attempted" | Reject and show to user |
-| File doesn't exist (read) | "Failed to read: No such file" | Show "not found" to user |
-| File deleted by external app | "Failed to read: No such file" | Show "not found" to user |
+| Scenario                     | Error                                | Recovery                                   |
+| ---------------------------- | ------------------------------------ | ------------------------------------------ |
+| Documents dir doesn't exist  | "Documents directory not found"      | Tauri creates it on first write            |
+| Disk full                    | "Failed to write: No space left"     | User must free disk space                  |
+| File permission denied       | "Failed to write: Permission denied" | User must grant permissions in OS settings |
+| Invalid filename (traversal) | "Invalid path: traversal attempted"  | Reject and show to user                    |
+| File doesn't exist (read)    | "Failed to read: No such file"       | Show "not found" to user                   |
+| File deleted by external app | "Failed to read: No such file"       | Show "not found" to user                   |
 
 ---
 
 ## Performance Notes
 
-| Operation | Latency | Notes |
-|-----------|---------|-------|
-| write_transcript (~50KB) | ~10ms | Atomic; no buffering |
-| list_transcripts (100 files) | ~20ms | Directory scan + sort |
-| read_transcript (~50KB) | ~5ms | Sequential read |
-| delete_transcript | ~2ms | File removal |
+| Operation                    | Latency | Notes                 |
+| ---------------------------- | ------- | --------------------- |
+| write_transcript (~50KB)     | ~10ms   | Atomic; no buffering  |
+| list_transcripts (100 files) | ~20ms   | Directory scan + sort |
+| read_transcript (~50KB)      | ~5ms    | Sequential read       |
+| delete_transcript            | ~2ms    | File removal          |
 
 All operations non-blocking (Tauri spawns on separate thread).
 
@@ -410,11 +433,13 @@ All operations non-blocking (Tauri spawns on separate thread).
 ## Future Enhancements
 
 **v0.3.0**:
+
 - Add `export_transcript(filename, format)` command (PDF, SRT, JSON)
 - Implement local SQLite for indexed full-text search
 - Add transcript tagging / metadata (custom labels)
 
 **v1.0+**:
+
 - Cloud backup integration (optional, user-initiated)
 - Transcript encryption at rest (Tauri Stronghold plugin)
 - Batch operations (delete multiple, bulk export)

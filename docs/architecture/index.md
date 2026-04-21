@@ -21,6 +21,7 @@ Detailed architecture documentation covering design patterns, data flow, and res
 **New to the codebase?** Start with [Overview & Diagram](./overview.md), then dive into specific topics.
 
 **Looking for specific answers?**
+
 - How does audio get captured? → [Audio Pipeline](./audio-pipeline.md)
 - How does connection recovery work? → [Connection Resilience](./connection-resilience.md)
 - Where is my API key stored? → [Security Architecture](./security-architecture.md)

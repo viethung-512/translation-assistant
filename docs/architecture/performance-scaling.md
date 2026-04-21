@@ -10,23 +10,23 @@ Memory, CPU, bandwidth usage and optimization strategies.
 
 ### Idle State
 
-| Component | Typical | Notes |
-|-----------|---------|-------|
-| React runtime | ~40MB | React 18 + Zustand |
-| Tauri runtime | ~30MB | Chromium-like renderer |
-| Rust backend | ~10MB | Minimal startup |
-| CSS/DOM | ~5MB | Tailwind + UI tree |
-| **Total** | **~85MB** | — |
+| Component     | Typical   | Notes                  |
+| ------------- | --------- | ---------------------- |
+| React runtime | ~40MB     | React 18 + Zustand     |
+| Tauri runtime | ~30MB     | Chromium-like renderer |
+| Rust backend  | ~10MB     | Minimal startup        |
+| CSS/DOM       | ~5MB      | Tailwind + UI tree     |
+| **Total**     | **~85MB** | —                      |
 
 ### Recording State (100 sec recording)
 
-| Component | Typical | Peak | Notes |
-|-----------|---------|------|-------|
-| SessionStore tokens | ~10MB | ~15MB | 1000 tokens × 10KB each |
-| Pending audio chunks | ~5MB | ~10MB | Buffer up to 600 chunks |
-| AudioContext buffers | ~5MB | ~5MB | Fixed size (sample buffers) |
-| TTS queue | <1MB | <1MB | Limited to 3 utterances |
-| **Total** | **~120MB** | **~180MB** | — |
+| Component            | Typical    | Peak       | Notes                       |
+| -------------------- | ---------- | ---------- | --------------------------- |
+| SessionStore tokens  | ~10MB      | ~15MB      | 1000 tokens × 10KB each     |
+| Pending audio chunks | ~5MB       | ~10MB      | Buffer up to 600 chunks     |
+| AudioContext buffers | ~5MB       | ~5MB       | Fixed size (sample buffers) |
+| TTS queue            | <1MB       | <1MB       | Limited to 3 utterances     |
+| **Total**            | **~120MB** | **~180MB** | —                           |
 
 ### Peak Memory (Long Recording)
 
@@ -52,16 +52,17 @@ Total ≈ 140MB
 
 ### Audio Processing
 
-| Operation | CPU | Duration | Frequency |
-|-----------|-----|----------|-----------|
-| Float32→Int16 conversion | 2% | 1ms | Every 100ms |
-| WebSocket send | <1% | <1ms | Every 100ms |
-| React re-render (token) | <5% | <10ms | Every 100ms |
-| TTS synthesis | 5–15% | 1–3s | Per finalized line |
+| Operation                | CPU   | Duration | Frequency          |
+| ------------------------ | ----- | -------- | ------------------ |
+| Float32→Int16 conversion | 2%    | 1ms      | Every 100ms        |
+| WebSocket send           | <1%   | <1ms     | Every 100ms        |
+| React re-render (token)  | <5%   | <10ms    | Every 100ms        |
+| TTS synthesis            | 5–15% | 1–3s     | Per finalized line |
 
 **Total during recording**: ~5–10% CPU (idle cores available).
 
 **Why low?**
+
 - AudioWorklet runs off main thread (no blocking)
 - React batches updates (reduces render frequency)
 - WebSocket is async (non-blocking)
@@ -93,6 +94,7 @@ Over 1 hour: 32 KB/s × 3600s = 115 MB
 ```
 
 **Mobile Impact** (LTE: 5–10 Mbps):
+
 - 256 Kbps audio is ~2.5% of available bandwidth
 - No measurable impact on other apps
 
@@ -128,11 +130,11 @@ Typical Estimate: 50–100 KB per hour of recording
 
 ### Accumulation Over Time
 
-| Usage | Storage After |
-|-------|---|
-| 5 hours/week | 250 KB after 1 week |
-| 20 hours/month | 1 MB after 1 month |
-| 240 hours/year | 12 MB after 1 year |
+| Usage          | Storage After       |
+| -------------- | ------------------- |
+| 5 hours/week   | 250 KB after 1 week |
+| 20 hours/month | 1 MB after 1 month  |
+| 240 hours/year | 12 MB after 1 year  |
 
 **User Device**: Negligible impact (typical phone: 64–256 GB).
 
@@ -157,9 +159,11 @@ Uncompressed:  ~700 KB
 ```
 
 **Download Time** (LTE: 5 Mbps):
+
 - 200 KB = 0.3 seconds (negligible)
 
 **Load Time**:
+
 - React hydration: <500ms
 - Tauri window open: ~1s
 - Total: <2s (meets target)
@@ -247,14 +251,14 @@ Memory: +5–10 MB for speaker embeddings
 
 ## Performance Targets vs Actuals
 
-| Metric | Target | Actual | Status |
-|--------|--------|--------|--------|
-| STT latency | 300–500ms | 300–500ms | ✓ Met |
-| Memory (idle) | <100MB | ~90MB | ✓ Met |
-| Memory (recording) | <200MB | ~100–150MB | ✓ Met |
-| Startup time | <2s | <2s | ✓ Met |
-| Bundle (gzipped) | <300KB | ~200KB | ✓ Met |
-| CPU (recording) | <15% | ~5–10% | ✓ Exceeded |
+| Metric             | Target    | Actual     | Status     |
+| ------------------ | --------- | ---------- | ---------- |
+| STT latency        | 300–500ms | 300–500ms  | ✓ Met      |
+| Memory (idle)      | <100MB    | ~90MB      | ✓ Met      |
+| Memory (recording) | <200MB    | ~100–150MB | ✓ Met      |
+| Startup time       | <2s       | <2s        | ✓ Met      |
+| Bundle (gzipped)   | <300KB    | ~200KB     | ✓ Met      |
+| CPU (recording)    | <15%      | ~5–10%     | ✓ Exceeded |
 
 ---
 
@@ -283,15 +287,16 @@ if (settings.enableTelemetry) {
 
 ### Minimum Specs (v0.1.0)
 
-| Spec | Minimum | Recommended |
-|------|---------|-------------|
-| RAM | 2 GB | 4+ GB |
-| Disk Space | 100 MB | 500 MB |
-| CPU | Dual-core 1GHz | Quad-core 2GHz+ |
-| Network | 3G (0.5 Mbps) | LTE 5+ Mbps |
-| OS | iOS 13, Android 8 | iOS 14+, Android 10+ |
+| Spec       | Minimum           | Recommended          |
+| ---------- | ----------------- | -------------------- |
+| RAM        | 2 GB              | 4+ GB                |
+| Disk Space | 100 MB            | 500 MB               |
+| CPU        | Dual-core 1GHz    | Quad-core 2GHz+      |
+| Network    | 3G (0.5 Mbps)     | LTE 5+ Mbps          |
+| OS         | iOS 13, Android 8 | iOS 14+, Android 10+ |
 
 **Unsupported**:
+
 - Low-memory devices (<1GB RAM)
 - Slow networks (<256 Kbps reliable)
 - Offline mode (requires live connection)
@@ -328,19 +333,19 @@ if (settings.enableTelemetry) {
 
 ### Hard Limits
 
-| Limit | Value | Reason |
-|-------|-------|--------|
-| WebSocket timeout | 300 minutes | Soniox API limit |
-| Pending chunk buffer | 600 chunks | ~60s audio; prevent runaway memory |
-| TTS queue | 3 utterances | Prevent TTS lag |
-| Concurrent WebSockets | 1 | Single recording per app instance |
+| Limit                 | Value        | Reason                             |
+| --------------------- | ------------ | ---------------------------------- |
+| WebSocket timeout     | 300 minutes  | Soniox API limit                   |
+| Pending chunk buffer  | 600 chunks   | ~60s audio; prevent runaway memory |
+| TTS queue             | 3 utterances | Prevent TTS lag                    |
+| Concurrent WebSockets | 1            | Single recording per app instance  |
 
 ### Soft Limits (Performance Degrades)
 
-| Limit | Value | Symptom |
-|-------|-------|---------|
-| Transcript count | 1000+ | Slow listing (O(n) filesystem scan) |
-| Tokens per session | 10,000+ | High memory (~100 MB) |
+| Limit              | Value     | Symptom                              |
+| ------------------ | --------- | ------------------------------------ |
+| Transcript count   | 1000+     | Slow listing (O(n) filesystem scan)  |
+| Tokens per session | 10,000+   | High memory (~100 MB)                |
 | Recording duration | 24+ hours | Long session state; may need restart |
 
 ---

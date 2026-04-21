@@ -13,30 +13,30 @@ Toggle persists to `localStorage`; initial value set from `prefers-color-scheme`
 
 ### Token Reference
 
-| Token | Light | Dark | Usage |
-|-------|-------|------|-------|
-| `--bg-primary` | `#ffffff` | `#0d0d14` | Page background |
-| `--bg-secondary` | `#f8fafc` | `#13131f` | Input, select backgrounds |
-| `--bg-tertiary` | `#f1f5f9` | `#1c1c2e` | Subtle surface (close button) |
-| `--text-primary` | `#0f172a` | `#f1f5f9` | Body text |
-| `--text-secondary` | `#475569` | `#94a3b8` | Labels, status |
-| `--text-muted` | `#94a3b8` | `#64748b` | Timestamps, placeholders |
-| `--border` | `#e2e8f0` | `#1e293b` | Dividers, card borders |
-| `--border-light` | `#f1f5f9` | `#1e293b` | Transcript line separators |
-| `--accent` | `#3b82f6` | `#60a5fa` | Buttons, active states |
-| `--accent-dim` | `#dbeafe` | `#1e3a5f` | Active mode bg (settings) |
-| `--danger` | `#ef4444` | `#f87171` | Errors, stop/delete |
-| `--danger-dim` | `#fee2e2` | `#3b1010` | Error banner background |
-| `--success` | `#22c55e` | `#4ade80` | "Live" status, stored key |
-| `--warning` | `#f59e0b` | `#fbbf24` | "Connecting" status |
-| `--overlay` | `rgba(0,0,0,0.45)` | `rgba(0,0,0,0.65)` | Modal backdrop |
-| `--shadow-sm` | `0 1px 3px rgba(0,0,0,0.08)` | `0 1px 3px rgba(0,0,0,0.3)` | Subtle shadow |
-| `--shadow-md` | `0 4px 20px rgba(0,0,0,0.12)` | `0 4px 20px rgba(0,0,0,0.4)` | Sheet, card shadow |
+| Token              | Light                         | Dark                         | Usage                         |
+| ------------------ | ----------------------------- | ---------------------------- | ----------------------------- |
+| `--bg-primary`     | `#ffffff`                     | `#0d0d14`                    | Page background               |
+| `--bg-secondary`   | `#f8fafc`                     | `#13131f`                    | Input, select backgrounds     |
+| `--bg-tertiary`    | `#f1f5f9`                     | `#1c1c2e`                    | Subtle surface (close button) |
+| `--text-primary`   | `#0f172a`                     | `#f1f5f9`                    | Body text                     |
+| `--text-secondary` | `#475569`                     | `#94a3b8`                    | Labels, status                |
+| `--text-muted`     | `#94a3b8`                     | `#64748b`                    | Timestamps, placeholders      |
+| `--border`         | `#e2e8f0`                     | `#1e293b`                    | Dividers, card borders        |
+| `--border-light`   | `#f1f5f9`                     | `#1e293b`                    | Transcript line separators    |
+| `--accent`         | `#3b82f6`                     | `#60a5fa`                    | Buttons, active states        |
+| `--accent-dim`     | `#dbeafe`                     | `#1e3a5f`                    | Active mode bg (settings)     |
+| `--danger`         | `#ef4444`                     | `#f87171`                    | Errors, stop/delete           |
+| `--danger-dim`     | `#fee2e2`                     | `#3b1010`                    | Error banner background       |
+| `--success`        | `#22c55e`                     | `#4ade80`                    | "Live" status, stored key     |
+| `--warning`        | `#f59e0b`                     | `#fbbf24`                    | "Connecting" status           |
+| `--overlay`        | `rgba(0,0,0,0.45)`            | `rgba(0,0,0,0.65)`           | Modal backdrop                |
+| `--shadow-sm`      | `0 1px 3px rgba(0,0,0,0.08)`  | `0 1px 3px rgba(0,0,0,0.3)`  | Subtle shadow                 |
+| `--shadow-md`      | `0 4px 20px rgba(0,0,0,0.12)` | `0 4px 20px rgba(0,0,0,0.4)` | Sheet, card shadow            |
 
 ### Hook
 
 ```ts
-import { useTheme } from '@/theme/use-theme';
+import { useTheme } from "@/theme/use-theme";
 const { theme, toggleTheme } = useTheme(); // theme: 'light' | 'dark'
 ```
 
@@ -69,13 +69,13 @@ System font stack for native feel across iOS and Android:
 -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', Roboto, sans-serif
 ```
 
-| Use | Size | Weight | Color token |
-|-----|------|--------|-------------|
-| Section heading | 18px | 600 | `--text-primary` |
-| Body / transcript | 16px | 500 | `--text-primary` |
-| Labels | 12px | 500 | `--text-muted` |
-| Timestamps | 12px | 400 | `--text-muted` |
-| Status badge | 13px | 500 | `--text-secondary` |
+| Use               | Size | Weight | Color token        |
+| ----------------- | ---- | ------ | ------------------ |
+| Section heading   | 18px | 600    | `--text-primary`   |
+| Body / transcript | 16px | 500    | `--text-primary`   |
+| Labels            | 12px | 500    | `--text-muted`     |
+| Timestamps        | 12px | 400    | `--text-muted`     |
+| Status badge      | 13px | 500    | `--text-secondary` |
 
 ---
 
@@ -94,27 +94,30 @@ System font stack for native feel across iOS and Android:
 All icons are inline SVG, `viewBox="0 0 24 24"`, `stroke="currentColor"`, `strokeWidth="2"`.  
 Lucide-style: rounded linecaps and joins.
 
-| Icon | Component | Usage |
-|------|-----------|-------|
-| Gear | `<IconSettings>` in `App.tsx` | Open settings |
-| Sun / Moon | `<IconTheme>` in `App.tsx` | Toggle theme |
-| Speaker | `<IconSpeaker>` in `App.tsx` | TTS mode indicator |
-| Text lines | `<IconText>` in `App.tsx` | Text mode indicator |
-| X close | inline SVG | Error banner dismiss, settings close |
-| Check | `<IconCheck>` in `settings-panel` | API key stored |
+| Icon       | Component                         | Usage                                |
+| ---------- | --------------------------------- | ------------------------------------ |
+| Gear       | `<IconSettings>` in `App.tsx`     | Open settings                        |
+| Sun / Moon | `<IconTheme>` in `App.tsx`        | Toggle theme                         |
+| Speaker    | `<IconSpeaker>` in `App.tsx`      | TTS mode indicator                   |
+| Text lines | `<IconText>` in `App.tsx`         | Text mode indicator                  |
+| X close    | inline SVG                        | Error banner dismiss, settings close |
+| Check      | `<IconCheck>` in `settings-panel` | API key stored                       |
 
 ---
 
 ## Component Notes
 
 ### `RecordButton`
+
 - 76×76px circle; idle = `--accent`, recording = `--danger`, disabled = `--text-muted`
 - Pulse ring defined in global CSS (not scoped `<style>`) to survive HMR
 
 ### `StatusBadge`
+
 - Dot colors are semantic (not themed): disconnected gray, connecting amber, live green, error red
 
 ### `SettingsPanel`
+
 - Bottom sheet with drag handle pill
 - `z-index: 100` for overlay layer
 - Backdrop click closes sheet

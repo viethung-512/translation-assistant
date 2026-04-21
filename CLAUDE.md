@@ -40,25 +40,31 @@ Mic → AudioCapture → SonioxClient (WebSocket) → SessionStore → Translati
 ### Layer breakdown
 
 **Audio layer** (`src/audio/`)
+
 - `audio-capture.ts` — `AudioCapture` class. Uses `AudioWorklet` when available; falls back to deprecated `ScriptProcessorNode` for older WebViews. Emits PCM s16le 16 kHz mono chunks (~100 ms each). The worklet processor file (`pcm-worklet-processor.ts`) is loaded via `new URL('./pcm-worklet-processor.ts', import.meta.url)` — Vite handles bundling it as a separate asset.
 - `tts-service.ts` — `TtsService` wraps Web Speech API `SpeechSynthesis`. Drops utterances if queue ≥ 3 to prevent pile-up.
 
 **Provider layer** (`src/providers/`)
+
 - `types.ts` — `STTProvider` interface. All providers implement `connect/sendAudio/disconnect/onToken/onError/onStatus`. Adding a new provider (e.g. Deepgram) only requires implementing this interface.
 - `soniox/soniox-client.ts` — WebSocket client with exponential backoff reconnect (1 s → max 30 s), pre-emptive reconnect before the 280-min stream limit, and a pending chunk queue during reconnection.
 
 **State** (`src/store/`)
-- `session-store.ts` — Ephemeral per-recording state (reset on each `startSession`). Key logic: original tokens accumulate in `interimOriginal`; when a translated *final* token arrives, both buffers are committed as a `TranscriptLine` and cleared.
+
+- `session-store.ts` — Ephemeral per-recording state (reset on each `startSession`). Key logic: original tokens accumulate in `interimOriginal`; when a translated _final_ token arrives, both buffers are committed as a `TranscriptLine` and cleared.
 - `settings-store.ts` — Persistent settings (Zustand `persist` → `localStorage`): `sourceLanguage`, `targetLanguage`, `outputMode`. The `apiKey` field is in-memory only (populated from `localStorage` on mount via `getApiKey()`).
 
 **Tauri bridge** (`src/tauri/`)
+
 - `secure-storage.ts` — `saveApiKey / getApiKey / deleteApiKey` backed by `localStorage`.
 - `transcript-fs.ts` — Invokes the Rust commands `write_transcript` / `list_transcripts`. Transcripts are saved to `~/Documents/TranslationAssistant/` with ISO timestamp filenames.
 
 **Orchestration** (`src/hooks/use-translation-session.ts`)
+
 - The single hook that wires all four layers. It is the only place that holds references to `AudioCapture`, `SonioxClient`, and `TtsService` simultaneously. `startSession` / `stopSession` are the entry points.
 
 **Rust backend** (`src-tauri/src/`)
+
 - `lib.rs` — Tauri builder entry point. No plugins currently registered.
 - `commands/transcript.rs` — Two `#[tauri::command]` functions: `write_transcript` (atomic tmp-then-rename write) and `list_transcripts` (sorted by creation time). Both resolve paths relative to the platform document directory.
 
@@ -76,5 +82,6 @@ Mic → AudioCapture → SonioxClient (WebSocket) → SessionStore → Translati
 ## Icon conventions
 
 All SVG icons live in `src/components/icons/index.tsx`. **Before writing any inline `<svg>` element:**
+
 1. Check `components/icons/index.tsx` for an existing icon that fits.
 2. Only create a new export there if nothing suitable exists — never define local SVG functions inside component files.

@@ -10,7 +10,8 @@
 
 Translation Assistant is a lightweight, distraction-free cross-platform app (Tauri 2 + React 18) that delivers real-time speech-to-text translation powered by Soniox WebSocket API. Users speak in their native language, and the app transcribes and translates to a target language in real-time, with optional voice playback.
 
-**Target Users**: 
+**Target Users**:
+
 - Language learners needing live translation feedback
 - Business professionals in multilingual meetings
 - Content creators requiring quick multilingual subtitles
@@ -26,18 +27,21 @@ Enable seamless real-time translation for anyone, anywhere—from mobile devices
 ## User Personas
 
 ### Persona 1: Language Learner (Maria)
+
 - **Goal**: Practice speaking Spanish; get instant feedback on what she said + translation
 - **Pain Point**: Online services require account setup; mobile apps have lag
 - **Ideal Solution**: Open app, select Spanish→English, speak, see real-time transcript + translation
 - **Usage**: 15–30 min sessions, multiple times per week
 
 ### Persona 2: Business Professional (David)
+
 - **Goal**: Transcribe client calls in German; auto-save for later reference
 - **Pain Point**: Manual note-taking misses details; existing tools are enterprise-only
 - **Ideal Solution**: One-click recording; transcripts saved locally for compliance
 - **Usage**: Scheduled meetings, batch processing afterward
 
 ### Persona 3: Content Creator (Sofia)
+
 - **Goal**: Generate subtitle data for TikTok videos in multiple languages
 - **Pain Point**: Manual transcription is slow; automated tools have poor accuracy for her accent
 - **Ideal Solution**: Bulk record short clips; get accurate timestamps + translations
@@ -49,32 +53,32 @@ Enable seamless real-time translation for anyone, anywhere—from mobile devices
 
 ### Core Features (MVP — v0.1.0)
 
-| Feature | Description | Status |
-|---------|-------------|--------|
-| Real-time STT | Soniox WebSocket streaming with live token display | ✓ Complete |
-| Translation | Live target language translation via Soniox (both manual and auto-detect modes) | ✓ Complete |
-| Audio Capture | AudioWorklet-based mic input (16kHz PCM) | ✓ Complete |
+| Feature            | Description                                                                                                                         | Status     |
+| ------------------ | ----------------------------------------------------------------------------------------------------------------------------------- | ---------- |
+| Real-time STT      | Soniox WebSocket streaming with live token display                                                                                  | ✓ Complete |
+| Translation        | Live target language translation via Soniox (both manual and auto-detect modes)                                                     | ✓ Complete |
+| Audio Capture      | AudioWorklet-based mic input (16kHz PCM)                                                                                            | ✓ Complete |
 | Language Selection | Manual: 15+ languages; mutual exclusion (source ≠ target). Auto-detect: bidirectional with automatic source language identification | ✓ Complete |
-| Auto-detect Mode | Optional bidirectional translation with automatic source language identification from speech | ✓ Complete |
-| Output Modes | Text-only or TTS voice playback | ✓ Complete |
-| Transcript Save | Atomic file writes to local disk; includes detected language metadata in auto-detect mode | ✓ Complete |
-| Transcript List | View/manage saved transcripts | ✓ Complete |
-| Settings Panel | Configure API key, language pair, auto-detect toggle, output mode | ✓ Complete |
-| Theme Toggle | Light/dark mode with persistence | ✓ Complete |
-| Accessibility | ARIA labels, 44×44px touch targets, keyboard nav | ✓ Complete |
+| Auto-detect Mode   | Optional bidirectional translation with automatic source language identification from speech                                        | ✓ Complete |
+| Output Modes       | Text-only or TTS voice playback                                                                                                     | ✓ Complete |
+| Transcript Save    | Atomic file writes to local disk; includes detected language metadata in auto-detect mode                                           | ✓ Complete |
+| Transcript List    | View/manage saved transcripts                                                                                                       | ✓ Complete |
+| Settings Panel     | Configure API key, language pair, auto-detect toggle, output mode                                                                   | ✓ Complete |
+| Theme Toggle       | Light/dark mode with persistence                                                                                                    | ✓ Complete |
+| Accessibility      | ARIA labels, 44×44px touch targets, keyboard nav                                                                                    | ✓ Complete |
 
 ### Future Features (Post-MVP)
 
-| Feature | Rationale | Estimated Effort |
-|---------|-----------|------------------|
-| Multi-provider support | Allow switching between Soniox, Google Cloud, AWS Transcribe | Medium |
-| Transcript history UI | Search/filter/delete transcripts within app (vs file manager) | Small |
-| Mobile offline caching | Store common phrases locally for offline lookup | Medium |
-| Stronghold keychain | Replace localStorage with platform keychain (macOS Keychain, Windows Credential Manager) | Small |
-| Batch transcript processing | Drag-and-drop audio files; queue processing | Large |
-| Export formats | PDF, SRT subtitles, markdown transcripts | Medium |
-| Advanced audio filters | Noise cancellation, voice activity detection (VAD) | Medium |
-| Custom vocabulary | User-defined terms for improved STT accuracy | Small |
+| Feature                     | Rationale                                                                                | Estimated Effort |
+| --------------------------- | ---------------------------------------------------------------------------------------- | ---------------- |
+| Multi-provider support      | Allow switching between Soniox, Google Cloud, AWS Transcribe                             | Medium           |
+| Transcript history UI       | Search/filter/delete transcripts within app (vs file manager)                            | Small            |
+| Mobile offline caching      | Store common phrases locally for offline lookup                                          | Medium           |
+| Stronghold keychain         | Replace localStorage with platform keychain (macOS Keychain, Windows Credential Manager) | Small            |
+| Batch transcript processing | Drag-and-drop audio files; queue processing                                              | Large            |
+| Export formats              | PDF, SRT subtitles, markdown transcripts                                                 | Medium           |
+| Advanced audio filters      | Noise cancellation, voice activity detection (VAD)                                       | Medium           |
+| Custom vocabulary           | User-defined terms for improved STT accuracy                                             | Small            |
 
 ---
 
@@ -82,15 +86,15 @@ Enable seamless real-time translation for anyone, anywhere—from mobile devices
 
 ### Performance
 
-| Metric | Target | Status |
-|--------|--------|--------|
-| STT latency (interim token) | ≤ 500ms from audio chunk | ✓ Met (Soniox typical ~300ms) |
-| Translation latency | ≤ 800ms from STT finalization | ✓ Met |
-| TTS playback lag | ≤ 1.5s from translation complete | ✓ Met |
-| Startup time | ≤ 2s from app launch to ready state | ✓ Met |
-| Memory usage (idle) | ≤ 100MB | ✓ Met |
-| Memory usage (recording) | ≤ 200MB | ✓ Met |
-| Bundle size (gzipped) | ≤ 300KB | ✓ ~200KB |
+| Metric                      | Target                              | Status                        |
+| --------------------------- | ----------------------------------- | ----------------------------- |
+| STT latency (interim token) | ≤ 500ms from audio chunk            | ✓ Met (Soniox typical ~300ms) |
+| Translation latency         | ≤ 800ms from STT finalization       | ✓ Met                         |
+| TTS playback lag            | ≤ 1.5s from translation complete    | ✓ Met                         |
+| Startup time                | ≤ 2s from app launch to ready state | ✓ Met                         |
+| Memory usage (idle)         | ≤ 100MB                             | ✓ Met                         |
+| Memory usage (recording)    | ≤ 200MB                             | ✓ Met                         |
+| Bundle size (gzipped)       | ≤ 300KB                             | ✓ ~200KB                      |
 
 ### Reliability
 
@@ -116,13 +120,13 @@ Enable seamless real-time translation for anyone, anywhere—from mobile devices
 
 ### Compatibility
 
-| Platform | Min Version | Status |
-|----------|-------------|--------|
-| iOS | 13.0 | ✓ Supported |
-| Android | 8.0 | ✓ Supported |
-| macOS | 10.15 | ✓ Supported |
-| Windows | 10 (21H2) | ✓ Supported |
-| Linux | Ubuntu 20.04+ | ✓ Supported |
+| Platform | Min Version   | Status      |
+| -------- | ------------- | ----------- |
+| iOS      | 13.0          | ✓ Supported |
+| Android  | 8.0           | ✓ Supported |
+| macOS    | 10.15         | ✓ Supported |
+| Windows  | 10 (21H2)     | ✓ Supported |
+| Linux    | Ubuntu 20.04+ | ✓ Supported |
 
 ---
 
@@ -139,18 +143,22 @@ Enable seamless real-time translation for anyone, anywhere—from mobile devices
 ## Success Metrics
 
 ### User Adoption
+
 - 100+ downloads in first month (post-launch)
 - 30-day retention rate ≥ 40%
 
 ### Quality
+
 - App crash rate < 1% (measured via error tracking, if added)
 - Soniox API uptime > 99.9% (inherited from provider)
 
 ### User Satisfaction
+
 - NPS ≥ 40 (measured via in-app survey)
 - Zero major bugs reported in first week of beta
 
 ### Performance
+
 - P95 transcript latency ≤ 1.5s end-to-end
 - App memory usage < 150MB while recording
 
@@ -202,13 +210,14 @@ See [Design System](./design-system/design-principles.md) for detailed token ref
 
 ## Competitive Landscape
 
-| Product | Strengths | Weaknesses | Our Edge |
-|---------|-----------|-----------|----------|
-| Google Translate | Free, fast, multi-lingual | Cloud-only, privacy concerns | Local, cross-platform |
-| Soniox Web | Real-time STT | UI minimal, expensive | Full-featured app, affordable |
-| Otter AI | Transcript search, summaries | Subscription-based, cloud-dependent | Desktop-first, local |
+| Product          | Strengths                    | Weaknesses                          | Our Edge                      |
+| ---------------- | ---------------------------- | ----------------------------------- | ----------------------------- |
+| Google Translate | Free, fast, multi-lingual    | Cloud-only, privacy concerns        | Local, cross-platform         |
+| Soniox Web       | Real-time STT                | UI minimal, expensive               | Full-featured app, affordable |
+| Otter AI         | Transcript search, summaries | Subscription-based, cloud-dependent | Desktop-first, local          |
 
 **Differentiation**:
+
 - Only true real-time translation (not polling-based)
 - Cross-platform parity (iOS = macOS = Windows)
 - Local transcript storage (no cloud lock-in)
@@ -219,22 +228,26 @@ See [Design System](./design-system/design-principles.md) for detailed token ref
 ## Roadmap
 
 ### Q2 2026 (Current)
+
 - v0.1.0: MVP launch
 - Beta testing with 20+ users
 - Bug fixes and stabilization
 
 ### Q3 2026
+
 - v0.2.0: Multi-provider support
 - Native transcript management UI
 - Platform keychain integration
 - Analytics dashboard (opt-in)
 
 ### Q4 2026
+
 - v0.3.0: Offline transcription (local Whisper model)
 - Batch processing for multiple files
 - Custom vocabulary support
 
 ### 2027
+
 - v1.0.0: Production release
 - Marketplace for provider plugins
 - Team collaboration (shared transcripts)
@@ -243,14 +256,14 @@ See [Design System](./design-system/design-principles.md) for detailed token ref
 
 ## Risk Assessment
 
-| Risk | Probability | Impact | Mitigation |
-|------|-------------|--------|-----------|
-| Soniox API changes | Medium | High | Monitor API changelog; version endpoints |
-| High Soniox costs at scale | Medium | High | Implement multi-provider; offer tier-based pricing |
-| iOS app store rejection | Low | High | Early submission; review guidelines compliance |
-| Poor STT accuracy for accents | Medium | Medium | Allow user feedback; improve via Soniox custom models |
-| Battery drain on mobile | Low | Medium | Optimize audio chunk size; profile regularly |
-| Privacy concerns (audio data) | Low | High | Transparent privacy policy; never persist audio |
+| Risk                          | Probability | Impact | Mitigation                                            |
+| ----------------------------- | ----------- | ------ | ----------------------------------------------------- |
+| Soniox API changes            | Medium      | High   | Monitor API changelog; version endpoints              |
+| High Soniox costs at scale    | Medium      | High   | Implement multi-provider; offer tier-based pricing    |
+| iOS app store rejection       | Low         | High   | Early submission; review guidelines compliance        |
+| Poor STT accuracy for accents | Medium      | Medium | Allow user feedback; improve via Soniox custom models |
+| Battery drain on mobile       | Low         | Medium | Optimize audio chunk size; profile regularly          |
+| Privacy concerns (audio data) | Low         | High   | Transparent privacy policy; never persist audio       |
 
 ---
 

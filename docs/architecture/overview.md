@@ -1,9 +1,20 @@
 # Architecture Overview
 
-**Version**: 0.2.0 (SDK Migration)  
-**Last Updated**: April 2026
+**Version**: 0.2.0 (SDK Migration + UI v2 Wireframe)  
+**Last Updated**: April 20, 2026
 
-System architecture diagram and high-level component breakdown. Migrated from hand-rolled WebSocket client and custom audio capture to @soniox/react SDK.
+System architecture diagram and high-level component breakdown. Migrated from hand-rolled WebSocket client and custom audio capture to @soniox/react SDK. Added static wireframe UI v2 under `src/v2/` with env-flag switching.
+
+---
+
+## UI Versions
+
+| Version | Path      | Purpose                                  | Status    |
+| ------- | --------- | ---------------------------------------- | --------- |
+| **v1**  | `src/`    | Production app (real Soniox integration) | Active    |
+| **v2**  | `src/v2/` | Static wireframe (6-screen preview)      | Wireframe |
+
+**Switching**: Set `VITE_UI_VERSION=v2` in `.env.local`. Default is v1 (tree-shaken from v1 builds).
 
 ---
 
@@ -64,12 +75,14 @@ System architecture diagram and high-level component breakdown. Migrated from ha
 **Purpose**: User-facing UI and state management
 
 **Key Modules**:
+
 - `App.tsx` — Root layout component
 - `RecordButton`, `StatusBadge`, `TranslationDisplay` — Core UI
 - `SettingsPanel` — Configuration UI
 - `useTranslationSession` — Orchestration hook (manages SDK hooks + state)
 
 **Responsibilities**:
+
 - Render UI based on hook state + SettingsStore
 - Dispatch user actions (record, stop, select language)
 - Display real-time tokens and errors
@@ -82,12 +95,14 @@ System architecture diagram and high-level component breakdown. Migrated from ha
 **Purpose**: Manage application state across component tree
 
 #### Hook-Local State (Ephemeral)
+
 - **Lifetime**: Resets when recording stops
 - **Location**: `useTranslationSession` hook
 - **Contents**: finalLines, interimOriginal, interimTranslated
 - **Used by**: Hook itself; exposed via return object to App
 
 #### SettingsStore (Persistent via Zustand)
+
 - **Lifetime**: Survives app restart via localStorage
 - **Contents**: API key, language pair, output mode
 - **Used by**: App initialization, settings panel, SDK setup
@@ -101,11 +116,13 @@ See [State Management](./state-management.md) for detailed design.
 **Purpose**: Capture mic input, send PCM to Soniox, receive transcription + translation
 
 **Components**:
+
 - `useRecording` hook — Manages WebSocket connection, audio capture, PCM encoding, token callbacks (from @soniox/react)
 - `useMicrophonePermission` hook — Handles mic permission UI/logic (from @soniox/react)
 - `TTSService` — Queues translated text for voice synthesis (Web Speech API)
 
 **Previous Custom Implementations (Removed)**:
+
 - `AudioCapture` — Replaced by SDK's getUserMedia integration
 - `PCMWorklet` — Replaced by SDK's PCM encoding
 - `SonioxClient` — Replaced by SDK's WebSocket management
@@ -119,6 +136,7 @@ See [Audio Pipeline](./audio-pipeline.md) for detailed flow.
 **Purpose**: Communicate with Rust backend for file I/O
 
 **Commands**:
+
 - `write_transcript(filename, content)` — Save transcript to disk
 - `list_transcripts()` — Fetch transcript metadata
 
@@ -131,10 +149,12 @@ See [Tauri Integration](./tauri-integration.md) for command details.
 **Purpose**: File I/O operations (Tauri sandboxing layer)
 
 **Modules**:
+
 - `commands/transcript.rs` — Implements write_transcript + list_transcripts
 - Handles path validation, directory creation, error reporting
 
 **Removed**:
+
 - `src-tauri/src/audio/` — No longer needed (SDK handles audio capture)
 
 See [Tauri Integration](./tauri-integration.md) for implementation.
@@ -229,6 +249,7 @@ See [Tauri Integration](./tauri-integration.md) for implementation.
 **Old Design** (v0.1.0): Pluggable `STTProvider` interface allowed swapping Soniox for Google Cloud, AWS, etc.
 
 **Current State** (v0.2.0): Soniox SDK now directly used via `useRecording` hook. Multi-provider support deferred to future release. If multi-provider support becomes needed, consider:
+
 - Wrapper hooks (`useSonioxRecording`, `useGoogleRecording`) per provider
 - Conditional hook instantiation based on settings
 - Unified result type for token callbacks
@@ -271,13 +292,13 @@ See [Tauri Integration](./tauri-integration.md) for implementation.
 
 ### Build Targets
 
-| Platform | Target | Bundle Size | Runtime |
-|----------|--------|-------------|---------|
-| macOS | universal-apple-darwin | ~150MB | Native |
-| Windows | x86_64-pc-windows-msvc | ~120MB | Native |
-| Linux | x86_64-unknown-linux-gnu | ~110MB | Native |
-| iOS | aarch64-apple-ios | ~80MB | Native |
-| Android | aarch64-linux-android | ~90MB | Native |
+| Platform | Target                   | Bundle Size | Runtime |
+| -------- | ------------------------ | ----------- | ------- |
+| macOS    | universal-apple-darwin   | ~150MB      | Native  |
+| Windows  | x86_64-pc-windows-msvc   | ~120MB      | Native  |
+| Linux    | x86_64-unknown-linux-gnu | ~110MB      | Native  |
+| iOS      | aarch64-apple-ios        | ~80MB       | Native  |
+| Android  | aarch64-linux-android    | ~90MB       | Native  |
 
 All targets share same React/TypeScript frontend code.
 
@@ -285,13 +306,13 @@ All targets share same React/TypeScript frontend code.
 
 ## Performance Targets
 
-| Metric | Target | Status |
-|--------|--------|--------|
-| STT latency | 300–500ms | Met (Soniox dependent) |
-| Memory (idle) | <100MB | Met (~90MB) |
-| Memory (recording) | <200MB | Met (~100–200MB peak) |
-| Startup time | <2s | Met |
-| Bundle (gzipped) | <300KB | Met (~200KB) |
+| Metric             | Target    | Status                 |
+| ------------------ | --------- | ---------------------- |
+| STT latency        | 300–500ms | Met (Soniox dependent) |
+| Memory (idle)      | <100MB    | Met (~90MB)            |
+| Memory (recording) | <200MB    | Met (~100–200MB peak)  |
+| Startup time       | <2s       | Met                    |
+| Bundle (gzipped)   | <300KB    | Met (~200KB)           |
 
 See [Performance & Scaling](./performance-scaling.md) for detailed analysis.
 
@@ -299,12 +320,12 @@ See [Performance & Scaling](./performance-scaling.md) for detailed analysis.
 
 ## Security Posture
 
-| Concern | Mitigation |
-|---------|-----------|
-| API key storage | localStorage (v0.2.0) → platform keychain (v1.0) |
-| Audio data persistence | Never saved; transcripts only |
-| WebSocket hijacking | TLS 1.3 only (wss://, managed by SDK) |
-| Tauri IPC injection | Type-safe Rust commands; no shell execution |
+| Concern                | Mitigation                                       |
+| ---------------------- | ------------------------------------------------ |
+| API key storage        | localStorage (v0.2.0) → platform keychain (v1.0) |
+| Audio data persistence | Never saved; transcripts only                    |
+| WebSocket hijacking    | TLS 1.3 only (wss://, managed by SDK)            |
+| Tauri IPC injection    | Type-safe Rust commands; no shell execution      |
 
 See [Security Architecture](./security-architecture.md) for detailed strategy.
 
@@ -313,6 +334,7 @@ See [Security Architecture](./security-architecture.md) for detailed strategy.
 ## Migration Notes (v0.1 → v0.2)
 
 **What Changed**:
+
 - Removed: `src/providers/`, `src/audio/audio-capture.ts`, `src/audio/pcm-worklet-processor.ts`, `src/hooks/use-microphone-permission.ts`, `src/store/session-store.ts`
 - Removed: `src-tauri/src/audio/`, `src-tauri/src/commands/audio.rs`
 - Replaced: Custom WebSocket → SDK `useRecording` hook
@@ -320,6 +342,7 @@ See [Security Architecture](./security-architecture.md) for detailed strategy.
 - Moved: `TranscriptLine` type & `buildTranscriptContent` → `src/tauri/transcript-fs.ts`
 
 **What's the Same**:
+
 - UI components unchanged
 - SettingsStore unchanged
 - Tauri transcript I/O unchanged

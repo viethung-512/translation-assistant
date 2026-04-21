@@ -11,6 +11,7 @@ API key storage, data protection, and CSP strategy.
 ### Current (v0.1.0): localStorage
 
 **Storage**:
+
 ```typescript
 // SettingsStore persists to localStorage
 export const useSettingsStore = create<SettingsState>()(
@@ -27,6 +28,7 @@ export const useSettingsStore = create<SettingsState>()(
 **Key Location**: `localStorage['translation-assistant-settings']`
 
 **Format**:
+
 ```json
 {
   "state": {
@@ -40,6 +42,7 @@ export const useSettingsStore = create<SettingsState>()(
 ```
 
 **Risk Assessment**:
+
 - **XSS Vulnerability**: If attacker injects JavaScript, can steal from localStorage
 - **Mitigation**: Tauri app (not web); served from native binary only, no internet-facing endpoints
 - **Clear Text**: API key not encrypted in localStorage
@@ -51,13 +54,14 @@ Migrate to encrypted storage via Tauri plugin:
 
 ```typescript
 // Future implementation
-import { secureStorage } from '@tauri-apps/plugin-keychain';
+import { secureStorage } from "@tauri-apps/plugin-keychain";
 
-await secureStorage.set('soniox-api-key', apiKey);
-const key = await secureStorage.get('soniox-api-key');
+await secureStorage.set("soniox-api-key", apiKey);
+const key = await secureStorage.get("soniox-api-key");
 ```
 
 **Benefits**:
+
 - Encrypted at rest (platform-native encryption)
 - OS-level access control
 - Survives app uninstall
@@ -72,6 +76,7 @@ const key = await secureStorage.get('soniox-api-key');
 **Never Persisted**: Raw audio is discarded after transcription.
 
 **Flow**:
+
 ```
 Microphone → AudioWorklet → PCM chunks → Soniox WebSocket → Soniox servers
                                     ↓
@@ -109,11 +114,13 @@ Port: 443 (HTTPS only)
 ```
 
 **Certificate Validation**:
+
 - Browser validates Soniox SSL certificate
 - Self-signed certificates rejected
 - Mitigates MITM attacks
 
 **Data in Transit**:
+
 - PCM audio encrypted by TLS 1.3
 - Tokens encrypted by TLS 1.3
 - No plaintext transmission
@@ -140,6 +147,7 @@ Port: 443 (HTTPS only)
 ```
 
 **Rationale**:
+
 - AudioWorklet requires `script-src 'self'`
 - Web Audio API requires media permissions
 - Tauri app (not web); CSP less critical for isolated binary
@@ -167,6 +175,7 @@ App declares minimal permissions:
 ```
 
 **Restrictions**:
+
 - ✓ Can read/write transcript directory
 - ✗ Cannot execute shell commands
 - ✗ Cannot access system directories
@@ -190,6 +199,7 @@ App declares minimal permissions:
 ```
 
 **Strategy**:
+
 - Pin minor version (e.g., `^18.3.1` allows 18.x.x, not 19.0.0)
 - Quarterly dependency audit
 - Subscribe to security advisories (npm audit, snyk)
@@ -203,6 +213,7 @@ serde = "1"
 ```
 
 **Strategy**:
+
 - Use `cargo audit` for vulnerability scanning
 - Security updates applied immediately
 - Minimal dependencies (reduce attack surface)
@@ -233,17 +244,20 @@ serde = "1"
 ## Privacy Policy (High-Level)
 
 **Data Collection**:
+
 - ✗ No telemetry by default
 - ✗ No analytics tracking
 - ✗ No phone-home calls
 - ✓ Only Soniox API calls (user controls via API key)
 
 **Data Retention**:
+
 - Audio: Never persisted locally
 - Transcripts: Stored locally; user controls deletion
 - Settings: Stored locally; user can clear
 
 **User Control**:
+
 - Can view all stored files (~/Documents/TranslationAssistant/)
 - Can delete transcripts manually
 - Can revoke API key in Settings
@@ -265,6 +279,7 @@ this.ws?.send(JSON.stringify(authMsg));
 ```
 
 **Invalid Key Behavior**:
+
 - Soniox rejects connection
 - Error callback fires
 - User sees "Invalid API key" error in UI
@@ -274,15 +289,15 @@ this.ws?.send(JSON.stringify(authMsg));
 
 ## Threat Model
 
-| Threat | Likelihood | Impact | Mitigation |
-|--------|------------|--------|-----------|
-| API key theft (XSS) | Low | High | Tauri sandbox; no internet exposure |
-| API key theft (physical access) | Low | Medium | OS file permissions; future: keychain encryption |
-| MITM on WebSocket | Very Low | High | TLS 1.3 certificate validation |
-| Audio data theft | Low | High | Never persisted; only in-memory during session |
-| Transcript theft | Low | Medium | File permissions (user controls) |
-| Tauri command injection | Very Low | High | Type-safe Rust; no shell execution |
-| Soniox server compromise | Very Low | Critical | Out of our control; user chooses provider |
+| Threat                          | Likelihood | Impact   | Mitigation                                       |
+| ------------------------------- | ---------- | -------- | ------------------------------------------------ |
+| API key theft (XSS)             | Low        | High     | Tauri sandbox; no internet exposure              |
+| API key theft (physical access) | Low        | Medium   | OS file permissions; future: keychain encryption |
+| MITM on WebSocket               | Very Low   | High     | TLS 1.3 certificate validation                   |
+| Audio data theft                | Low        | High     | Never persisted; only in-memory during session   |
+| Transcript theft                | Low        | Medium   | File permissions (user controls)                 |
+| Tauri command injection         | Very Low   | High     | Type-safe Rust; no shell execution               |
+| Soniox server compromise        | Very Low   | Critical | Out of our control; user chooses provider        |
 
 ---
 
@@ -304,16 +319,19 @@ this.ws?.send(JSON.stringify(authMsg));
 ## Compliance Considerations
 
 **GDPR** (future, if EU users):
+
 - [ ] Privacy policy with data retention terms
 - [ ] User right to data export
 - [ ] User right to deletion
 
 **HIPAA** (future, if healthcare use):
+
 - [ ] Encrypted transcript storage
 - [ ] Access logs
 - [ ] Business associate agreement with Soniox
 
 **SOC 2** (future, if enterprise customers):
+
 - [ ] Security audit
 - [ ] Incident response plan
 - [ ] Vulnerability disclosure policy
@@ -323,6 +341,7 @@ this.ws?.send(JSON.stringify(authMsg));
 ## Reporting Security Issues
 
 **Future Process**:
+
 1. Email: security@translation-assistant.app (when domain acquired)
 2. Do not disclose publicly until patch available
 3. 90-day disclosure window
