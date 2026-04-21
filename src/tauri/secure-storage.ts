@@ -2,7 +2,7 @@
 // including iOS WKWebView. The key is not sensitive enough to require hardware-backed
 // encryption (it's a service API key, not a user password).
 
-const STORAGE_KEY = 'translation_assistant_api_key';
+const STORAGE_KEY = "hey_gracie_api_key";
 
 export async function saveApiKey(key: string): Promise<void> {
   localStorage.setItem(STORAGE_KEY, key);

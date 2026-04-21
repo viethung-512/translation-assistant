@@ -194,18 +194,51 @@ export function IconMicDisabled() {
 
 export function IconMic() {
   return (
-    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+    <svg
+      width="28"
+      height="28"
+      viewBox="0 0 24 24"
+      fill="none"
+      aria-hidden="true"
+    >
       <rect x="9" y="2" width="6" height="11" rx="3" fill="white" />
-      <path d="M5 11a7 7 0 0 0 14 0" stroke="white" strokeWidth="2" strokeLinecap="round" />
-      <line x1="12" y1="18" x2="12" y2="22" stroke="white" strokeWidth="2" strokeLinecap="round" />
-      <line x1="9" y1="22" x2="15" y2="22" stroke="white" strokeWidth="2" strokeLinecap="round" />
+      <path
+        d="M5 11a7 7 0 0 0 14 0"
+        stroke="white"
+        strokeWidth="2"
+        strokeLinecap="round"
+      />
+      <line
+        x1="12"
+        y1="18"
+        x2="12"
+        y2="22"
+        stroke="white"
+        strokeWidth="2"
+        strokeLinecap="round"
+      />
+      <line
+        x1="9"
+        y1="22"
+        x2="15"
+        y2="22"
+        stroke="white"
+        strokeWidth="2"
+        strokeLinecap="round"
+      />
     </svg>
   );
 }
 
 export function IconPause() {
   return (
-    <svg width="24" height="24" viewBox="0 0 24 24" fill="white" aria-hidden="true">
+    <svg
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      fill="white"
+      aria-hidden="true"
+    >
       <rect x="5" y="3" width="4" height="18" rx="1" />
       <rect x="15" y="3" width="4" height="18" rx="1" />
     </svg>
@@ -214,7 +247,13 @@ export function IconPause() {
 
 export function IconPlay() {
   return (
-    <svg width="26" height="26" viewBox="0 0 24 24" fill="white" aria-hidden="true">
+    <svg
+      width="26"
+      height="26"
+      viewBox="0 0 24 24"
+      fill="white"
+      aria-hidden="true"
+    >
       <polygon points="5,3 19,12 5,21" />
     </svg>
   );
@@ -222,13 +261,47 @@ export function IconPlay() {
 
 export function IconMicPlaceholder() {
   return (
-    <svg width="36" height="36" viewBox="0 0 24 24" fill="none" aria-hidden="true"
+    <svg
+      width="36"
+      height="36"
+      viewBox="0 0 24 24"
+      fill="none"
+      aria-hidden="true"
       style={{ opacity: 0.25 }}
     >
-      <rect x="9" y="2" width="6" height="11" rx="3" stroke="currentColor" strokeWidth="1.5" />
-      <path d="M5 11a7 7 0 0 0 14 0" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-      <line x1="12" y1="18" x2="12" y2="22" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-      <line x1="9" y1="22" x2="15" y2="22" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+      <rect
+        x="9"
+        y="2"
+        width="6"
+        height="11"
+        rx="3"
+        stroke="currentColor"
+        strokeWidth="1.5"
+      />
+      <path
+        d="M5 11a7 7 0 0 0 14 0"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+      />
+      <line
+        x1="12"
+        y1="18"
+        x2="12"
+        y2="22"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+      />
+      <line
+        x1="9"
+        y1="22"
+        x2="15"
+        y2="22"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+      />
     </svg>
   );
 }

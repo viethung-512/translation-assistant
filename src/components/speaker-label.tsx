@@ -13,7 +13,11 @@ export default function SpeakerLabel({ speakerNumber }: SpeakerLabelProps) {
       as="div"
       size="2"
       weight="bold"
-      style={{ textTransform: "uppercase", marginTop: "var(--space-2)", color: speakerColor }}
+      style={{
+        textTransform: "uppercase",
+        marginTop: "var(--space-2)",
+        color: speakerColor,
+      }}
     >
       Speaker {speakerNumber}:
     </Text>

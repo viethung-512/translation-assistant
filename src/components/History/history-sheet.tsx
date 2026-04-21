@@ -12,10 +12,10 @@ import { SessionItem } from "./session-item";
 
 interface Props {
   isOpen: boolean;
-  onClose: () => void;
+  onDismiss: () => void;
 }
 
-export function HistorySheet({ isOpen, onClose }: Props) {
+export function HistorySheet({ isOpen, onDismiss }: Props) {
   const { t } = useTranslation();
   const [sessions, setSessions] = useState<TranscriptMeta[]>([]);
   const [loading, setLoading] = useState(false);
@@ -48,7 +48,7 @@ export function HistorySheet({ isOpen, onClose }: Props) {
   }, []);
 
   return (
-    <BottomSheet isOpen={isOpen} onClose={onClose}>
+    <BottomSheet isOpen={isOpen} onDismiss={onDismiss}>
       <Box pt="4" pb="2">
         {/* Sheet header */}
         <Flex
@@ -61,7 +61,7 @@ export function HistorySheet({ isOpen, onClose }: Props) {
           <Text size="3" weight="bold">
             {t("history_title")}
           </Text>
-          <IconButton aria-label={t("aria_close_history")} onClick={onClose}>
+          <IconButton aria-label={t("aria_close_history")} onClick={onDismiss}>
             <IconClose size={16} />
           </IconButton>
         </Flex>

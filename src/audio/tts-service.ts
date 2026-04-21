@@ -40,7 +40,7 @@ export class TtsService {
 
   private findVoice(lang: string): SpeechSynthesisVoice | null {
     const voices = window.speechSynthesis.getVoices();
-    const prefix = lang.split('-')[0];
+    const prefix = lang.split("-")[0];
     return (
       voices.find((v) => v.lang === lang) ??
       voices.find((v) => v.lang.startsWith(prefix)) ??

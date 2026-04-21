@@ -17,8 +17,10 @@ function formatDate(unixSeconds: string, fallback: string): string {
   const ts = Number(unixSeconds) * 1000;
   if (!ts) return fallback;
   return new Intl.DateTimeFormat(undefined, {
-    month: "short", day: "numeric",
-    hour: "2-digit", minute: "2-digit",
+    month: "short",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
   }).format(new Date(ts));
 }
 
@@ -77,17 +79,32 @@ export function SessionItem({ session, onDeleted, onShare }: Props) {
       <Button
         variant="ghost"
         onClick={handleExpand}
-        style={{ width: "100%", justifyContent: "flex-start", textAlign: "left", borderRadius: 0 }}
+        style={{
+          width: "100%",
+          justifyContent: "flex-start",
+          textAlign: "left",
+          borderRadius: 0,
+        }}
       >
         <Box>
-          <Text size="2" weight="bold" color="gray" mb="1" style={{ display: "block" }}>
-            {formatDate(session.createdAt, t("session_unknown_date"))} {expanded ? "∧" : "∨"}
+          <Text
+            size="2"
+            weight="bold"
+            color="gray"
+            mb="1"
+            style={{ display: "block" }}
+          >
+            {formatDate(session.createdAt, t("session_unknown_date"))}{" "}
+            {expanded ? "∧" : "∨"}
           </Text>
           {!expanded && (
             <Text size="2" color="gray">
               {content !== null
                 ? preview(content, t("session_empty_preview"))
-                : preview(session.name.replace(".txt", ""), t("session_empty_preview"))}
+                : preview(
+                    session.name.replace(".txt", ""),
+                    t("session_empty_preview"),
+                  )}
             </Text>
           )}
         </Box>
@@ -97,17 +114,25 @@ export function SessionItem({ session, onDeleted, onShare }: Props) {
       {expanded && (
         <Box px="4" pb="3">
           {loading && (
-            <Text as="p" size="2" color="gray">{t("session_loading")}</Text>
+            <Text as="p" size="2" color="gray">
+              {t("session_loading")}
+            </Text>
           )}
           {error && (
-            <Text as="p" size="2" color="red">{error}</Text>
+            <Text as="p" size="2" color="red">
+              {error}
+            </Text>
           )}
           {content !== null && (
             <ScrollArea style={{ maxHeight: 200 }} mb="3">
               <Text
                 as="div"
                 size="2"
-                style={{ whiteSpace: "pre-wrap", wordBreak: "break-word", lineHeight: 1.6 }}
+                style={{
+                  whiteSpace: "pre-wrap",
+                  wordBreak: "break-word",
+                  lineHeight: 1.6,
+                }}
               >
                 {content}
               </Text>
@@ -119,7 +144,11 @@ export function SessionItem({ session, onDeleted, onShare }: Props) {
               <Button size="sm" variant="outline" onClick={handleCopy}>
                 {copied ? t("session_copied") : t("session_copy")}
               </Button>
-              <Button size="sm" variant="outline" onClick={() => onShare(content, session.path)}>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => onShare(content, session.path)}
+              >
                 {t("session_share")}
               </Button>
 
@@ -131,15 +160,15 @@ export function SessionItem({ session, onDeleted, onShare }: Props) {
                   </Button>
                 </AlertDialog.Trigger>
                 <AlertDialog.Content maxWidth="320px">
-                  <AlertDialog.Title>{t("session_delete_title")}</AlertDialog.Title>
+                  <AlertDialog.Title>
+                    {t("session_delete_title")}
+                  </AlertDialog.Title>
                   <AlertDialog.Description size="2" color="gray">
                     {t("session_delete_description")}
                   </AlertDialog.Description>
                   <Flex gap="3" mt="4" justify="end">
                     <AlertDialog.Cancel>
-                      <Button variant="outline">
-                        {t("session_cancel")}
-                      </Button>
+                      <Button variant="outline">{t("session_cancel")}</Button>
                     </AlertDialog.Cancel>
                     <AlertDialog.Action>
                       <Button variant="danger" onClick={handleDelete}>

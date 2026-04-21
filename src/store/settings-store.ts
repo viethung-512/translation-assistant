@@ -1,9 +1,9 @@
 // Persistent app settings (except apiKey — managed by Tauri secure storage).
-import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
-import i18n from '@/i18n';
+import { create } from "zustand";
+import { persist } from "zustand/middleware";
+import i18n from "@/i18n";
 
-export type OutputMode = 'text' | 'tts';
+export type OutputMode = "text" | "tts";
 
 interface SettingsState {
   apiKey: string; // In-memory only — never written to localStorage
@@ -24,12 +24,12 @@ interface SettingsState {
 export const useSettingsStore = create<SettingsState>()(
   persist(
     (set) => ({
-      apiKey: '',
-      languageA: 'en',
-      languageB: 'vi',
+      apiKey: "",
+      languageA: "en",
+      languageB: "vi",
       autoDetect: false,
-      outputMode: 'text',
-      uiLanguage: 'en',
+      outputMode: "text",
+      uiLanguage: "en",
       setApiKey: (key) => set({ apiKey: key }),
       setLanguageA: (lang) => set({ languageA: lang }),
       setLanguageB: (lang) => set({ languageB: lang }),
@@ -41,7 +41,7 @@ export const useSettingsStore = create<SettingsState>()(
       },
     }),
     {
-      name: 'translation-assistant-settings',
+      name: "hey-gracie-settings",
       version: 1,
       migrate: (persisted: any, version) => {
         if (!persisted) return persisted;
@@ -64,6 +64,6 @@ export const useSettingsStore = create<SettingsState>()(
         outputMode: state.outputMode,
         uiLanguage: state.uiLanguage,
       }),
-    }
-  )
+    },
+  ),
 );

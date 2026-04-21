@@ -165,11 +165,11 @@ export function AppShell() {
         />
         <HistorySheet
           isOpen={historyOpen}
-          onClose={() => setHistoryOpen(false)}
+          onDismiss={() => setHistoryOpen(false)}
         />
 
         {/* ── Microphone permission sheet ── */}
-        <BottomSheet isOpen={needsPermission} onClose={() => {}}>
+        <BottomSheet isOpen={needsPermission} onDismiss={() => {}}>
           <Box p="4" style={{ textAlign: "center" }}>
             <Flex justify="center" mb="4">
               <IconMicDisabled />

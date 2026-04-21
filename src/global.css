@@ -18,6 +18,20 @@ body,
   height: 100%;
 }
 
+body {
+  font-family: -apple-system, "SF Pro Text", "Inter", system-ui, sans-serif;
+  line-height: 1.4;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* v2 app root — applies base typography for all v2 screens and portals */
+.v2-app {
+  letter-spacing: -0.1px;
+  color: inherit;
+  -webkit-text-size-adjust: 100%;
+}
+
 /* Radix <Theme> renders a wrapper div.radix-themes — must participate in the height chain */
 .radix-themes {
   height: 100%;

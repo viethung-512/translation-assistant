@@ -11,7 +11,11 @@ interface SelectProps {
 
 export function Select({ value, onChange, children, disabled }: SelectProps) {
   return (
-    <RadixSelect.Root value={value} onValueChange={onChange} disabled={disabled}>
+    <RadixSelect.Root
+      value={value}
+      onValueChange={onChange}
+      disabled={disabled}
+    >
       <RadixSelect.Trigger style={{ width: "100%" }} />
       <RadixSelect.Content>{children}</RadixSelect.Content>
     </RadixSelect.Root>

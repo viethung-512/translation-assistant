@@ -75,7 +75,7 @@ export function SettingsPanel({ isOpen, onClose, recordingStatus }: Props) {
   };
 
   return (
-    <BottomSheet isOpen={isOpen} onClose={onClose}>
+    <BottomSheet isOpen={isOpen} onDismiss={onClose}>
       <ScrollArea style={{ maxHeight: "72dvh" }}>
         <Box px="5" py="4">
           {/* Header */}

@@ -10,11 +10,14 @@ interface Props {
 }
 
 // Static hex colors for semantic status dots — no Radix token equivalent
-const STATUS_CONFIG: Record<ConnectionStatus, { color: string; labelKey: TranslationKeys }> = {
+const STATUS_CONFIG: Record<
+  ConnectionStatus,
+  { color: string; labelKey: TranslationKeys }
+> = {
   disconnected: { color: "#94a3b8", labelKey: "status_disconnected" },
-  connecting:   { color: "#f59e0b", labelKey: "status_connecting" },
-  connected:    { color: "#22c55e", labelKey: "status_connected" },
-  error:        { color: "#ef4444", labelKey: "status_error" },
+  connecting: { color: "#f59e0b", labelKey: "status_connecting" },
+  connected: { color: "#22c55e", labelKey: "status_connected" },
+  error: { color: "#ef4444", labelKey: "status_error" },
 };
 
 export function StatusBadge({ status }: Props) {

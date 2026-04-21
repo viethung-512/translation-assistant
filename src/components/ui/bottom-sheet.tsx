@@ -1,16 +1,16 @@
-// iOS-style bottom sheet using Radix Dialog — provides overlay, focus trap, Escape dismiss.
+// iOS-style bottom sheet using Radix Dialog — provides focus trap, Escape dismiss.
 import { Dialog, Flex } from "@radix-ui/themes";
 import type { ReactNode } from "react";
 
 interface BottomSheetProps {
   isOpen: boolean;
-  onClose: () => void;
+  onDismiss: () => void;
   children: ReactNode;
 }
 
-export function BottomSheet({ isOpen, onClose, children }: BottomSheetProps) {
+export function BottomSheet({ isOpen, onDismiss, children }: BottomSheetProps) {
   return (
-    <Dialog.Root open={isOpen} onOpenChange={(open) => !open && onClose()}>
+    <Dialog.Root open={isOpen} onOpenChange={(open) => !open && onDismiss()}>
       <Dialog.Content
         aria-describedby={undefined}
         className="glass"
@@ -23,7 +23,6 @@ export function BottomSheet({ isOpen, onClose, children }: BottomSheetProps) {
           margin: "0 auto",
           maxWidth: 500,
           width: "100%",
-          /* Rounded top corners only — flat at bottom edge of screen */
           borderRadius: "28px 28px 0 0",
           borderBottom: "none",
           paddingBottom: "28px",

@@ -246,5 +246,3 @@ export const ALL_AVAILABLE_LANGUAGES: Language[] = [
     name: "Welsh",
   },
 ];
-
-

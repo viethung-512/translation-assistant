@@ -6,7 +6,10 @@ import type { ComponentProps } from "react";
 type OldVariant = "primary" | "danger" | "ghost" | "outline";
 type OldSize = "sm" | "md";
 
-interface ButtonProps extends Omit<ComponentProps<typeof RadixButton>, "variant" | "size"> {
+interface ButtonProps extends Omit<
+  ComponentProps<typeof RadixButton>,
+  "variant" | "size"
+> {
   variant?: OldVariant;
   size?: OldSize;
 }
@@ -16,17 +19,23 @@ function mapVariantColor(variant: OldVariant): {
   color?: ComponentProps<typeof RadixButton>["color"];
 } {
   switch (variant) {
-    case "primary": return { variant: "solid" };
-    case "danger":  return { variant: "solid", color: "red" };
-    case "ghost":   return { variant: "ghost" };
-    case "outline": return { variant: "outline" };
+    case "primary":
+      return { variant: "solid" };
+    case "danger":
+      return { variant: "solid", color: "red" };
+    case "ghost":
+      return { variant: "ghost" };
+    case "outline":
+      return { variant: "outline" };
   }
 }
 
 export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
   ({ variant = "primary", size = "md", color: colorProp, ...rest }, ref) => {
-    const { variant: radixVariant, color: derivedColor } = mapVariantColor(variant);
-    const radixSize: ComponentProps<typeof RadixButton>["size"] = size === "sm" ? "1" : "2";
+    const { variant: radixVariant, color: derivedColor } =
+      mapVariantColor(variant);
+    const radixSize: ComponentProps<typeof RadixButton>["size"] =
+      size === "sm" ? "1" : "2";
     return (
       <RadixButton
         ref={ref}
@@ -36,7 +45,7 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
         {...rest}
       />
     );
-  }
+  },
 );
 
 Button.displayName = "Button";

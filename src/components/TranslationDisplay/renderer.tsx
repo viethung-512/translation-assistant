@@ -20,7 +20,12 @@ interface RendererProps {
 }
 
 // Renders a sequence of tokens with speaker/language labels and final vs interim styling.
-function TokenBlock({ tokens, textSize, italic, showSpeakerLabel = true }: {
+function TokenBlock({
+  tokens,
+  textSize,
+  italic,
+  showSpeakerLabel = true,
+}: {
   tokens: readonly Token[];
   textSize?: "1" | "2" | "3" | "4" | "5";
   italic?: boolean;
@@ -45,7 +50,9 @@ function TokenBlock({ tokens, textSize, italic, showSpeakerLabel = true }: {
             )}
             {isNewLanguage && !isNewSpeaker && <br />}
             {isNewLanguage && (
-              <Badge color="gray" mr="1">{getLanguage(token.language!).name}</Badge>
+              <Badge color="gray" mr="1">
+                {getLanguage(token.language!).name}
+              </Badge>
             )}
             <Text
               as="span"
@@ -63,16 +70,27 @@ function TokenBlock({ tokens, textSize, italic, showSpeakerLabel = true }: {
 }
 
 // Pretty-displays translated tokens (large) and original tokens (small italic) in a unified view.
-export default function Renderer({ originalTokens, translatedTokens, placeholder }: RendererProps) {
+export default function Renderer({
+  originalTokens,
+  translatedTokens,
+  placeholder,
+}: RendererProps) {
   const isEmpty = originalTokens.length === 0 && translatedTokens.length === 0;
 
   if (isEmpty) {
     return (
-      <Flex direction="column" align="center" justify="center" height="100%" gap="3"
+      <Flex
+        direction="column"
+        align="center"
+        justify="center"
+        height="100%"
+        gap="3"
         style={{ paddingBottom: 24 }}
       >
         <IconMicPlaceholder />
-        <Text color="gray" align="center" size="2">{placeholder}</Text>
+        <Text color="gray" align="center" size="2">
+          {placeholder}
+        </Text>
       </Flex>
     );
   }
