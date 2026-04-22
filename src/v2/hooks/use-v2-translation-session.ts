@@ -3,6 +3,7 @@
 import { TtsService } from "@/audio/tts-service";
 import { useV2SettingsStore } from "@/v2/store/v2-settings-store";
 import { useV2HistoryStore } from "@/v2/store/v2-history-store";
+import { putTranscript } from "@/v2/storage/transcript-idb";
 import {
   buildHistoryFromSnapshot,
   type CommittedRow,
@@ -70,6 +71,7 @@ export function useV2TranslationSession() {
   languageBRef.current = languageB;
 
   const [isPaused, setIsPaused] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
 
   const { status: permissionStatus } = useMicrophonePermission({
     autoCheck: true,
@@ -119,6 +121,7 @@ export function useV2TranslationSession() {
   const startSession = useCallback(async () => {
     rowSnapshotsRef.current = [];
     sessionStartedAt.current = Date.now();
+    setSaveError(null);
     ttsRef.current.setEnabled(outputMode === "voice");
     await recording.start();
   }, [outputMode, recording]);
@@ -157,7 +160,19 @@ export function useV2TranslationSession() {
         startMs,
       );
       if (historyItem) {
-        useV2HistoryStore.getState().addItem(historyItem);
+        const historyStore = useV2HistoryStore.getState();
+        historyStore.addItem(historyItem);
+        try {
+          await putTranscript(historyItem.id, {
+            v: 1,
+            sessionStartMs: startMs,
+            rows: rowSnapshotsRef.current,
+          });
+        } catch (error) {
+          historyStore.removeItems([historyItem.id]);
+          setSaveError("Failed to save transcript details.");
+          console.error("Failed to persist transcript body", error);
+        }
       }
     }
   }, [recording, autoSave]);
@@ -169,7 +184,7 @@ export function useV2TranslationSession() {
     resumeSession,
     recordingStatus: toRecordingStatus(recording.state, isPaused),
     connectionStatus: toConnectionStatus(recording.state),
-    error: recording.error?.message ?? null,
+    error: recording.error?.message ?? saveError,
     permissionState: permissionStatus,
     needsPermission:
       permissionStatus === "denied" ||

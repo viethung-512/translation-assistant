@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from "react";
+import React, { useMemo, useState, useCallback, useEffect } from "react";
 import { useT, VT } from "@/v2/tokens/tokens";
 import { Typography } from "@/v2/components/ui/typography";
 import { Icon } from "@/v2/components/icons";
@@ -8,77 +8,29 @@ import { Button } from "@/v2/components/ui/button";
 import { TextField } from "@/v2/components/ui/text-input";
 import { ActionBar } from "@/v2/components/ui/action-bar";
 import { useV2T } from "@/v2/i18n";
-
-const TRANSCRIPT = [
-  {
-    s: 0,
-    name: "John",
-    flag: "🇺🇸",
-    code: "EN",
-    orig: "Hand me the torque wrench from the tool cart.",
-    trans: "Đưa cho tôi cờ lê lực từ xe đẩy dụng cụ.",
-    time: "2:14",
-  },
-  {
-    s: 1,
-    name: "Speaker 2",
-    flag: "🇻🇳",
-    code: "VI",
-    orig: "Cái nào? Loại 10 hay 14 milimet?",
-    trans: "Which one? The 10 or 14 millimeter?",
-    time: "2:14",
-  },
-  {
-    s: 2,
-    name: "Speaker 3",
-    flag: "🇯🇵",
-    code: "JA",
-    orig: "圧力計の値は8バールです",
-    trans: "The pressure gauge reads 8 bar.",
-    time: "2:15",
-  },
-  {
-    s: 0,
-    name: "John",
-    flag: "🇺🇸",
-    code: "EN",
-    orig: "The 14 millimeter. Check line 3 alignment next.",
-    trans: "Loại 14mm. Kiểm tra căn chỉnh dây chuyền 3.",
-    time: "2:15",
-  },
-  {
-    s: 3,
-    name: "Speaker 4",
-    flag: "🇰🇷",
-    code: "KO",
-    orig: "3번 라인 정렬 확인 완료했습니다.",
-    trans: "Line 3 alignment check complete.",
-    time: "2:16",
-  },
-  {
-    s: 1,
-    name: "Speaker 2",
-    flag: "🇻🇳",
-    code: "VI",
-    orig: "Tốt. Báo cáo ca tiếp theo.",
-    trans: "Good. Report on the next shift.",
-    time: "2:16",
-  },
-];
+import { useNavigate, useParams } from "react-router-dom";
+import { ROUTES } from "@/v2/router/routes";
+import { useV2HistoryStore } from "@/v2/store/v2-history-store";
+import { getTranscript, type StoredSessionTranscript } from "@/v2/storage/transcript-idb";
+import type { CommittedRow } from "@/v2/utils/scrape-transcript";
+import { ALL_AVAILABLE_LANGUAGES } from "@/v2/tokens/languages";
 
 function FilterChip({
   active,
   s,
+  onClick,
   children,
 }: {
   active?: boolean;
   s?: number;
+  onClick?: () => void;
   children: React.ReactNode;
 }) {
   const t = useT();
   const sColor = s !== undefined ? VT.s[s] : null;
   return (
     <div
+      onClick={onClick}
       style={{
         display: "flex",
         alignItems: "center",
@@ -92,6 +44,7 @@ function FilterChip({
         fontWeight: 700,
         letterSpacing: -0.1,
         border: active ? "none" : `1px solid ${t.divider}`,
+        cursor: onClick ? "pointer" : "default",
       }}
     >
       {sColor && (
@@ -113,7 +66,16 @@ function DetailRow({
   trans,
   time,
   isLast,
-}: (typeof TRANSCRIPT)[0] & { isLast?: boolean }) {
+}: {
+  s: number;
+  name: string;
+  flag: string;
+  code: string;
+  orig: string;
+  trans: string;
+  time: string;
+  isLast?: boolean;
+}) {
   const t = useT();
   return (
     <div style={{ padding: "10px 16px", position: "relative" }}>
@@ -194,13 +156,186 @@ function DetailRow({
 export function DetailScreen({ onBack }: { onBack?: () => void }) {
   const t = useT();
   const { t: i18n } = useV2T();
+  const navigate = useNavigate();
+  const { historyId } = useParams<{ historyId: string }>();
+  const items = useV2HistoryStore((s) => s.items);
   const [renaming, setRenaming] = useState(false);
+  const [activeSpeaker, setActiveSpeaker] = useState<string | null>(null);
+  const [loadingBody, setLoadingBody] = useState(true);
+  const [storedTranscript, setStoredTranscript] =
+    useState<StoredSessionTranscript | null>(null);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [hydrated, setHydrated] = useState(useV2HistoryStore.persist.hasHydrated());
+  const historyItem = useMemo(
+    () => items.find((item) => item.id === historyId),
+    [items, historyId],
+  );
+
+  useEffect(() => {
+    const unsubHydrate = useV2HistoryStore.persist.onFinishHydration(() =>
+      setHydrated(true),
+    );
+    return () => {
+      unsubHydrate();
+    };
+  }, []);
+
+  useEffect(() => {
+    let isCancelled = false;
+    if (!historyId) {
+      navigate(ROUTES.HISTORY, { replace: true });
+      return;
+    }
+
+    setLoadingBody(true);
+    setLoadError(null);
+    getTranscript(historyId)
+      .then((result) => {
+        if (isCancelled) return;
+        setStoredTranscript(result);
+      })
+      .catch((error) => {
+        if (isCancelled) return;
+        console.error("Failed to load transcript body", error);
+        setLoadError("Failed to load transcript.");
+      })
+      .finally(() => {
+        if (!isCancelled) setLoadingBody(false);
+      });
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [historyId, navigate]);
+
+  const speakerOrder = useMemo(() => {
+    const seen = new Set<string>();
+    const out: string[] = [];
+    for (const row of storedTranscript?.rows ?? []) {
+      if (!row.speaker || seen.has(row.speaker)) continue;
+      seen.add(row.speaker);
+      out.push(row.speaker);
+    }
+    return out;
+  }, [storedTranscript]);
+
+  const rowsToRender = useMemo(() => {
+    const rows = storedTranscript?.rows ?? [];
+    if (!activeSpeaker) return rows;
+    return rows.filter((row) => row.speaker === activeSpeaker);
+  }, [storedTranscript, activeSpeaker]);
+
+  const detailRows = useMemo(() => {
+    const sessionStart = storedTranscript?.sessionStartMs ?? 0;
+    const speakerIndexMap = new Map<string, number>();
+    const speakerLabelMap = new Map<string, string>();
+
+    const getSpeakerIndex = (speaker: string): number => {
+      const existing = speakerIndexMap.get(speaker);
+      if (existing != null) return existing;
+      const parsed = Number.parseInt(speaker.replace(/\D+/g, ""), 10);
+      const next =
+        Number.isFinite(parsed) && parsed > 0
+          ? parsed - 1
+          : speakerIndexMap.size;
+      speakerIndexMap.set(speaker, next);
+      return next;
+    };
+
+    const getSpeakerLabel = (speaker: string): string => {
+      const existing = speakerLabelMap.get(speaker);
+      if (existing) return existing;
+      const index = getSpeakerIndex(speaker);
+      const label = `Speaker ${index + 1}`;
+      speakerLabelMap.set(speaker, label);
+      return label;
+    };
+
+    const formatTime = (row: CommittedRow): string => {
+      const elapsedMs = Math.max(0, row.endMs);
+      const elapsed = new Date(sessionStart + elapsedMs);
+      return elapsed.toLocaleTimeString([], {
+        hour: "2-digit",
+        minute: "2-digit",
+      });
+    };
+
+    return rowsToRender.map((row) => {
+      const lang = ALL_AVAILABLE_LANGUAGES.find((l) => l.code === row.lang);
+      return {
+        s: getSpeakerIndex(row.speaker),
+        name: getSpeakerLabel(row.speaker),
+        flag: lang?.flag ?? "🌐",
+        code: row.lang ? row.lang.toUpperCase() : "UNK",
+        orig: row.origText,
+        trans: row.transText,
+        time: formatTime(row),
+      };
+    });
+  }, [rowsToRender, storedTranscript]);
+
+  const headerLangCodes = useMemo(() => {
+    if (historyItem) {
+      return historyItem.flags
+        .map(
+          (flag) =>
+            ALL_AVAILABLE_LANGUAGES.find((l) => l.flag === flag)?.code ?? "",
+        )
+        .filter(Boolean)
+        .map((code) => code.toUpperCase());
+    }
+    return [];
+  }, [historyItem]);
 
   const handleBack = useCallback(() => onBack?.(), [onBack]);
   const handleStopPropagation = useCallback(
     (e: React.MouseEvent) => e.stopPropagation(),
     [],
   );
+
+  if (!historyId) return null;
+
+  if (!hydrated || loadingBody) {
+    return (
+      <ScreenLayout>
+        <div style={{ padding: "20px 16px", color: t.textDim }}>Loading...</div>
+      </ScreenLayout>
+    );
+  }
+
+  if (!historyItem) {
+    return (
+      <ScreenLayout>
+        <div style={{ padding: "20px 16px", color: t.textDim }}>
+          Session not found.
+        </div>
+        <ActionBar>
+          <Button
+            variant="primary"
+            label="Back to history"
+            onPress={() => navigate(ROUTES.HISTORY)}
+          />
+        </ActionBar>
+      </ScreenLayout>
+    );
+  }
+
+  if (!storedTranscript || loadError) {
+    return (
+      <ScreenLayout>
+        <div style={{ padding: "20px 16px", color: t.textDim }}>
+          Transcript unavailable.
+        </div>
+        <ActionBar>
+          <Button
+            variant="primary"
+            label="Back to history"
+            onPress={() => navigate(ROUTES.HISTORY)}
+          />
+        </ActionBar>
+      </ScreenLayout>
+    );
+  }
 
   return (
     <ScreenLayout>
@@ -235,7 +370,7 @@ export function DetailScreen({ onBack }: { onBack?: () => void }) {
               letterSpacing: -0.3,
             }}
           >
-            Today, 2:14 PM
+            {historyItem.date}, {historyItem.time}
           </div>
           <div
             style={{
@@ -245,7 +380,7 @@ export function DetailScreen({ onBack }: { onBack?: () => void }) {
               marginTop: 2,
             }}
           >
-            {["🇺🇸", "🇻🇳", "🇯🇵", "🇰🇷"].map((f, i) => (
+            {historyItem.flags.map((f, i) => (
               <span key={i} style={{ fontSize: 13 }}>
                 {f}
               </span>
@@ -259,7 +394,7 @@ export function DetailScreen({ onBack }: { onBack?: () => void }) {
                 letterSpacing: 0.3,
               }}
             >
-              EN · VI · JA · KO
+              {headerLangCodes.join(" · ")}
             </span>
           </div>
         </div>
@@ -274,16 +409,27 @@ export function DetailScreen({ onBack }: { onBack?: () => void }) {
           flexShrink: 0,
         }}
       >
-        <FilterChip active>{i18n("v2_detail_filter_all")}</FilterChip>
-        <FilterChip s={0}>John</FilterChip>
-        <FilterChip s={1}>Speaker 2</FilterChip>
-        <FilterChip s={2}>Speaker 3</FilterChip>
-        <FilterChip s={3}>Speaker 4</FilterChip>
+        <FilterChip
+          active={activeSpeaker === null}
+          onClick={() => setActiveSpeaker(null)}
+        >
+          {i18n("v2_detail_filter_all")}
+        </FilterChip>
+        {speakerOrder.map((speakerId, idx) => (
+          <FilterChip
+            key={speakerId}
+            s={idx}
+            active={activeSpeaker === speakerId}
+            onClick={() => setActiveSpeaker(speakerId)}
+          >
+            {`Speaker ${idx + 1}`}
+          </FilterChip>
+        ))}
       </div>
 
       <div style={{ padding: "4px 0" }}>
-        {TRANSCRIPT.map((r, i) => (
-          <DetailRow key={i} {...r} isLast={i === TRANSCRIPT.length - 1} />
+        {detailRows.map((r, i) => (
+          <DetailRow key={`${r.s}-${i}`} {...r} isLast={i === detailRows.length - 1} />
         ))}
       </div>
 
@@ -294,6 +440,7 @@ export function DetailScreen({ onBack }: { onBack?: () => void }) {
           icon={<Icon.Share s={17} />}
           label={i18n("v2_detail_share")}
           flex={1}
+          disabled
         />
         <Button
           variant="card"
@@ -301,6 +448,7 @@ export function DetailScreen({ onBack }: { onBack?: () => void }) {
           icon={<Icon.Export s={17} />}
           label={i18n("v2_detail_export")}
           flex={1}
+          disabled
         />
       </ActionBar>
 

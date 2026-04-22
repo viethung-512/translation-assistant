@@ -8,6 +8,7 @@ import { Button } from "@/v2/components/ui/button";
 import { ActionBar } from "@/v2/components/ui/action-bar";
 import { EmptyState } from "@/v2/components/ui/empty-state";
 import { ConfirmDialog } from "@/v2/components/ui/confirm-dialog";
+import { deleteTranscripts } from "@/v2/storage/transcript-idb";
 import {
   useV2HistoryStore,
   type V2HistoryItem,
@@ -177,7 +178,7 @@ export function HistoryScreen({
 }: {
   empty?: boolean;
   onBack?: () => void;
-  onSelectItem?: () => void;
+  onSelectItem?: (historyId: string) => void;
 }) {
   const t = useT();
   const { t: i18n } = useV2T();
@@ -206,8 +207,19 @@ export function HistoryScreen({
     if (selectedIds.size > 0) setPendingDelete(true);
   }, [selectedIds.size]);
 
-  const handleConfirmDelete = useCallback(() => {
-    removeItems(Array.from(selectedIds));
+  const handleConfirmDelete = useCallback(async () => {
+    const ids = Array.from(selectedIds);
+    removeItems(ids);
+    try {
+      await deleteTranscripts(ids);
+    } catch (firstError) {
+      console.error("Failed to delete transcript bodies, retrying once", firstError);
+      try {
+        await deleteTranscripts(ids);
+      } catch (secondError) {
+        console.error("Retry failed while deleting transcript bodies", secondError);
+      }
+    }
     setSelectedIds(new Set());
     setMultiSelect(false);
     setPendingDelete(false);
@@ -318,7 +330,7 @@ export function HistoryScreen({
                     multiSelect={multiSelect}
                     selected={selectedIds.has(it.id)}
                     isLast={i === arr.length - 1}
-                    onPress={onSelectItem}
+                    onPress={() => onSelectItem?.(it.id)}
                     onToggle={() => toggleItem(it.id)}
                   />
                 ))}

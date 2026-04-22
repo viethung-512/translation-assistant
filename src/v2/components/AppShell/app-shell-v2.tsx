@@ -5,7 +5,7 @@ import { DetailScreen } from "@/v2/components/screens/detail-screen";
 import { HistoryScreen } from "@/v2/components/screens/history-screen";
 import { MainScreen } from "@/v2/components/screens/main-screen";
 import { SettingsScreen } from "@/v2/components/screens/settings-screen";
-import { ROUTES } from "@/v2/router/routes";
+import { ROUTES, detailPath } from "@/v2/router/routes";
 import { useT } from "@/v2/tokens/tokens";
 import { getApiKey } from "@/tauri/secure-storage";
 import { useV2SettingsStore } from "@/v2/store/v2-settings-store";
@@ -64,7 +64,7 @@ export function AppShellV2() {
             element={
               <HistoryScreen
                 onBack={() => navigate(-1)}
-                onSelectItem={() => navigate(ROUTES.DETAIL)}
+                onSelectItem={(historyId) => navigate(detailPath(historyId))}
               />
             }
           />
