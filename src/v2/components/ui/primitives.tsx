@@ -1,5 +1,6 @@
 import React from "react";
 import { useT, VT } from "@/v2/tokens/tokens";
+import { FlagEmoji } from "@/v2/components/ui/flag-emoji";
 
 export function Card({
   children,
@@ -116,7 +117,7 @@ export function LangTag({ flag, code }: { flag: string; code: string }) {
         color: t.textMuted,
       }}
     >
-      <span style={{ fontSize: 13 }}>{flag}</span>
+      <FlagEmoji flag={flag} size={13} />
       <span>{code}</span>
     </div>
   );

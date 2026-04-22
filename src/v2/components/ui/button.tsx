@@ -18,6 +18,7 @@ interface ButtonProps {
   fullWidth?: boolean;
   height?: number;
   flex?: number;
+  disabled?: boolean;
   onPress?: () => void;
   style?: React.CSSProperties;
 }
@@ -30,6 +31,7 @@ export function Button({
   fullWidth,
   height = 52,
   flex,
+  disabled,
   onPress,
   style = {},
 }: ButtonProps) {
@@ -61,7 +63,7 @@ export function Button({
 
   return (
     <div
-      onClick={onPress}
+      onClick={disabled ? undefined : onPress}
       style={{
         height,
         borderRadius,
@@ -72,7 +74,8 @@ export function Button({
         fontSize: 15,
         fontWeight: 700,
         letterSpacing: -0.1,
-        cursor: onPress ? "pointer" : "default",
+        cursor: disabled ? "default" : onPress ? "pointer" : "default",
+        opacity: disabled ? 0.45 : 1,
         ...(fullWidth ? { width: "100%" } : {}),
         ...(flex !== undefined ? { flex } : {}),
         ...vs,

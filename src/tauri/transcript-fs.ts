@@ -9,6 +9,10 @@ export interface TranscriptLine {
   detectedLanguage?: string; // populated in auto-detect mode from token.language
 }
 
+export interface INewTranscriptLine extends TranscriptLine {
+  provisionalText: string;
+}
+
 /** Build a human-readable transcript string from finalized lines. */
 export function buildTranscriptContent(
   lines: TranscriptLine[],

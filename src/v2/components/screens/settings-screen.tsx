@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useCallback } from "react";
+import React, { useState, useMemo, useCallback, useEffect } from "react";
 import { useT, VT } from "@/v2/tokens/tokens";
 import { Typography } from "@/v2/components/ui/typography";
 import { Icon } from "@/v2/components/icons";
@@ -15,7 +15,10 @@ import { ALL_AVAILABLE_LANGUAGES } from "@/v2/tokens/languages";
 import { useV2T } from "@/v2/i18n";
 import i18n from "@/v2/i18n";
 import { ConfirmDialog } from "../ui/confirm-dialog";
+import { ApiKeyDialog } from "../ui/api-key-dialog";
+import { FlagEmoji } from "../ui/flag-emoji";
 import { LangSheet } from "../ui/lang-sheet";
+import { getApiKey } from "@/tauri/secure-storage";
 
 type OpenSheet =
   | "outputMode"
@@ -92,7 +95,7 @@ function LangDetail({ code }: { code: string }) {
   if (!lang) return <span>{code.toUpperCase()}</span>;
   return (
     <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
-      <span style={{ fontSize: 16 }}>{lang.flag}</span>
+      <FlagEmoji flag={lang.flag} size={16} />
       {lang.name}
     </span>
   );
@@ -128,7 +131,18 @@ export function SettingsScreen({ onBack }: SettingsScreenProps) {
   const [openSheet, setOpenSheet] = useState<OpenSheet>(null);
   const [confirmClearAllHistories, setConfirmClearAllHistories] =
     useState(false);
+  const [apiKeyOpen, setApiKeyOpen] = useState(false);
+  const [hasStoredKey, setHasStoredKey] = useState(false);
   const closeSheet = useCallback(() => setOpenSheet(null), []);
+
+  useEffect(() => {
+    getApiKey().then((k) => setHasStoredKey(!!k));
+  }, []);
+
+  const handleApiKeyDismiss = useCallback(() => {
+    setApiKeyOpen(false);
+    getApiKey().then((k) => setHasStoredKey(!!k));
+  }, []);
 
   const themeIndex = useMemo(
     () => (theme === "light" ? 0 : theme === "dark" ? 1 : 2),
@@ -337,6 +351,18 @@ export function SettingsScreen({ onBack }: SettingsScreenProps) {
             onPress={() => setConfirmClearAllHistories(true)}
           />
         </SectionGroup>
+        <SectionGroup title={tr("v2_settings_section_api")}>
+          <SectionRow
+            title={tr("v2_settings_api_key")}
+            detail={
+              hasStoredKey
+                ? tr("v2_settings_api_key_configured")
+                : tr("v2_settings_api_key_not_set")
+            }
+            isLast
+            onPress={() => setApiKeyOpen(true)}
+          />
+        </SectionGroup>
         <SectionGroup title={tr("v2_settings_section_about")}>
           <SectionRow
             title={tr("v2_settings_app_version")}
@@ -408,6 +434,7 @@ export function SettingsScreen({ onBack }: SettingsScreenProps) {
           onConfirm={() => setConfirmClearAllHistories(false)}
         />
       )}
+      <ApiKeyDialog isOpen={apiKeyOpen} onDismiss={handleApiKeyDismiss} />
     </ScreenLayout>
   );
 }

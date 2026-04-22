@@ -144,9 +144,9 @@ This project maintains **two parallel UI implementations**:
 
 ---
 
-## Frontend (React/TypeScript) — `src/v2/` (Wireframe v2)
+## Frontend (React/TypeScript) — `src/v2/` (v2 Shell + Soniox Integration)
 
-Static UI preview with no business logic. Useful for design review, prototyping, and stakeholder demos.
+Modern UI shell with full Soniox integration. Uses identical business logic to v1 but with refreshed component design (Radix UI, simplified form factors).
 
 **Note**: v2 is **tree-shaken from v1 builds**. Only loaded when `VITE_UI_VERSION=v2`.
 
@@ -155,18 +155,32 @@ Static UI preview with no business logic. Useful for design review, prototyping,
 ```
 src/v2/
 ├── tokens/
-│   └── tokens.ts           — Design tokens (Theme interface, VT colors, ThemeProvider context)
+│   ├── tokens.ts           — Design tokens (Theme interface, VT colors, ThemeProvider context)
+│   └── languages.ts        — ALL_AVAILABLE_LANGUAGES list with metadata
+├── store/
+│   └── v2-settings-store.ts — Zustand store: languages, outputMode, theme, apiKey (in-memory), autoSave
+├── hooks/
+│   └── use-v2-translation-session.ts — Soniox session hook (mirrors v1, reads v2 store)
+├── i18n/
+│   └── index.ts            — i18n config for v2 (v2-prefixed keys)
 ├── components/
 │   ├── icons/
 │   │   └── index.tsx       — Icon library (18 SVG icons with typed props)
 │   ├── ui/
-│   │   └── primitives.tsx  — Shared primitives (Card, Toggle, StatusBar, SpeakerAvatar, LangTag)
+│   │   ├── primitives.tsx  — Shared primitives (Card, Toggle, StatusBar, SpeakerAvatar)
+│   │   ├── screen-layout.tsx — Layout wrapper (safe areas, padding)
+│   │   ├── text-input.tsx  — TextField with type, onFocus, onBlur support
+│   │   ├── button.tsx      — Button with disabled state
+│   │   ├── api-key-dialog.tsx — Modal for API key save/delete
+│   │   ├── confirm-dialog.tsx — Generic confirm dialog
+│   │   ├── empty-state.tsx — Empty state placeholder
+│   │   └── lang-sheet.tsx  — Language picker sheet
 │   ├── screens/
-│   │   ├── main-screen.tsx + helpers
+│   │   ├── main-screen.tsx + helpers — Recording UI with real Soniox session
 │   │   ├── lang-sheet-screen.tsx
 │   │   ├── history-screen.tsx
 │   │   ├── detail-screen.tsx
-│   │   ├── settings-screen.tsx
+│   │   ├── settings-screen.tsx — Persisted settings with API key section
 │   │   └── dialog-screen.tsx
 │   └── AppShell/
 │       └── app-shell-v2.tsx — Shell + floating preview nav (6 tabs)
@@ -175,14 +189,19 @@ src/v2/
 
 ### Key Files
 
-| File                                   | LOC    | Purpose                                                               |
-| -------------------------------------- | ------ | --------------------------------------------------------------------- |
-| `tokens/tokens.ts`                     | ~150   | Theme interface, VT constants, ThemeProvider, useT hook               |
-| `components/icons/index.tsx`           | ~350   | 18 SVG icon components with typed `IconProps`                         |
-| `components/ui/primitives.tsx`         | ~200   | 5 shared primitives (Card, Toggle, StatusBar, SpeakerAvatar, LangTag) |
-| `components/screens/*.tsx`             | 50–150 | 6 static screen components (each with screen-local helpers)           |
-| `components/AppShell/app-shell-v2.tsx` | ~100   | App shell + PreviewNav floating pill                                  |
-| `app-v2.tsx`                           | ~20    | Root entry with ThemeProvider                                         |
+| File                                      | LOC    | Purpose                                                                                                     |
+| ----------------------------------------- | ------ | ----------------------------------------------------------------------------------------------------------- |
+| `store/v2-settings-store.ts`              | ~70    | Zustand store: languages, outputMode, theme, apiKey (in-memory), autoSave; persists all except apiKey       |
+| `hooks/use-v2-translation-session.ts`     | ~180   | Soniox recording session hook; wires `@soniox/react` SDK, TtsService, transcript writing; async API key     |
+| `tokens/tokens.ts`                        | ~150   | Theme interface, VT constants, ThemeProvider, useT hook                                                    |
+| `components/ui/api-key-dialog.tsx`        | ~150   | Portal modal for save/delete API key; backed by localStorage via `secure-storage.ts`                        |
+| `components/ui/confirm-dialog.tsx`        | ~80    | Generic confirm/cancel dialog; used for no-key-set case in main-screen                                      |
+| `components/icons/index.tsx`              | ~350   | 18 SVG icon components with typed `IconProps`                                                              |
+| `components/ui/primitives.tsx`            | ~200   | Shared primitives (Card, Toggle, StatusBar, SpeakerAvatar)                                                 |
+| `components/screens/main-screen.tsx`      | ~250   | Recording UI: real session management, transcript display, outputMode toggle (text/voice), pause/resume     |
+| `components/screens/settings-screen.tsx`  | ~150   | Settings UI: language pickers, theme, autoSave toggle, new API key section with modal                       |
+| `components/AppShell/app-shell-v2.tsx`    | ~100   | Shell layout + floating preview nav (6 tabs for demo)                                                       |
+| `app-v2.tsx`                              | ~20    | Root entry with ThemeProvider                                                                              |
 
 ### Design Tokens
 
@@ -199,14 +218,15 @@ export const VT_H = 812;  // Design height
 export const makeTheme(dark: boolean): Theme { /* light/dark variants */ }
 ```
 
-### No Business Logic
+### Business Logic
 
-All screens are **100% static**:
+v2 screens have full Soniox integration and state management:
 
-- Click handlers are `() => {}`
-- No `useState`, `useEffect`, or `useContext`
-- Prop-based styling only (active/inactive states)
-- Safe for design review and demo purposes
+- **Session Management**: `useV2TranslationSession` hook (async Soniox recording via `@soniox/react` SDK)
+- **State**: `v2-settings-store` persists languages, outputMode, theme, autoSave; stores apiKey in-memory
+- **Screens**: MainScreen wires real recording controls; SettingsScreen manages API key + language/theme settings
+- **Modals**: ApiKeyDialog and ConfirmDialog for critical flows
+- **Diff from v1**: Identical business logic but modernized UI patterns (Radix-inspired components, streamlined forms)
 
 ---
 

@@ -9,6 +9,9 @@ interface TextFieldProps {
   prefix?: React.ReactNode;
   focused?: boolean;
   height?: number;
+  type?: React.HTMLInputTypeAttribute;
+  onFocus?: () => void;
+  onBlur?: () => void;
   style?: React.CSSProperties;
 }
 
@@ -19,6 +22,9 @@ export function TextField({
   prefix,
   focused,
   height = 52,
+  type,
+  onFocus,
+  onBlur,
   style = {},
 }: TextFieldProps) {
   const t = useT();
@@ -41,6 +47,9 @@ export function TextField({
         value={value}
         onChange={(e) => onChange?.(e.target.value)}
         placeholder={placeholder}
+        type={type}
+        onFocus={onFocus}
+        onBlur={onBlur}
         style={{
           flex: 1,
           background: "transparent",

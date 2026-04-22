@@ -13,6 +13,7 @@ interface V2SettingsState {
   theme: V2Theme;
   autoSave: boolean;
   uiLanguage: string;
+  apiKey: string; // in-memory only — never written to localStorage
   // actions
   setLanguageA: (code: string) => void;
   setLanguageB: (code: string) => void;
@@ -23,6 +24,7 @@ interface V2SettingsState {
   setTheme: (theme: V2Theme) => void;
   setAutoSave: (v: boolean) => void;
   setUiLanguage: (lang: string) => void;
+  setApiKey: (key: string) => void;
 }
 
 export const useV2SettingsStore = create<V2SettingsState>()(
@@ -36,6 +38,7 @@ export const useV2SettingsStore = create<V2SettingsState>()(
       theme: "system",
       autoSave: true,
       uiLanguage: "en",
+      apiKey: "",
       setLanguageA: (code) => set({ languageA: code }),
       setLanguageB: (code) => set({ languageB: code }),
       swapLanguages: () =>
@@ -46,6 +49,7 @@ export const useV2SettingsStore = create<V2SettingsState>()(
       setTheme: (theme) => set({ theme }),
       setAutoSave: (v) => set({ autoSave: v }),
       setUiLanguage: (lang) => set({ uiLanguage: lang }),
+      setApiKey: (key) => set({ apiKey: key }),
     }),
     {
       name: "hey-gracie-v2-settings",

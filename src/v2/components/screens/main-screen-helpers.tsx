@@ -4,6 +4,7 @@ import { Icon } from "@/v2/components/icons";
 import { SpeakerAvatar, LangTag } from "@/v2/components/ui/primitives";
 import { useV2T } from "@/v2/i18n";
 import { Typography } from "@/v2/components/ui/typography";
+import { ALL_AVAILABLE_LANGUAGES } from "@/v2/tokens/languages";
 
 export function IconBtn({
   children,
@@ -151,29 +152,87 @@ export function SegBtn({
   );
 }
 
+interface Token {
+  text: string;
+  is_final: boolean;
+  speaker?: string;
+  language?: string;
+  translation_status?: "none" | "original" | "translation";
+  end_ms?: number;
+}
+
 export interface TranscriptRowProps {
-  s: number;
-  flag: string;
-  code: string;
-  orig: string;
-  trans: string;
-  time: string;
-  active?: boolean;
-  isLast?: boolean;
+  originalTokens: readonly Token[];
+  translatedTokens: readonly Token[];
+}
+
+function detectFlagCode(langCode?: string) {
+  const lang = langCode
+    ? ALL_AVAILABLE_LANGUAGES.find((l) => l.code === langCode)
+    : undefined;
+  const flag = lang?.flag ?? "🌐";
+  const code = langCode?.toUpperCase() ?? "…";
+
+  return { flag, code };
+}
+
+function renderTokens(
+  tokens: readonly Token[],
+  variant: "orig" | "trans",
+  t: ReturnType<typeof useT>,
+): React.ReactNode {
+  let lastLang: string | undefined;
+  return tokens.map((token, idx) => {
+    lastLang = token.language ?? lastLang;
+    const color = !token.is_final
+      ? t.textFaint
+      : variant === "trans"
+        ? t.cyanText
+        : t.textMuted;
+
+    return (
+      <React.Fragment key={idx}>
+        <span
+          style={{
+            color,
+            fontStyle: variant === "orig" ? "italic" : undefined,
+            ...(variant === "trans" && { fontSize: 18 }),
+          }}
+        >
+          {token.text}
+        </span>
+      </React.Fragment>
+    );
+  });
 }
 
 export function TranscriptRow({
-  s,
-  flag,
-  code,
-  orig,
-  trans,
-  time,
-  active,
-  isLast,
+  originalTokens,
+  translatedTokens,
 }: TranscriptRowProps) {
   const t = useT();
   const { t: i18n } = useV2T();
+
+  const speakerStr = originalTokens[0]?.speaker;
+  const s = speakerStr ? Math.max(0, parseInt(speakerStr) - 1) : 0;
+  const { flag, code } = detectFlagCode(originalTokens[0]?.language);
+
+  const active =
+    originalTokens.some((tok) => !tok.is_final) ||
+    translatedTokens.some((tok) => !tok.is_final);
+
+  const lastWithTime = [...originalTokens, ...translatedTokens]
+    .slice()
+    .reverse()
+    .find((tok) => tok.end_ms != null);
+  const time =
+    lastWithTime?.end_ms != null
+      ? (() => {
+          const sec = Math.floor(lastWithTime.end_ms / 1000);
+          return `${String(Math.floor(sec / 60)).padStart(2, "0")}:${String(sec % 60).padStart(2, "0")}`;
+        })()
+      : "–";
+
   const speakerLabel = useMemo(
     () => i18n("v2_speaker", { n: String(s + 1) }),
     [i18n, s],
@@ -221,35 +280,29 @@ export function TranscriptRow({
               {time}
             </span>
           </div>
-          {/* original: small, italic, dimmed — source text */}
-          <Typography
-            variant="hint"
-            color={t.textMuted}
-            italic
+          <div
             style={{
-              opacity: 0.7,
+              fontSize: 12,
               lineHeight: 1.35,
               letterSpacing: -0.1,
               marginBottom: 4,
             }}
           >
-            {orig}
-          </Typography>
-          {/* translated: bold, prominent — the meaningful output */}
-          <Typography
-            variant="subheading"
-            style={{ fontWeight: 700, lineHeight: 1.3, letterSpacing: -0.2 }}
+            {renderTokens(originalTokens, "orig", t)}
+          </div>
+          <div
+            style={{
+              fontSize: 15,
+              fontWeight: 700,
+              lineHeight: 1.3,
+              letterSpacing: -0.2,
+            }}
           >
-            {trans}
+            {renderTokens(translatedTokens, "trans", t)}
             {active && <span style={{ color: VT.cyan, opacity: 0.6 }}>▎</span>}
-          </Typography>
+          </div>
         </div>
       </div>
-      {!isLast && (
-        <div
-          style={{ height: 1, background: t.hairline, margin: "4px 0 0 48px" }}
-        />
-      )}
     </div>
   );
 }
@@ -257,13 +310,10 @@ export function TranscriptRow({
 export function pulseRingStyle(i: number): React.CSSProperties {
   return {
     position: "absolute",
-    top: -8 - i * 6,
-    left: -8 - i * 6,
-    right: -8 - i * 6,
-    bottom: -8 - i * 6,
+    inset: 0,
     borderRadius: 999,
     border: `2px solid ${VT.cyan}`,
-    opacity: 0.5 - i * 0.15,
+    animation: `pulse-ring 1.6s cubic-bezier(0.22, 0.61, 0.36, 1) ${i * 0.53}s infinite`,
     zIndex: 1,
   };
 }

@@ -136,6 +136,24 @@ export const en = {
   v2_settings_sheet_output_device: "Output Device",
   v2_settings_sheet_app_language: "App Language",
 
+  // v2 API Key Settings
+  v2_settings_section_api: "API",
+  v2_settings_api_key: "Soniox API Key",
+  v2_settings_api_key_configured: "Configured",
+  v2_settings_api_key_not_set: "Not set",
+  v2_api_key_dialog_title: "Soniox API Key",
+  v2_api_key_dialog_placeholder_empty: "Enter your API key",
+  v2_api_key_dialog_placeholder_stored: "••••••••••••",
+  v2_api_key_dialog_save: "Save",
+  v2_api_key_dialog_saving: "Saving…",
+  v2_api_key_dialog_delete: "Delete Key",
+  v2_api_key_dialog_cancel: "Cancel",
+  // v2 No API Key Dialog
+  v2_no_key_dialog_title: "API Key Required",
+  v2_no_key_dialog_body: "Add your Soniox API key in Settings to start translating.",
+  v2_no_key_dialog_go_settings: "Go to Settings",
+  v2_no_key_dialog_cancel: "Cancel",
+
   // v2 History
   v2_history_title: "History",
   v2_history_sessions: "{{count}} sessions",

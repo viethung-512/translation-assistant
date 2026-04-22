@@ -14,7 +14,9 @@ import {
 } from "./main-screen-helpers";
 import { EmptyState } from "@/v2/components/ui/empty-state";
 import { LangSheet } from "@/v2/components/ui/lang-sheet";
+import { ConfirmDialog } from "@/v2/components/ui/confirm-dialog";
 import { useV2SettingsStore } from "@/v2/store/v2-settings-store";
+import { useV2TranslationSession } from "@/v2/hooks/use-v2-translation-session";
 import { ALL_AVAILABLE_LANGUAGES } from "@/v2/tokens/languages";
 import { useV2T } from "@/v2/i18n";
 
@@ -25,63 +27,14 @@ type SessionState =
   | "translating"
   | "stopped";
 
-const TRANSCRIPT = [
-  {
-    s: 0,
-    flag: "🇺🇸",
-    code: "EN",
-    orig: "Hand me the torque wrench from the tool cart.",
-    trans: "Đưa cho tôi cờ lê lực từ xe đẩy dụng cụ.",
-    time: "2:14",
-  },
-  {
-    s: 1,
-    flag: "🇻🇳",
-    code: "VI",
-    orig: "Cái nào? Loại 10 hay 14 milimet?",
-    trans: "Which one? The 10 or 14 millimeter?",
-    time: "2:14",
-  },
-  {
-    s: 2,
-    flag: "🇯🇵",
-    code: "JA",
-    orig: "圧力計の値は8バールです",
-    trans: "The pressure gauge reads 8 bar.",
-    time: "2:15",
-  },
-  {
-    s: 0,
-    flag: "🇺🇸",
-    code: "EN",
-    orig: "Good. Check line three alignment next.",
-    trans: "Tốt. Kiểm tra căn chỉnh dây chuyền 3 tiếp theo.",
-    time: "2:15",
-    active: true,
-  },
-];
-
-const WAVEFORM_HEIGHTS = [
-  8, 14, 22, 10, 18, 28, 12, 20, 8, 16, 24, 14, 10, 20, 8, 16, 22, 10,
-];
-
 interface MainScreenProps {
-  state?: SessionState;
-  empty?: boolean;
   onSettings?: () => void;
   onHistory?: () => void;
 }
 
-export function MainScreen({
-  state: initialState = "ready",
-  empty = false,
-  onSettings,
-  onHistory,
-}: MainScreenProps) {
+export function MainScreen({ onSettings, onHistory }: MainScreenProps) {
   const t = useT();
   const { t: i18n } = useV2T();
-  const [state, setState] = useState<SessionState>(initialState);
-
   const {
     languageA: storeA,
     languageB: storeB,
@@ -92,7 +45,11 @@ export function MainScreen({
   const [localLangA, setLocalLangA] = useState(storeA);
   const [localLangB, setLocalLangB] = useState(storeB);
   const [outputMode, setOutputMode] = useState(storeOutputMode);
+
+  const session = useV2TranslationSession();
+
   const [langSlot, setLangSlot] = useState<"A" | "B" | null>(null);
+  const [showNoKeyDialog, setShowNoKeyDialog] = useState(false);
 
   const langA = useMemo(
     () =>
@@ -120,6 +77,23 @@ export function MainScreen({
     });
   }, [localLangB]);
 
+  const sessionState = useMemo<SessionState>(() => {
+    switch (session.recordingStatus) {
+      case "recording":
+        return "listening";
+      case "paused":
+        return "paused";
+      case "stopping":
+        return "stopped";
+      default:
+        return "ready";
+    }
+  }, [session.recordingStatus]);
+
+  const isActive =
+    sessionState === "listening" || sessionState === "translating";
+  const isPaused = sessionState === "paused";
+
   const handleLangSelect = useCallback(
     (code: string) => {
       if (langSlot === "A") setLocalLangA(code);
@@ -132,8 +106,34 @@ export function MainScreen({
   const openLangSlotA = useCallback(() => setLangSlot("A"), []);
   const openLangSlotB = useCallback(() => setLangSlot("B"), []);
   const closeLangSlot = useCallback(() => setLangSlot(null), []);
-  const handleSetOutputText = useCallback(() => setOutputMode("text"), []);
-  const handleSetOutputVoice = useCallback(() => setOutputMode("voice"), []);
+
+  const handleSetOutputText = useCallback(
+    () => setOutputMode("text"),
+    [setOutputMode],
+  );
+  const handleSetOutputVoice = useCallback(
+    () => setOutputMode("voice"),
+    [setOutputMode],
+  );
+
+  const handleMainBtn = useCallback(async () => {
+    if (sessionState === "ready" || sessionState === "stopped") {
+      try {
+        await session.startSession();
+      } catch (e) {
+        const msg = e instanceof Error ? e.message : "";
+        if (msg.includes("API key")) setShowNoKeyDialog(true);
+      }
+    } else if (sessionState === "listening") {
+      session.pauseSession();
+    } else if (sessionState === "paused") {
+      await session.resumeSession();
+    }
+  }, [sessionState, session]);
+
+  const handleStop = useCallback(() => {
+    session.stopSession();
+  }, [session]);
 
   const statusMap = useMemo<
     Record<SessionState, { label: string; dot: string }>
@@ -148,9 +148,7 @@ export function MainScreen({
     [i18n],
   );
 
-  const status = statusMap[state];
-  const isActive = state === "listening" || state === "translating";
-  const isPaused = state === "paused";
+  const status = statusMap[sessionState];
 
   const mainBtn = useMemo(
     () =>
@@ -171,14 +169,6 @@ export function MainScreen({
           : i18n("v2_btn_start"),
     [isActive, isPaused, i18n],
   );
-
-  const handleMainBtn = useCallback(() => {
-    if (state === "ready" || state === "stopped") setState("listening");
-    else if (state === "listening") setState("paused");
-    else if (state === "paused") setState("listening");
-  }, [state]);
-
-  const handleStop = useCallback(() => setState("stopped"), []);
 
   const header = useMemo(
     () => (
@@ -284,29 +274,6 @@ export function MainScreen({
           alignItems: "center",
         }}
       >
-        <div
-          style={{
-            display: "flex",
-            gap: 3,
-            alignItems: "center",
-            height: 24,
-            marginBottom: 10,
-          }}
-        >
-          {WAVEFORM_HEIGHTS.map((h, i) => (
-            <div
-              key={i}
-              style={{
-                width: 3,
-                height: isActive ? h : 4,
-                borderRadius: 2,
-                background: isActive ? VT.cyan : t.textFaint,
-                opacity: isActive ? 1 : 0.4,
-                transition: "height 0.3s",
-              }}
-            />
-          ))}
-        </div>
         <div
           style={{
             display: "flex",
@@ -436,6 +403,29 @@ export function MainScreen({
     ],
   );
 
+  const bodyMarkup = useMemo(() => {
+    if (sessionState === "stopped" || sessionState === "ready") {
+      return (
+        <EmptyState
+          icon={<Icon.Mic s={34} c={VT.cyan} />}
+          title={i18n("v2_empty_start_title")}
+          subtitle={i18n("v2_empty_start_body")}
+        />
+      );
+    }
+    return (
+      <div style={{ flex: 1, overflowY: "auto", padding: "6px 4px" }}>
+        {(session.originalTokens.length > 0 ||
+          session.translatedTokens.length > 0) && (
+          <TranscriptRow
+            originalTokens={session.originalTokens}
+            translatedTokens={session.translatedTokens}
+          />
+        )}
+      </div>
+    );
+  }, [sessionState, i18n, session.originalTokens, session.translatedTokens]);
+
   return (
     <>
       <ScreenLayout variant="fixed" header={header} footer={footer}>
@@ -456,7 +446,8 @@ export function MainScreen({
               overflow: "hidden",
             }}
           >
-            {empty ? (
+            {bodyMarkup}
+            {/* {session.finalLines.length === 0 ? (
               <EmptyState
                 icon={<Icon.Mic s={34} c={VT.cyan} />}
                 title={i18n("v2_empty_start_title")}
@@ -464,15 +455,37 @@ export function MainScreen({
               />
             ) : (
               <div style={{ flex: 1, overflowY: "auto", padding: "6px 4px" }}>
-                {TRANSCRIPT.map((r, i) => (
-                  <TranscriptRow
-                    key={i}
-                    {...r}
-                    isLast={i === TRANSCRIPT.length - 1}
-                  />
-                ))}
+                {session.finalLines.map((line, idx) => {
+                  const s = line.detectedLanguage === localLangA ? 0 : 1;
+                  const detectedCode =
+                    line.detectedLanguage ??
+                    (s === 0 ? localLangA : localLangB);
+                  const lang = ALL_AVAILABLE_LANGUAGES.find(
+                    (l) => l.code === detectedCode,
+                  );
+                  const flag = lang?.flag ?? "🌐";
+                  const code = detectedCode.toUpperCase();
+                  const totalSec = Math.floor(line.timestampMs / 1000);
+                  const time = `${String(Math.floor(totalSec / 60)).padStart(2, "0")}:${String(totalSec % 60).padStart(2, "0")}`;
+                  const isLast = idx === session.finalLines.length - 1;
+                  return (
+                    <TranscriptRow
+                      key={idx}
+                      originalTokens={[{ text: line.originalText, is_final: true }]}
+                      translatedTokens={[{ text: line.translatedText, is_final: true }]}
+                    />
+                  );
+                })}
+                {isActive &&
+                  (session.originalTokens.length > 0 ||
+                    session.translatedTokens.length > 0) && (
+                    <TranscriptRow
+                      originalTokens={session.originalTokens}
+                      translatedTokens={session.translatedTokens}
+                    />
+                  )}
               </div>
-            )}
+            )} */}
           </Card>
           <div
             style={{
@@ -507,6 +520,19 @@ export function MainScreen({
         onDismiss={closeLangSlot}
         selectedCode={langSlot === "A" ? localLangA : localLangB}
         onSelect={handleLangSelect}
+      />
+      <ConfirmDialog
+        isOpen={showNoKeyDialog}
+        onDismiss={() => setShowNoKeyDialog(false)}
+        icon={<Icon.Gear c={VT.cyan} s={24} />}
+        title={i18n("v2_no_key_dialog_title")}
+        body={i18n("v2_no_key_dialog_body")}
+        confirmLabel={i18n("v2_no_key_dialog_go_settings")}
+        cancelLabel={i18n("v2_no_key_dialog_cancel")}
+        onConfirm={() => {
+          setShowNoKeyDialog(false);
+          onSettings?.();
+        }}
       />
     </>
   );

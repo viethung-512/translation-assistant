@@ -139,6 +139,24 @@ export const vi: Record<TranslationKeys, string> = {
   v2_settings_sheet_output_device: "Thiết bị đầu ra",
   v2_settings_sheet_app_language: "Ngôn ngữ ứng dụng",
 
+  // v2 API Key Settings
+  v2_settings_section_api: "API",
+  v2_settings_api_key: "Khoá API Soniox",
+  v2_settings_api_key_configured: "Đã cấu hình",
+  v2_settings_api_key_not_set: "Chưa cài đặt",
+  v2_api_key_dialog_title: "Khoá API Soniox",
+  v2_api_key_dialog_placeholder_empty: "Nhập khoá API của bạn",
+  v2_api_key_dialog_placeholder_stored: "••••••••••••",
+  v2_api_key_dialog_save: "Lưu",
+  v2_api_key_dialog_saving: "Đang lưu…",
+  v2_api_key_dialog_delete: "Xoá khoá",
+  v2_api_key_dialog_cancel: "Huỷ",
+  // v2 No API Key Dialog
+  v2_no_key_dialog_title: "Yêu cầu khoá API",
+  v2_no_key_dialog_body: "Thêm khoá API Soniox trong Cài đặt để bắt đầu dịch.",
+  v2_no_key_dialog_go_settings: "Đến Cài đặt",
+  v2_no_key_dialog_cancel: "Huỷ",
+
   // v2 History
   v2_history_title: "Lịch sử",
   v2_history_sessions: "{{count}} phiên",
