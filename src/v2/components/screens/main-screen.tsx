@@ -413,14 +413,32 @@ export function MainScreen({ onSettings, onHistory }: MainScreenProps) {
         />
       );
     }
+    const ot = session.originalTokens;
+    const tt = session.translatedTokens;
+    const derivedSpeaker = ot[0]?.speaker ?? "S1";
+    const derivedLang = ot[0]?.language ?? "";
+    const derivedOrigText = ot.map((t) => t.text).join("");
+    const derivedTransText = tt.map((t) => t.text).join("");
+    const combined = [...ot, ...tt];
+    const derivedEndMs =
+      [...combined].reverse().find((t) => t.end_ms != null)?.end_ms ?? 0;
+
     return (
       <div style={{ flex: 1, overflowY: "auto", padding: "6px 4px" }}>
-        {(session.originalTokens.length > 0 ||
-          session.translatedTokens.length > 0) && (
-          <TranscriptRow
-            originalTokens={session.originalTokens}
-            translatedTokens={session.translatedTokens}
-          />
+        {(ot.length > 0 || tt.length > 0) && (
+          <div
+            id="active-transcript-row"
+            data-speaker={derivedSpeaker}
+            data-lang={derivedLang}
+            data-orig={derivedOrigText}
+            data-trans={derivedTransText}
+            data-end-ms={derivedEndMs}
+          >
+            <TranscriptRow
+              originalTokens={session.originalTokens}
+              translatedTokens={session.translatedTokens}
+            />
+          </div>
         )}
       </div>
     );
@@ -447,45 +465,6 @@ export function MainScreen({ onSettings, onHistory }: MainScreenProps) {
             }}
           >
             {bodyMarkup}
-            {/* {session.finalLines.length === 0 ? (
-              <EmptyState
-                icon={<Icon.Mic s={34} c={VT.cyan} />}
-                title={i18n("v2_empty_start_title")}
-                subtitle={i18n("v2_empty_start_body")}
-              />
-            ) : (
-              <div style={{ flex: 1, overflowY: "auto", padding: "6px 4px" }}>
-                {session.finalLines.map((line, idx) => {
-                  const s = line.detectedLanguage === localLangA ? 0 : 1;
-                  const detectedCode =
-                    line.detectedLanguage ??
-                    (s === 0 ? localLangA : localLangB);
-                  const lang = ALL_AVAILABLE_LANGUAGES.find(
-                    (l) => l.code === detectedCode,
-                  );
-                  const flag = lang?.flag ?? "🌐";
-                  const code = detectedCode.toUpperCase();
-                  const totalSec = Math.floor(line.timestampMs / 1000);
-                  const time = `${String(Math.floor(totalSec / 60)).padStart(2, "0")}:${String(totalSec % 60).padStart(2, "0")}`;
-                  const isLast = idx === session.finalLines.length - 1;
-                  return (
-                    <TranscriptRow
-                      key={idx}
-                      originalTokens={[{ text: line.originalText, is_final: true }]}
-                      translatedTokens={[{ text: line.translatedText, is_final: true }]}
-                    />
-                  );
-                })}
-                {isActive &&
-                  (session.originalTokens.length > 0 ||
-                    session.translatedTokens.length > 0) && (
-                    <TranscriptRow
-                      originalTokens={session.originalTokens}
-                      translatedTokens={session.translatedTokens}
-                    />
-                  )}
-              </div>
-            )} */}
           </Card>
           <div
             style={{

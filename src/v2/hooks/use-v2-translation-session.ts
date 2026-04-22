@@ -1,11 +1,14 @@
 // Orchestrates recording session for v2 UI using @soniox/react SDK.
 // Mirrors src/hooks/use-translation-session.ts but reads from v2 store.
 import { TtsService } from "@/audio/tts-service";
-import type { TranscriptLine } from "@/tauri/transcript-fs";
-import { buildTranscriptContent, writeTranscript } from "@/tauri/transcript-fs";
 import { useV2SettingsStore } from "@/v2/store/v2-settings-store";
+import { useV2HistoryStore } from "@/v2/store/v2-history-store";
+import {
+  buildHistoryFromSnapshot,
+  type CommittedRow,
+} from "@/v2/utils/scrape-transcript";
 import { useMicrophonePermission, useRecording } from "@soniox/react";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 
 export type RecordingStatus = "idle" | "recording" | "paused" | "stopping";
 export type ConnectionStatus = "disconnected" | "connecting" | "connected";
@@ -23,12 +26,48 @@ function toConnectionStatus(state: string): ConnectionStatus {
   return "disconnected";
 }
 
+/** Read `#active-transcript-row` and append if non-empty and not duplicate of last row. */
+function appendActiveTranscriptSnapshot(
+  rows: CommittedRow[],
+  opts: { speak: boolean; tts: TtsService; languageB: string },
+): void {
+  const el = document.getElementById(
+    "active-transcript-row",
+  ) as HTMLElement | null;
+  if (!el) return;
+  const {
+    speaker = "S1",
+    lang = "",
+    orig = "",
+    trans = "",
+    endMs = "0",
+  } = el.dataset;
+  if (!orig && !trans) return;
+  const last = rows[rows.length - 1];
+  if (last && last.origText === orig && last.transText === trans) return;
+  rows.push({
+    id: crypto.randomUUID(),
+    speaker,
+    lang,
+    origText: orig,
+    transText: trans,
+    endMs: Number(endMs),
+  });
+  if (opts.speak && trans) {
+    opts.tts.speak(trans, opts.languageB);
+  }
+}
+
 export function useV2TranslationSession() {
   const { outputMode, languageA, languageB, autoDetect, autoSave } =
     useV2SettingsStore();
   const ttsRef = useRef(new TtsService());
   const sessionStartedAt = useRef(0);
-  const spokenLinesCountRef = useRef(0);
+  const rowSnapshotsRef = useRef<CommittedRow[]>([]);
+  const outputModeRef = useRef(outputMode);
+  const languageBRef = useRef(languageB);
+  outputModeRef.current = outputMode;
+  languageBRef.current = languageB;
 
   const [isPaused, setIsPaused] = useState(false);
 
@@ -49,6 +88,13 @@ export function useV2TranslationSession() {
     enable_speaker_diarization: true,
     enable_endpoint_detection: true,
     max_endpoint_delay_ms: 1000,
+    onEndpoint() {
+      appendActiveTranscriptSnapshot(rowSnapshotsRef.current, {
+        speak: outputModeRef.current === "voice",
+        tts: ttsRef.current,
+        languageB: languageBRef.current,
+      });
+    },
   });
 
   const allTokens = useMemo(
@@ -70,60 +116,8 @@ export function useV2TranslationSession() {
     [allTokens],
   );
 
-  const finalLines = useMemo<TranscriptLine[]>(() => {
-    const lines: TranscriptLine[] = [];
-    let origAcc = "";
-    let transAcc = "";
-    for (const token of recording.finalTokens) {
-      const { translation_status } = token;
-
-      const isOrig =
-        translation_status === "original" ||
-        translation_status === "none" ||
-        translation_status == null;
-      const isTrans = translation_status === "translation";
-
-      if (isOrig) {
-        origAcc += token.text;
-      } else if (isTrans) {
-        transAcc += token.text;
-      }
-
-      // if (isUserSpeakEnd) {
-      //   lines.push({
-      //     originalText: origAcc,
-      //     translatedText: transAcc,
-      //     timestampMs,
-      //     detectedLanguage: autoDetect ? detectedLang : undefined,
-      //   });
-      //   origAcc = "";
-      //   transAcc = "";
-      //   detectedLang = undefined;
-      //   // translated
-      // }
-    }
-    return lines;
-  }, [recording.finalTokens, autoDetect]);
-
-  // v2 uses "voice" (not "tts") for TTS output mode
-  useEffect(() => {
-    if (outputMode !== "voice") return;
-    const newLines = finalLines.slice(spokenLinesCountRef.current);
-    newLines.forEach((line) => {
-      const ttsLang = autoDetect
-        ? line.detectedLanguage === languageA
-          ? languageB
-          : line.detectedLanguage === languageB
-            ? languageA
-            : languageB
-        : languageB;
-      ttsRef.current.speak(line.translatedText, ttsLang);
-    });
-    spokenLinesCountRef.current = finalLines.length;
-  }, [finalLines, outputMode, autoDetect, languageA, languageB]);
-
   const startSession = useCallback(async () => {
-    spokenLinesCountRef.current = 0;
+    rowSnapshotsRef.current = [];
     sessionStartedAt.current = Date.now();
     ttsRef.current.setEnabled(outputMode === "voice");
     await recording.start();
@@ -144,33 +138,35 @@ export function useV2TranslationSession() {
   const stopSession = useCallback(async () => {
     setIsPaused(false);
     ttsRef.current.stop();
-    recording.stop();
-    // Only write transcript if autoSave is enabled
-    if (autoSave && finalLines.length > 0) {
-      const { languageA: la, languageB: lb } = useV2SettingsStore.getState();
-      const content = buildTranscriptContent(
-        finalLines,
-        la,
-        lb,
-        sessionStartedAt.current,
-      );
-      const filename =
-        new Date(sessionStartedAt.current)
-          .toISOString()
-          .replace(/[:.]/g, "-")
-          .slice(0, 19) + ".txt";
-      writeTranscript(filename, content).catch((e: unknown) =>
-        console.error("Failed to save transcript:", e),
-      );
+    const startMs = sessionStartedAt.current;
+
+    if (autoSave) {
+      // Flush tail utterance before SDK stop may clear tokens / DOM.
+      appendActiveTranscriptSnapshot(rowSnapshotsRef.current, {
+        speak: false,
+        tts: ttsRef.current,
+        languageB: languageBRef.current,
+      });
     }
-  }, [recording, finalLines, autoSave]);
+
+    recording.stop();
+
+    if (autoSave) {
+      const historyItem = buildHistoryFromSnapshot(
+        rowSnapshotsRef.current,
+        startMs,
+      );
+      if (historyItem) {
+        useV2HistoryStore.getState().addItem(historyItem);
+      }
+    }
+  }, [recording, autoSave]);
 
   return {
     startSession,
     stopSession,
     pauseSession,
     resumeSession,
-    finalLines,
     recordingStatus: toRecordingStatus(recording.state, isPaused),
     connectionStatus: toConnectionStatus(recording.state),
     error: recording.error?.message ?? null,
