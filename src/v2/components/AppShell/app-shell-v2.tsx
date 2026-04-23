@@ -9,6 +9,7 @@ import { ROUTES, detailPath } from "@/v2/router/routes";
 import { useT } from "@/v2/tokens/tokens";
 import { getApiKey } from "@/tauri/secure-storage";
 import { useV2SettingsStore } from "@/v2/store/v2-settings-store";
+import { SwipeBackLayer } from "@/v2/components/ui/swipe-back-layer";
 
 export function AppShellV2() {
   const t = useT();
@@ -57,20 +58,30 @@ export function AppShellV2() {
           />
           <Route
             path={ROUTES.SETTINGS}
-            element={<SettingsScreen onBack={() => navigate(-1)} />}
+            element={
+              <SwipeBackLayer onBack={() => navigate(ROUTES.MAIN)}>
+                <SettingsScreen onBack={() => navigate(ROUTES.MAIN)} />
+              </SwipeBackLayer>
+            }
           />
           <Route
             path={ROUTES.HISTORY}
             element={
-              <HistoryScreen
-                onBack={() => navigate(-1)}
-                onSelectItem={(historyId) => navigate(detailPath(historyId))}
-              />
+              <SwipeBackLayer onBack={() => navigate(ROUTES.MAIN)}>
+                <HistoryScreen
+                  onBack={() => navigate(ROUTES.MAIN)}
+                  onSelectItem={(historyId) => navigate(detailPath(historyId))}
+                />
+              </SwipeBackLayer>
             }
           />
           <Route
             path={ROUTES.DETAIL}
-            element={<DetailScreen onBack={() => navigate(-1)} />}
+            element={
+              <SwipeBackLayer onBack={() => navigate(ROUTES.HISTORY)}>
+                <DetailScreen onBack={() => navigate(ROUTES.HISTORY)} />
+              </SwipeBackLayer>
+            }
           />
         </Routes>
       </div>
