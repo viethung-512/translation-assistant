@@ -74,10 +74,14 @@ export function MainScreen({ onSettings, onHistory }: MainScreenProps) {
     autoDetect,
     setAutoDetect,
   } = useV2SettingsStore();
+
   const [localLangA, setLocalLangA] = useState(storeA);
   const [localLangB, setLocalLangB] = useState(storeB);
 
-  const session = useV2TranslationSession();
+  const session = useV2TranslationSession({
+    languageA: localLangA,
+    languageB: localLangB,
+  });
 
   const [langSlot, setLangSlot] = useState<"A" | "B" | null>(null);
   const [showNoKeyDialog, setShowNoKeyDialog] = useState(false);
@@ -203,7 +207,6 @@ export function MainScreen({ onSettings, onHistory }: MainScreenProps) {
 
     if (prevLen > 0 && tokens.length === 0) {
       const snap = lastLiveSplitRef.current;
-      console.log({ snap });
       if (
         snap &&
         (snap.originalTokens.length > 0 || snap.translatedTokens.length > 0)
@@ -224,7 +227,6 @@ export function MainScreen({ onSettings, onHistory }: MainScreenProps) {
 
     if (tokens.length > 0) {
       const split = splitActiveTokens(tokens);
-      console.log({ split });
       const meta = deriveRowMeta(tokens, split);
       lastLiveSplitRef.current = {
         originalTokens: [...split.originalTokens],
@@ -380,7 +382,8 @@ export function MainScreen({ onSettings, onHistory }: MainScreenProps) {
     () => (
       <div
         style={{
-          padding: "12px 20px 24px",
+          padding:
+            "12px 20px calc(24px + env(safe-area-inset-bottom))",
           display: "flex",
           flexDirection: "column",
           alignItems: "center",

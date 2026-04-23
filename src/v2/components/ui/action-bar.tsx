@@ -15,7 +15,7 @@ export function ActionBar({ children, style = {} }: ActionBarProps) {
         position: "sticky",
         bottom: 0,
         zIndex: 10,
-        padding: `${t.spacing.md}px ${t.spacing.lg}px ${t.spacing.xxl}px`,
+        padding: `${t.spacing.md}px ${t.spacing.lg}px calc(${t.spacing.xxl}px + env(safe-area-inset-bottom))`,
         background: t.surface,
         borderTop: `1px solid ${t.divider}`,
         display: "flex",

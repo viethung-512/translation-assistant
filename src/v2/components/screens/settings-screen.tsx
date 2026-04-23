@@ -269,7 +269,7 @@ export function SettingsScreen({ onBack }: SettingsScreenProps) {
       <div style={{ padding: "0 20px 16px" }}>
         <Typography variant="display">{tr("v2_settings_title")}</Typography>
       </div>
-      <div style={{ padding: "0 16px 24px" }}>
+      <div style={{ padding: "0 16px calc(24px + env(safe-area-inset-bottom))" }}>
         <SectionGroup title={tr("v2_settings_section_languages")}>
           <SectionRow
             title={tr("v2_settings_lang_a")}

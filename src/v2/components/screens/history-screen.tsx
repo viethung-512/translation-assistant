@@ -316,7 +316,7 @@ export function HistoryScreen({
           subtitle={i18n("v2_history_empty_body")}
         />
       ) : (
-        <div style={{ padding: "14px 16px 0" }}>
+        <div style={{ padding: "14px 16px calc(8px + env(safe-area-inset-bottom))" }}>
           {Object.entries(groups).map(([date, arr]) => (
             <div key={date} style={{ marginBottom: 16 }}>
               <Typography variant="caption" style={{ padding: "0 8px 8px" }}>
