@@ -9,7 +9,8 @@ import {
   type CommittedRow,
 } from "@/v2/utils/scrape-transcript";
 import { useMicrophonePermission, useRecording } from "@soniox/react";
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useCallback, useRef, useState } from "react";
+import { RealtimeToken } from "@soniox/client";
 
 export type RecordingStatus = "idle" | "recording" | "paused" | "stopping";
 export type ConnectionStatus = "disconnected" | "connecting" | "connected";
@@ -72,6 +73,7 @@ export function useV2TranslationSession() {
 
   const [isPaused, setIsPaused] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
+  const [activeTokens, setActiveTokens] = useState<RealtimeToken[]>([]);
 
   const { status: permissionStatus } = useMicrophonePermission({
     autoCheck: true,
@@ -89,34 +91,21 @@ export function useV2TranslationSession() {
     enable_language_identification: true,
     enable_speaker_diarization: true,
     enable_endpoint_detection: true,
-    max_endpoint_delay_ms: 1000,
     onEndpoint() {
       appendActiveTranscriptSnapshot(rowSnapshotsRef.current, {
         speak: outputModeRef.current === "voice",
         tts: ttsRef.current,
         languageB: languageBRef.current,
       });
+      setActiveTokens([]);
+    },
+    onResult(result) {
+      setActiveTokens((prev) => [
+        ...result.tokens,
+        ...prev.filter((tk) => tk.is_final),
+      ]);
     },
   });
-
-  const allTokens = useMemo(
-    () => [...recording.finalTokens, ...recording.partialTokens],
-    [recording.finalTokens, recording.partialTokens],
-  );
-
-  const originalTokens = useMemo(
-    () =>
-      allTokens.filter((t) => {
-        const s = t.translation_status;
-        return s === "original" || s === "none" || s == null;
-      }),
-    [allTokens],
-  );
-
-  const translatedTokens = useMemo(
-    () => allTokens.filter((t) => t.translation_status === "translation"),
-    [allTokens],
-  );
 
   const startSession = useCallback(async () => {
     rowSnapshotsRef.current = [];
@@ -190,7 +179,6 @@ export function useV2TranslationSession() {
       permissionStatus === "denied" ||
       permissionStatus === "unavailable" ||
       permissionStatus === "unsupported",
-    originalTokens,
-    translatedTokens,
+    activeTokens,
   };
 }

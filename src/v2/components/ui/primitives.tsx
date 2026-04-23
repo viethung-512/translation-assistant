@@ -66,40 +66,6 @@ export function Toggle({
   );
 }
 
-export function SpeakerAvatar({
-  idx,
-  size = 36,
-  label,
-}: {
-  idx: number;
-  size?: number;
-  label?: string;
-}) {
-  const color = VT.s[idx] || VT.s[5];
-  const n = label || `S${idx + 1}`;
-  return (
-    <div
-      style={{
-        width: size,
-        height: size,
-        borderRadius: 999,
-        background: color,
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        color: idx === 4 ? "#0A1628" : "#fff",
-        fontSize: size * 0.35,
-        fontWeight: 800,
-        letterSpacing: -0.3,
-        flexShrink: 0,
-        boxShadow: "0 0 0 2px rgba(255,255,255,0.85)",
-      }}
-    >
-      {n.length > 3 ? n.slice(0, 2).toUpperCase() : n}
-    </div>
-  );
-}
-
 export function LangTag({ flag, code }: { flag: string; code: string }) {
   const t = useT();
   return (

@@ -4,7 +4,12 @@ import { Typography } from "@/v2/components/ui/typography";
 import { Icon } from "@/v2/components/icons";
 import { Card, Toggle } from "@/v2/components/ui/primitives";
 import { ScreenLayout } from "@/v2/components/ui/screen-layout";
-import { IconBtn, LangPill, pulseRingStyle } from "./main-screen-helpers";
+import {
+  IconBtn,
+  LangPill,
+  pulseRingStyle,
+  TranscriptRow,
+} from "./main-screen-helpers";
 import { OutputModeSegment } from "./main/output-mode-segment";
 import { RecordingStatus } from "./main/recording-status";
 import { EmptyState } from "@/v2/components/ui/empty-state";
@@ -14,8 +19,7 @@ import { useV2SettingsStore } from "@/v2/store/v2-settings-store";
 import { useV2TranslationSession } from "@/v2/hooks/use-v2-translation-session";
 import { ALL_AVAILABLE_LANGUAGES } from "@/v2/tokens/languages";
 import { useV2T } from "@/v2/i18n";
-import { buildTranscriptRows } from "./main-screen-transcript-segmentation";
-import { TokenBlock } from "./main/token-block";
+import type { RealtimeToken } from "@soniox/client";
 
 type SessionState =
   | "ready"
@@ -27,6 +31,42 @@ type SessionState =
 interface MainScreenProps {
   onSettings?: () => void;
   onHistory?: () => void;
+}
+
+interface CommittedTranscriptRow {
+  rowKey: string;
+  originalTokens: RealtimeToken[];
+  translatedTokens: RealtimeToken[];
+  speaker?: string;
+  language?: string;
+  endMs?: number;
+}
+
+function splitActiveTokens(tokens: readonly RealtimeToken[]) {
+  const originalTokens: RealtimeToken[] = [];
+  const translatedTokens: RealtimeToken[] = [];
+  for (const tok of tokens) {
+    if (tok.translation_status === "translation") {
+      translatedTokens.push(tok);
+    } else {
+      originalTokens.push(tok);
+    }
+  }
+  return { originalTokens, translatedTokens };
+}
+
+function deriveRowMeta(
+  tokens: readonly RealtimeToken[],
+  split: ReturnType<typeof splitActiveTokens>,
+) {
+  const firstOrig = split.originalTokens[0];
+  const firstTrans = split.translatedTokens[0];
+  const lastTok = tokens[tokens.length - 1];
+  return {
+    speaker: firstOrig?.speaker ?? firstTrans?.speaker,
+    language: firstOrig?.language ?? firstTrans?.language,
+    endMs: lastTok?.end_ms,
+  };
 }
 
 export function MainScreen({ onSettings, onHistory }: MainScreenProps) {
@@ -46,8 +86,19 @@ export function MainScreen({ onSettings, onHistory }: MainScreenProps) {
   const [langSlot, setLangSlot] = useState<"A" | "B" | null>(null);
   const [showNoKeyDialog, setShowNoKeyDialog] = useState(false);
   const [isFollowingLive, setIsFollowingLive] = useState(true);
+  const [committedRows, setCommittedRows] = useState<CommittedTranscriptRow[]>(
+    [],
+  );
   const transcriptScrollRef = useRef<HTMLDivElement | null>(null);
   const liveRowAnchorRef = useRef<HTMLDivElement | null>(null);
+  const lastLiveSplitRef = useRef<{
+    originalTokens: RealtimeToken[];
+    translatedTokens: RealtimeToken[];
+    speaker?: string;
+    language?: string;
+    endMs?: number;
+  } | null>(null);
+  const prevActiveLenRef = useRef(0);
 
   const langA = useMemo(
     () =>
@@ -109,6 +160,7 @@ export function MainScreen({ onSettings, onHistory }: MainScreenProps) {
     if (sessionState === "ready" || sessionState === "stopped") {
       try {
         await session.startSession();
+        setCommittedRows([]);
       } catch (e) {
         const msg = e instanceof Error ? e.message : "";
         if (msg.includes("API key")) setShowNoKeyDialog(true);
@@ -138,15 +190,59 @@ export function MainScreen({ onSettings, onHistory }: MainScreenProps) {
   );
 
   const status = statusMap[sessionState];
-  const segmentedRows = useMemo(
-    () =>
-      buildTranscriptRows({
-        originalTokens: session.originalTokens,
-        translatedTokens: session.translatedTokens,
-      }),
-    [session.originalTokens, session.translatedTokens],
-  );
-  const hasTranscriptRows = segmentedRows.length > 0;
+
+  const liveSplit = useMemo(() => {
+    if (session.activeTokens.length === 0) return null;
+    const split = splitActiveTokens(session.activeTokens);
+    return {
+      originalTokens: split.originalTokens,
+      translatedTokens: split.translatedTokens,
+      ...deriveRowMeta(session.activeTokens, split),
+    };
+  }, [session.activeTokens]);
+
+  useEffect(() => {
+    const tokens = session.activeTokens;
+    const prevLen = prevActiveLenRef.current;
+
+    if (prevLen > 0 && tokens.length === 0) {
+      const snap = lastLiveSplitRef.current;
+      console.log({ snap });
+      if (
+        snap &&
+        (snap.originalTokens.length > 0 || snap.translatedTokens.length > 0)
+      ) {
+        setCommittedRows((rows) => [
+          ...rows,
+          {
+            rowKey: crypto.randomUUID(),
+            originalTokens: snap.originalTokens,
+            translatedTokens: snap.translatedTokens,
+            speaker: snap.speaker,
+            language: snap.language,
+            endMs: snap.endMs,
+          },
+        ]);
+      }
+    }
+
+    if (tokens.length > 0) {
+      const split = splitActiveTokens(tokens);
+      console.log({ split });
+      const meta = deriveRowMeta(tokens, split);
+      lastLiveSplitRef.current = {
+        originalTokens: [...split.originalTokens],
+        translatedTokens: [...split.translatedTokens],
+        ...meta,
+      };
+    }
+
+    prevActiveLenRef.current = tokens.length;
+  }, [session.activeTokens]);
+
+  const displayRowCount =
+    committedRows.length + (session.activeTokens.length > 0 ? 1 : 0);
+  const hasTranscriptRows = displayRowCount > 0;
 
   const scrollToLiveRow = useCallback((behavior: ScrollBehavior = "smooth") => {
     liveRowAnchorRef.current?.scrollIntoView({ behavior, block: "end" });
@@ -168,12 +264,7 @@ export function MainScreen({ onSettings, onHistory }: MainScreenProps) {
   useEffect(() => {
     if (!hasTranscriptRows || !isFollowingLive) return;
     scrollToLiveRow("auto");
-  }, [
-    hasTranscriptRows,
-    isFollowingLive,
-    scrollToLiveRow,
-    segmentedRows.length,
-  ]);
+  }, [hasTranscriptRows, isFollowingLive, scrollToLiveRow, displayRowCount]);
 
   const mainBtn = useMemo(
     () =>
@@ -429,17 +520,14 @@ export function MainScreen({ onSettings, onHistory }: MainScreenProps) {
           onScroll={handleTranscriptScroll}
           style={{ height: "100%", overflowY: "auto", padding: "6px 4px" }}
         >
-          <TokenBlock
-            tokens={session.translatedTokens}
-            blockType="translation"
-          />
-          <TokenBlock tokens={session.originalTokens} blockType="original" />
-
-          {/* {segmentedRows.map((row, idx) => {
-            const isLatest = idx === segmentedRows.length - 1;
-            const derivedOrigText = row.originalTokens.map((t) => t.text).join("");
+          {committedRows.map((row, idx) => {
+            const isLatest =
+              idx === committedRows.length - 1 && liveSplit === null;
+            const derivedOrigText = row.originalTokens
+              .map((tok) => tok.text)
+              .join("");
             const derivedTransText = row.translatedTokens
-              .map((t) => t.text)
+              .map((tok) => tok.text)
               .join("");
 
             return (
@@ -462,7 +550,31 @@ export function MainScreen({ onSettings, onHistory }: MainScreenProps) {
                 />
               </div>
             );
-          })} */}
+          })}
+          {liveSplit && (
+            <div
+              key="live"
+              ref={liveRowAnchorRef}
+              id="active-transcript-row"
+              data-speaker={liveSplit.speaker}
+              data-lang={liveSplit.language}
+              data-orig={liveSplit.originalTokens
+                .map((tok) => tok.text)
+                .join("")}
+              data-trans={liveSplit.translatedTokens
+                .map((tok) => tok.text)
+                .join("")}
+              data-end-ms={liveSplit.endMs}
+            >
+              <TranscriptRow
+                originalTokens={liveSplit.originalTokens}
+                translatedTokens={liveSplit.translatedTokens}
+                speaker={liveSplit.speaker}
+                language={liveSplit.language}
+                endMs={liveSplit.endMs}
+              />
+            </div>
+          )}
         </div>
         {hasTranscriptRows && !isFollowingLive && (
           <div
@@ -491,7 +603,8 @@ export function MainScreen({ onSettings, onHistory }: MainScreenProps) {
     sessionState,
     i18n,
     t.navy,
-    segmentedRows,
+    committedRows,
+    liveSplit,
     hasTranscriptRows,
     isFollowingLive,
     handleJumpToLive,

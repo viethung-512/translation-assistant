@@ -2,7 +2,6 @@ import React, { useMemo, useState, useCallback, useEffect } from "react";
 import { useT, VT } from "@/v2/tokens/tokens";
 import { Typography } from "@/v2/components/ui/typography";
 import { Icon } from "@/v2/components/icons";
-import { SpeakerAvatar } from "@/v2/components/ui/primitives";
 import { ScreenLayout } from "@/v2/components/ui/screen-layout";
 import { Button } from "@/v2/components/ui/button";
 import { TextField } from "@/v2/components/ui/text-input";
@@ -11,9 +10,13 @@ import { useV2T } from "@/v2/i18n";
 import { useNavigate, useParams } from "react-router-dom";
 import { ROUTES } from "@/v2/router/routes";
 import { useV2HistoryStore } from "@/v2/store/v2-history-store";
-import { getTranscript, type StoredSessionTranscript } from "@/v2/storage/transcript-idb";
+import {
+  getTranscript,
+  type StoredSessionTranscript,
+} from "@/v2/storage/transcript-idb";
 import type { CommittedRow } from "@/v2/utils/scrape-transcript";
 import { ALL_AVAILABLE_LANGUAGES } from "@/v2/tokens/languages";
+import { SpeakerLabel } from "./shared/speaker-label";
 
 function FilterChip({
   active,
@@ -59,7 +62,6 @@ function FilterChip({
 
 function DetailRow({
   s,
-  name,
   flag,
   code,
   orig,
@@ -80,7 +82,6 @@ function DetailRow({
   return (
     <div style={{ padding: "10px 16px", position: "relative" }}>
       <div style={{ display: "flex", gap: 12 }}>
-        <SpeakerAvatar idx={s} size={38} />
         <div style={{ flex: 1, minWidth: 0 }}>
           <div
             style={{
@@ -90,16 +91,7 @@ function DetailRow({
               marginBottom: 4,
             }}
           >
-            <div
-              style={{
-                fontSize: 13,
-                fontWeight: 800,
-                color: t.text,
-                letterSpacing: -0.2,
-              }}
-            >
-              {name}
-            </div>
+            <SpeakerLabel idx={s} />
             <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
               <span style={{ fontSize: 13 }}>{flag}</span>
               <span
@@ -165,7 +157,9 @@ export function DetailScreen({ onBack }: { onBack?: () => void }) {
   const [storedTranscript, setStoredTranscript] =
     useState<StoredSessionTranscript | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
-  const [hydrated, setHydrated] = useState(useV2HistoryStore.persist.hasHydrated());
+  const [hydrated, setHydrated] = useState(
+    useV2HistoryStore.persist.hasHydrated(),
+  );
   const historyItem = useMemo(
     () => items.find((item) => item.id === historyId),
     [items, historyId],
@@ -429,7 +423,11 @@ export function DetailScreen({ onBack }: { onBack?: () => void }) {
 
       <div style={{ padding: "4px 0" }}>
         {detailRows.map((r, i) => (
-          <DetailRow key={`${r.s}-${i}`} {...r} isLast={i === detailRows.length - 1} />
+          <DetailRow
+            key={`${r.s}-${i}`}
+            {...r}
+            isLast={i === detailRows.length - 1}
+          />
         ))}
       </div>
 
@@ -487,7 +485,6 @@ export function DetailScreen({ onBack }: { onBack?: () => void }) {
                 marginBottom: 14,
               }}
             >
-              <SpeakerAvatar idx={1} size={44} />
               <div>
                 <Typography variant="subheading">
                   {i18n("v2_detail_rename_speaker")}

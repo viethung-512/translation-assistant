@@ -1,10 +1,10 @@
 import { Icon } from "@/v2/components/icons";
-import { LangTag, SpeakerAvatar } from "@/v2/components/ui/primitives";
+import { LangTag } from "@/v2/components/ui/primitives";
 import { Typography } from "@/v2/components/ui/typography";
-import { useV2T } from "@/v2/i18n";
 import { useT, VT } from "@/v2/tokens/tokens";
 import { detectFlagCode } from "@/v2/utils/helper";
-import React, { useMemo } from "react";
+import React from "react";
+import { SpeakerLabel } from "./shared/speaker-label";
 
 export function IconBtn({
   children,
@@ -207,7 +207,6 @@ export function TranscriptRow({
   endMs,
 }: TranscriptRowProps) {
   const t = useT();
-  const { t: i18n } = useV2T();
 
   const speakerStr = speaker ?? originalTokens[0]?.speaker;
   const numericSpeaker = Number.parseInt(speakerStr ?? "", 10);
@@ -235,13 +234,6 @@ export function TranscriptRow({
         })()
       : "–";
 
-  const speakerLabel = useMemo(() => {
-    if (!hasNumericSpeaker) {
-      return i18n("v2_unknown_speaker");
-    }
-    return i18n("v2_speaker", { n: String(s + 1) });
-  }, [i18n, hasNumericSpeaker, s]);
-
   return (
     <div
       style={{
@@ -252,7 +244,6 @@ export function TranscriptRow({
       }}
     >
       <div style={{ display: "flex", gap: 10 }}>
-        <SpeakerAvatar idx={s} size={34} />
         <div style={{ flex: 1, minWidth: 0 }}>
           <div
             style={{
@@ -262,16 +253,7 @@ export function TranscriptRow({
               marginBottom: 6,
             }}
           >
-            <span
-              style={{
-                fontSize: 12,
-                fontWeight: 800,
-                color: t.text,
-                letterSpacing: -0.1,
-              }}
-            >
-              {speakerLabel}
-            </span>
+            <SpeakerLabel idx={s} />
             <LangTag flag={flag} code={code} />
             <span
               style={{
@@ -284,16 +266,7 @@ export function TranscriptRow({
               {time}
             </span>
           </div>
-          <div
-            style={{
-              fontSize: 12,
-              lineHeight: 1.35,
-              letterSpacing: -0.1,
-              marginBottom: 4,
-            }}
-          >
-            {renderTokens(originalTokens, "orig", t)}
-          </div>
+
           <div
             style={{
               fontSize: 15,
@@ -304,6 +277,16 @@ export function TranscriptRow({
           >
             {renderTokens(translatedTokens, "trans", t)}
             {active && <span style={{ color: VT.cyan, opacity: 0.6 }}>▎</span>}
+          </div>
+          <div
+            style={{
+              fontSize: 12,
+              lineHeight: 1.35,
+              letterSpacing: -0.1,
+              marginBottom: 4,
+            }}
+          >
+            {renderTokens(originalTokens, "orig", t)}
           </div>
         </div>
       </div>

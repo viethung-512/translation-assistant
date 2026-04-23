@@ -1,4 +1,5 @@
-import { FC } from "react";
+import { VT } from "@/v2/tokens/tokens";
+import { FC, useMemo } from "react";
 import { Typography } from "../../ui/typography";
 
 type SpeakerLabelProps = {
@@ -6,5 +7,27 @@ type SpeakerLabelProps = {
 };
 
 export const SpeakerLabel: FC<SpeakerLabelProps> = ({ idx }) => {
-  return <Typography>Speaker {idx}</Typography>;
+  const index = useMemo(() => {
+    if (!idx) {
+      return 0;
+    }
+    try {
+      return parseInt(idx?.toString());
+    } catch {
+      return 0;
+    }
+  }, [idx]);
+
+  return (
+    <Typography
+      color={VT.s[index]}
+      style={{
+        fontSize: 12,
+        fontWeight: 800,
+        letterSpacing: -0.1,
+      }}
+    >
+      Speaker {index + 1}
+    </Typography>
+  );
 };
