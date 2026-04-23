@@ -23,11 +23,11 @@ const AppV2 =
 function AppRoot() {
   if (AppV2) {
     return (
-      <React.Suspense fallback={null}>
-        <SonioxProvider client={sonioxClient}>
-          <AppV2 />
-        </SonioxProvider>
-      </React.Suspense>
+      // <React.Suspense fallback={null}>
+      <SonioxProvider client={sonioxClient}>
+        <AppV2 />
+      </SonioxProvider>
+      // </React.Suspense>
     );
   }
 
