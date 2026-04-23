@@ -94,6 +94,8 @@ export const vi: Record<TranslationKeys, string> = {
   v2_empty_start_body:
     "Nói bằng bất kỳ ngôn ngữ nào. Mỗi giọng nói được tự động gán nhãn và tô màu.",
   v2_speaker: "Người nói {{n}}",
+  v2_unknown_speaker: "Người nói không xác định",
+  v2_jump_to_live: "Nhảy đến đoạn trực tiếp",
 
   // v2 Lang Sheet
   v2_lang_select_title: "Chọn ngôn ngữ",

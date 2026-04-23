@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback } from "react";
+import { useState, useMemo, useCallback, useRef, useEffect } from "react";
 import { useT, VT } from "@/v2/tokens/tokens";
 import { Typography } from "@/v2/components/ui/typography";
 import { Icon } from "@/v2/components/icons";
@@ -12,6 +12,7 @@ import {
   TranscriptRow,
   pulseRingStyle,
 } from "./main-screen-helpers";
+import { RecordingStatus } from "./main/recording-status";
 import { EmptyState } from "@/v2/components/ui/empty-state";
 import { LangSheet } from "@/v2/components/ui/lang-sheet";
 import { ConfirmDialog } from "@/v2/components/ui/confirm-dialog";
@@ -19,6 +20,7 @@ import { useV2SettingsStore } from "@/v2/store/v2-settings-store";
 import { useV2TranslationSession } from "@/v2/hooks/use-v2-translation-session";
 import { ALL_AVAILABLE_LANGUAGES } from "@/v2/tokens/languages";
 import { useV2T } from "@/v2/i18n";
+import { buildTranscriptRows } from "./main-screen-transcript-segmentation";
 
 type SessionState =
   | "ready"
@@ -50,6 +52,9 @@ export function MainScreen({ onSettings, onHistory }: MainScreenProps) {
 
   const [langSlot, setLangSlot] = useState<"A" | "B" | null>(null);
   const [showNoKeyDialog, setShowNoKeyDialog] = useState(false);
+  const [isFollowingLive, setIsFollowingLive] = useState(true);
+  const transcriptScrollRef = useRef<HTMLDivElement | null>(null);
+  const liveRowAnchorRef = useRef<HTMLDivElement | null>(null);
 
   const langA = useMemo(
     () =>
@@ -149,6 +154,37 @@ export function MainScreen({ onSettings, onHistory }: MainScreenProps) {
   );
 
   const status = statusMap[sessionState];
+  const segmentedRows = useMemo(
+    () =>
+      buildTranscriptRows({
+        originalTokens: session.originalTokens,
+        translatedTokens: session.translatedTokens,
+      }),
+    [session.originalTokens, session.translatedTokens],
+  );
+  const hasTranscriptRows = segmentedRows.length > 0;
+
+  const scrollToLiveRow = useCallback((behavior: ScrollBehavior = "smooth") => {
+    liveRowAnchorRef.current?.scrollIntoView({ behavior, block: "end" });
+  }, []);
+
+  const handleJumpToLive = useCallback(() => {
+    setIsFollowingLive(true);
+    scrollToLiveRow();
+  }, [scrollToLiveRow]);
+
+  const handleTranscriptScroll = useCallback(() => {
+    const el = transcriptScrollRef.current;
+    if (!el) return;
+    const distanceFromBottom = el.scrollHeight - el.scrollTop - el.clientHeight;
+    const shouldFollow = distanceFromBottom < 56;
+    setIsFollowingLive((prev) => (prev === shouldFollow ? prev : shouldFollow));
+  }, []);
+
+  useEffect(() => {
+    if (!hasTranscriptRows || !isFollowingLive) return;
+    scrollToLiveRow("auto");
+  }, [hasTranscriptRows, isFollowingLive, scrollToLiveRow, segmentedRows.length]);
 
   const mainBtn = useMemo(
     () =>
@@ -365,29 +401,11 @@ export function MainScreen({ onSettings, onHistory }: MainScreenProps) {
             </div>
           )}
         </div>
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: 8,
-            background: t.card,
-            borderRadius: 999,
-            padding: "7px 14px",
-            marginTop: 12,
-            border: `1px solid ${t.divider}`,
-          }}
-        >
-          <div
-            style={{
-              width: 8,
-              height: 8,
-              borderRadius: 999,
-              background: status.dot,
-              boxShadow: isActive ? `0 0 0 4px ${status.dot}33` : "none",
-            }}
-          />
-          <Typography variant="action">{status.label}</Typography>
-        </div>
+        <RecordingStatus
+          label={status.label}
+          dotColor={status.dot}
+          isActive={isActive}
+        />
       </div>
     ),
     [
@@ -413,36 +431,75 @@ export function MainScreen({ onSettings, onHistory }: MainScreenProps) {
         />
       );
     }
-    const ot = session.originalTokens;
-    const tt = session.translatedTokens;
-    const derivedSpeaker = ot[0]?.speaker ?? "S1";
-    const derivedLang = ot[0]?.language ?? "";
-    const derivedOrigText = ot.map((t) => t.text).join("");
-    const derivedTransText = tt.map((t) => t.text).join("");
-    const combined = [...ot, ...tt];
-    const derivedEndMs =
-      [...combined].reverse().find((t) => t.end_ms != null)?.end_ms ?? 0;
-
     return (
-      <div style={{ flex: 1, overflowY: "auto", padding: "6px 4px" }}>
-        {(ot.length > 0 || tt.length > 0) && (
+      <div style={{ flex: 1, minHeight: 0, position: "relative" }}>
+        <div
+          ref={transcriptScrollRef}
+          onScroll={handleTranscriptScroll}
+          style={{ height: "100%", overflowY: "auto", padding: "6px 4px" }}
+        >
+          {segmentedRows.map((row, idx) => {
+            const isLatest = idx === segmentedRows.length - 1;
+            const derivedOrigText = row.originalTokens.map((t) => t.text).join("");
+            const derivedTransText = row.translatedTokens
+              .map((t) => t.text)
+              .join("");
+
+            return (
+              <div
+                key={row.rowKey}
+                ref={isLatest ? liveRowAnchorRef : null}
+                id={isLatest ? "active-transcript-row" : undefined}
+                data-speaker={isLatest ? row.speaker : undefined}
+                data-lang={isLatest ? row.language : undefined}
+                data-orig={isLatest ? derivedOrigText : undefined}
+                data-trans={isLatest ? derivedTransText : undefined}
+                data-end-ms={isLatest ? row.endMs : undefined}
+              >
+                <TranscriptRow
+                  originalTokens={row.originalTokens}
+                  translatedTokens={row.translatedTokens}
+                  speaker={row.speaker}
+                  language={row.language}
+                  endMs={row.endMs}
+                />
+              </div>
+            );
+          })}
+        </div>
+        {hasTranscriptRows && !isFollowingLive && (
           <div
-            id="active-transcript-row"
-            data-speaker={derivedSpeaker}
-            data-lang={derivedLang}
-            data-orig={derivedOrigText}
-            data-trans={derivedTransText}
-            data-end-ms={derivedEndMs}
+            onClick={handleJumpToLive}
+            style={{
+              position: "absolute",
+              right: 10,
+              bottom: 10,
+              padding: "8px 12px",
+              borderRadius: 999,
+              background: VT.cyan,
+              color: t.navy,
+              fontSize: 12,
+              fontWeight: 800,
+              letterSpacing: -0.1,
+              cursor: "pointer",
+              boxShadow: "0 6px 18px rgba(0,0,0,0.18)",
+            }}
           >
-            <TranscriptRow
-              originalTokens={session.originalTokens}
-              translatedTokens={session.translatedTokens}
-            />
+            {i18n("v2_jump_to_live")}
           </div>
         )}
       </div>
     );
-  }, [sessionState, i18n, session.originalTokens, session.translatedTokens]);
+  }, [
+    sessionState,
+    i18n,
+    t.navy,
+    segmentedRows,
+    hasTranscriptRows,
+    isFollowingLive,
+    handleJumpToLive,
+    handleTranscriptScroll,
+  ]);
 
   return (
     <>

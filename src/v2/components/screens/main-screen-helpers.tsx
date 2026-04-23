@@ -164,6 +164,9 @@ interface Token {
 export interface TranscriptRowProps {
   originalTokens: readonly Token[];
   translatedTokens: readonly Token[];
+  speaker?: string;
+  language?: string;
+  endMs?: number;
 }
 
 function detectFlagCode(langCode?: string) {
@@ -209,13 +212,18 @@ function renderTokens(
 export function TranscriptRow({
   originalTokens,
   translatedTokens,
+  speaker,
+  language,
+  endMs,
 }: TranscriptRowProps) {
   const t = useT();
   const { t: i18n } = useV2T();
 
-  const speakerStr = originalTokens[0]?.speaker;
-  const s = speakerStr ? Math.max(0, parseInt(speakerStr) - 1) : 0;
-  const { flag, code } = detectFlagCode(originalTokens[0]?.language);
+  const speakerStr = speaker ?? originalTokens[0]?.speaker;
+  const numericSpeaker = Number.parseInt(speakerStr ?? "", 10);
+  const hasNumericSpeaker = Number.isFinite(numericSpeaker) && numericSpeaker > 0;
+  const s = hasNumericSpeaker ? Math.max(0, numericSpeaker - 1) : 0;
+  const { flag, code } = detectFlagCode(language ?? originalTokens[0]?.language);
 
   const active =
     originalTokens.some((tok) => !tok.is_final) ||
@@ -225,18 +233,21 @@ export function TranscriptRow({
     .slice()
     .reverse()
     .find((tok) => tok.end_ms != null);
+  const rowEndMs = endMs ?? lastWithTime?.end_ms;
   const time =
-    lastWithTime?.end_ms != null
+    rowEndMs != null
       ? (() => {
-          const sec = Math.floor(lastWithTime.end_ms / 1000);
+          const sec = Math.floor(rowEndMs / 1000);
           return `${String(Math.floor(sec / 60)).padStart(2, "0")}:${String(sec % 60).padStart(2, "0")}`;
         })()
       : "–";
 
-  const speakerLabel = useMemo(
-    () => i18n("v2_speaker", { n: String(s + 1) }),
-    [i18n, s],
-  );
+  const speakerLabel = useMemo(() => {
+    if (!hasNumericSpeaker) {
+      return i18n("v2_unknown_speaker");
+    }
+    return i18n("v2_speaker", { n: String(s + 1) });
+  }, [i18n, hasNumericSpeaker, s]);
 
   return (
     <div

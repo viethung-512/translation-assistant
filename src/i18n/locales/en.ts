@@ -92,6 +92,8 @@ export const en = {
   v2_empty_start_body:
     "Speak in any language. Each voice is auto-labeled and color-coded.",
   v2_speaker: "Speaker {{n}}",
+  v2_unknown_speaker: "Unknown Speaker",
+  v2_jump_to_live: "Jump to live",
 
   // v2 Lang Sheet
   v2_lang_select_title: "Select Language",
