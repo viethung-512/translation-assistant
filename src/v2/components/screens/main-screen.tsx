@@ -4,12 +4,8 @@ import { Typography } from "@/v2/components/ui/typography";
 import { Icon } from "@/v2/components/icons";
 import { Card, Toggle } from "@/v2/components/ui/primitives";
 import { ScreenLayout } from "@/v2/components/ui/screen-layout";
-import {
-  IconBtn,
-  LangPill,
-  pulseRingStyle,
-  TranscriptRow,
-} from "./main-screen-helpers";
+import { IconBtn, LangPill, pulseRingStyle } from "./main-screen-helpers";
+import { TranscriptRow } from "./shared/transcript-row";
 import { OutputModeSegment } from "./main/output-mode-segment";
 import { RecordingStatus } from "./main/recording-status";
 import { EmptyState } from "@/v2/components/ui/empty-state";
@@ -542,6 +538,7 @@ export function MainScreen({ onSettings, onHistory }: MainScreenProps) {
                 data-end-ms={isLatest ? row.endMs : undefined}
               >
                 <TranscriptRow
+                  variant="live"
                   originalTokens={row.originalTokens}
                   translatedTokens={row.translatedTokens}
                   speaker={row.speaker}
@@ -567,6 +564,7 @@ export function MainScreen({ onSettings, onHistory }: MainScreenProps) {
               data-end-ms={liveSplit.endMs}
             >
               <TranscriptRow
+                variant="live"
                 originalTokens={liveSplit.originalTokens}
                 translatedTokens={liveSplit.translatedTokens}
                 speaker={liveSplit.speaker}

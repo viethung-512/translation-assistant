@@ -16,7 +16,7 @@ import {
 } from "@/v2/storage/transcript-idb";
 import type { CommittedRow } from "@/v2/utils/scrape-transcript";
 import { ALL_AVAILABLE_LANGUAGES } from "@/v2/tokens/languages";
-import { SpeakerLabel } from "./shared/speaker-label";
+import { TranscriptRow } from "./shared/transcript-row";
 
 function FilterChip({
   active,
@@ -56,91 +56,6 @@ function FilterChip({
         />
       )}
       {children}
-    </div>
-  );
-}
-
-function DetailRow({
-  s,
-  flag,
-  code,
-  orig,
-  trans,
-  time,
-  isLast,
-}: {
-  s: number;
-  name: string;
-  flag: string;
-  code: string;
-  orig: string;
-  trans: string;
-  time: string;
-  isLast?: boolean;
-}) {
-  const t = useT();
-  return (
-    <div style={{ padding: "10px 16px", position: "relative" }}>
-      <div style={{ display: "flex", gap: 12 }}>
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              marginBottom: 4,
-            }}
-          >
-            <SpeakerLabel idx={s} />
-            <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-              <span style={{ fontSize: 13 }}>{flag}</span>
-              <span
-                style={{
-                  fontSize: 10,
-                  fontWeight: 700,
-                  color: t.textDim,
-                  letterSpacing: 0.4,
-                }}
-              >
-                {code}
-              </span>
-              <span
-                style={{
-                  fontSize: 11,
-                  color: t.textDim,
-                  fontWeight: 600,
-                  marginLeft: 4,
-                }}
-              >
-                {time}
-              </span>
-            </div>
-          </div>
-          <Typography variant="body">{orig}</Typography>
-          <div
-            style={{
-              fontSize: 15,
-              fontWeight: 500,
-              color: t.mode === "dark" ? t.cyanText : "#00A8CC",
-              lineHeight: 1.3,
-              letterSpacing: -0.15,
-              marginTop: 3,
-            }}
-          >
-            {trans}
-          </div>
-        </div>
-      </div>
-      {!isLast && (
-        <div
-          style={{
-            height: 1,
-            background: t.hairline,
-            marginTop: 10,
-            marginLeft: 50,
-          }}
-        />
-      )}
     </div>
   );
 }
@@ -222,7 +137,6 @@ export function DetailScreen({ onBack }: { onBack?: () => void }) {
   const detailRows = useMemo(() => {
     const sessionStart = storedTranscript?.sessionStartMs ?? 0;
     const speakerIndexMap = new Map<string, number>();
-    const speakerLabelMap = new Map<string, string>();
 
     const getSpeakerIndex = (speaker: string): number => {
       const existing = speakerIndexMap.get(speaker);
@@ -234,15 +148,6 @@ export function DetailScreen({ onBack }: { onBack?: () => void }) {
           : speakerIndexMap.size;
       speakerIndexMap.set(speaker, next);
       return next;
-    };
-
-    const getSpeakerLabel = (speaker: string): string => {
-      const existing = speakerLabelMap.get(speaker);
-      if (existing) return existing;
-      const index = getSpeakerIndex(speaker);
-      const label = `Speaker ${index + 1}`;
-      speakerLabelMap.set(speaker, label);
-      return label;
     };
 
     const formatTime = (row: CommittedRow): string => {
@@ -258,7 +163,6 @@ export function DetailScreen({ onBack }: { onBack?: () => void }) {
       const lang = ALL_AVAILABLE_LANGUAGES.find((l) => l.code === row.lang);
       return {
         s: getSpeakerIndex(row.speaker),
-        name: getSpeakerLabel(row.speaker),
         flag: lang?.flag ?? "🌐",
         code: row.lang ? row.lang.toUpperCase() : "UNK",
         orig: row.origText,
@@ -423,9 +327,15 @@ export function DetailScreen({ onBack }: { onBack?: () => void }) {
 
       <div style={{ padding: "4px 0" }}>
         {detailRows.map((r, i) => (
-          <DetailRow
+          <TranscriptRow
             key={`${r.s}-${i}`}
-            {...r}
+            variant="history"
+            s={r.s}
+            flag={r.flag}
+            code={r.code}
+            time={r.time}
+            translatedText={r.trans}
+            originalText={r.orig}
             isLast={i === detailRows.length - 1}
           />
         ))}
