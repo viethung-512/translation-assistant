@@ -1,7 +1,7 @@
-import React from "react";
-import { useT, VT } from "@/v2/tokens/tokens";
 import { LangTag } from "@/v2/components/ui/primitives";
+import { useT } from "@/v2/tokens/tokens";
 import { detectFlagCode } from "@/v2/utils/helper";
+import React from "react";
 import { SpeakerLabel } from "./speaker-label";
 
 export type TranscriptToken = {
@@ -69,15 +69,7 @@ export function TranscriptRow(props: TranscriptRowProps) {
   const t = useT();
 
   if (props.variant === "history") {
-    const {
-      s,
-      flag,
-      code,
-      time,
-      translatedText,
-      originalText,
-      isLast,
-    } = props;
+    const { s, flag, code, time, translatedText, originalText, isLast } = props;
 
     return (
       <div style={{ padding: "10px 16px", position: "relative" }}>
@@ -154,13 +146,7 @@ export function TranscriptRow(props: TranscriptRowProps) {
     );
   }
 
-  const {
-    originalTokens,
-    translatedTokens,
-    speaker,
-    language,
-    endMs,
-  } = props;
+  const { originalTokens, translatedTokens, speaker, language, endMs } = props;
 
   const speakerStr = speaker ?? originalTokens[0]?.speaker;
   const numericSpeaker = Number.parseInt(speakerStr ?? "", 10);
@@ -170,10 +156,6 @@ export function TranscriptRow(props: TranscriptRowProps) {
   const { flag, code } = detectFlagCode(
     language ?? originalTokens[0]?.language,
   );
-
-  const active =
-    originalTokens.some((tok) => !tok.is_final) ||
-    translatedTokens.some((tok) => !tok.is_final);
 
   const lastWithTime = [...originalTokens, ...translatedTokens]
     .slice()
@@ -193,7 +175,7 @@ export function TranscriptRow(props: TranscriptRowProps) {
       style={{
         padding: "12px 14px",
         borderRadius: 10,
-        background: active ? t.cyanTint : "transparent",
+        background: "transparent",
         position: "relative",
       }}
     >
@@ -230,7 +212,6 @@ export function TranscriptRow(props: TranscriptRowProps) {
             }}
           >
             {renderTokens(translatedTokens, "trans", t)}
-            {active && <span style={{ color: VT.cyan, opacity: 0.6 }}>▎</span>}
           </div>
           <div
             style={{

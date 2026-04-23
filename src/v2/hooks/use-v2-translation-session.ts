@@ -60,9 +60,23 @@ function appendActiveTranscriptSnapshot(
   }
 }
 
-export function useV2TranslationSession() {
-  const { outputMode, languageA, languageB, autoDetect, autoSave } =
-    useV2SettingsStore();
+export function useV2TranslationSession(props: {
+  languageA?: string;
+  languageB?: string;
+  outputMode?: string;
+}) {
+  const {
+    outputMode: defaultOutputMode,
+    languageA: defaultLanguageA,
+    languageB: defaultLanguageB,
+    autoDetect,
+    autoSave,
+  } = useV2SettingsStore();
+  const {
+    languageA = defaultLanguageA,
+    languageB = defaultLanguageB,
+    outputMode = defaultOutputMode,
+  } = props;
   const ttsRef = useRef(new TtsService());
   const sessionStartedAt = useRef(0);
   const rowSnapshotsRef = useRef<CommittedRow[]>([]);
