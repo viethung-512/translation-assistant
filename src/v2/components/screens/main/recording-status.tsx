@@ -21,7 +21,6 @@ export function RecordingStatus({
         background: t.card,
         borderRadius: 999,
         padding: "7px 14px",
-        marginTop: 12,
         border: `1px solid ${t.divider}`,
       }}
     >

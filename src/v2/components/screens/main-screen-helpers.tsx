@@ -1,10 +1,10 @@
-import React, { useMemo } from "react";
-import { useT, VT } from "@/v2/tokens/tokens";
 import { Icon } from "@/v2/components/icons";
-import { SpeakerAvatar, LangTag } from "@/v2/components/ui/primitives";
-import { useV2T } from "@/v2/i18n";
+import { LangTag, SpeakerAvatar } from "@/v2/components/ui/primitives";
 import { Typography } from "@/v2/components/ui/typography";
-import { ALL_AVAILABLE_LANGUAGES } from "@/v2/tokens/languages";
+import { useV2T } from "@/v2/i18n";
+import { useT, VT } from "@/v2/tokens/tokens";
+import { detectFlagCode } from "@/v2/utils/helper";
+import React, { useMemo } from "react";
 
 export function IconBtn({
   children,
@@ -169,16 +169,6 @@ export interface TranscriptRowProps {
   endMs?: number;
 }
 
-function detectFlagCode(langCode?: string) {
-  const lang = langCode
-    ? ALL_AVAILABLE_LANGUAGES.find((l) => l.code === langCode)
-    : undefined;
-  const flag = lang?.flag ?? "🌐";
-  const code = langCode?.toUpperCase() ?? "…";
-
-  return { flag, code };
-}
-
 function renderTokens(
   tokens: readonly Token[],
   variant: "orig" | "trans",
@@ -221,9 +211,12 @@ export function TranscriptRow({
 
   const speakerStr = speaker ?? originalTokens[0]?.speaker;
   const numericSpeaker = Number.parseInt(speakerStr ?? "", 10);
-  const hasNumericSpeaker = Number.isFinite(numericSpeaker) && numericSpeaker > 0;
+  const hasNumericSpeaker =
+    Number.isFinite(numericSpeaker) && numericSpeaker > 0;
   const s = hasNumericSpeaker ? Math.max(0, numericSpeaker - 1) : 0;
-  const { flag, code } = detectFlagCode(language ?? originalTokens[0]?.language);
+  const { flag, code } = detectFlagCode(
+    language ?? originalTokens[0]?.language,
+  );
 
   const active =
     originalTokens.some((tok) => !tok.is_final) ||

@@ -4,14 +4,8 @@ import { Typography } from "@/v2/components/ui/typography";
 import { Icon } from "@/v2/components/icons";
 import { Card, Toggle } from "@/v2/components/ui/primitives";
 import { ScreenLayout } from "@/v2/components/ui/screen-layout";
-import {
-  IconBtn,
-  LangPill,
-  Segmented,
-  SegBtn,
-  TranscriptRow,
-  pulseRingStyle,
-} from "./main-screen-helpers";
+import { IconBtn, LangPill, pulseRingStyle } from "./main-screen-helpers";
+import { OutputModeSegment } from "./main/output-mode-segment";
 import { RecordingStatus } from "./main/recording-status";
 import { EmptyState } from "@/v2/components/ui/empty-state";
 import { LangSheet } from "@/v2/components/ui/lang-sheet";
@@ -21,6 +15,7 @@ import { useV2TranslationSession } from "@/v2/hooks/use-v2-translation-session";
 import { ALL_AVAILABLE_LANGUAGES } from "@/v2/tokens/languages";
 import { useV2T } from "@/v2/i18n";
 import { buildTranscriptRows } from "./main-screen-transcript-segmentation";
+import { TokenBlock } from "./main/token-block";
 
 type SessionState =
   | "ready"
@@ -41,12 +36,10 @@ export function MainScreen({ onSettings, onHistory }: MainScreenProps) {
     languageA: storeA,
     languageB: storeB,
     autoDetect,
-    outputMode: storeOutputMode,
     setAutoDetect,
   } = useV2SettingsStore();
   const [localLangA, setLocalLangA] = useState(storeA);
   const [localLangB, setLocalLangB] = useState(storeB);
-  const [outputMode, setOutputMode] = useState(storeOutputMode);
 
   const session = useV2TranslationSession();
 
@@ -112,15 +105,6 @@ export function MainScreen({ onSettings, onHistory }: MainScreenProps) {
   const openLangSlotB = useCallback(() => setLangSlot("B"), []);
   const closeLangSlot = useCallback(() => setLangSlot(null), []);
 
-  const handleSetOutputText = useCallback(
-    () => setOutputMode("text"),
-    [setOutputMode],
-  );
-  const handleSetOutputVoice = useCallback(
-    () => setOutputMode("voice"),
-    [setOutputMode],
-  );
-
   const handleMainBtn = useCallback(async () => {
     if (sessionState === "ready" || sessionState === "stopped") {
       try {
@@ -184,7 +168,12 @@ export function MainScreen({ onSettings, onHistory }: MainScreenProps) {
   useEffect(() => {
     if (!hasTranscriptRows || !isFollowingLive) return;
     scrollToLiveRow("auto");
-  }, [hasTranscriptRows, isFollowingLive, scrollToLiveRow, segmentedRows.length]);
+  }, [
+    hasTranscriptRows,
+    isFollowingLive,
+    scrollToLiveRow,
+    segmentedRows.length,
+  ]);
 
   const mainBtn = useMemo(
     () =>
@@ -401,11 +390,13 @@ export function MainScreen({ onSettings, onHistory }: MainScreenProps) {
             </div>
           )}
         </div>
-        <RecordingStatus
-          label={status.label}
-          dotColor={status.dot}
-          isActive={isActive}
-        />
+        <div style={{ marginTop: 12 }}>
+          <RecordingStatus
+            label={status.label}
+            dotColor={status.dot}
+            isActive={isActive}
+          />
+        </div>
       </div>
     ),
     [
@@ -438,7 +429,13 @@ export function MainScreen({ onSettings, onHistory }: MainScreenProps) {
           onScroll={handleTranscriptScroll}
           style={{ height: "100%", overflowY: "auto", padding: "6px 4px" }}
         >
-          {segmentedRows.map((row, idx) => {
+          <TokenBlock
+            tokens={session.translatedTokens}
+            blockType="translation"
+          />
+          <TokenBlock tokens={session.originalTokens} blockType="original" />
+
+          {/* {segmentedRows.map((row, idx) => {
             const isLatest = idx === segmentedRows.length - 1;
             const derivedOrigText = row.originalTokens.map((t) => t.text).join("");
             const derivedTransText = row.translatedTokens
@@ -465,7 +462,7 @@ export function MainScreen({ onSettings, onHistory }: MainScreenProps) {
                 />
               </div>
             );
-          })}
+          })} */}
         </div>
         {hasTranscriptRows && !isFollowingLive && (
           <div
@@ -523,31 +520,7 @@ export function MainScreen({ onSettings, onHistory }: MainScreenProps) {
           >
             {bodyMarkup}
           </Card>
-          <div
-            style={{
-              display: "flex",
-              justifyContent: "center",
-              marginTop: 10,
-              marginBottom: 10,
-            }}
-          >
-            <Segmented>
-              <SegBtn
-                active={outputMode === "text"}
-                icon={<Icon.Text />}
-                onClick={handleSetOutputText}
-              >
-                {i18n("v2_output_text")}
-              </SegBtn>
-              <SegBtn
-                active={outputMode === "voice"}
-                icon={<Icon.Speaker />}
-                onClick={handleSetOutputVoice}
-              >
-                {i18n("v2_output_voice")}
-              </SegBtn>
-            </Segmented>
-          </div>
+          <OutputModeSegment />
         </div>
       </ScreenLayout>
 
