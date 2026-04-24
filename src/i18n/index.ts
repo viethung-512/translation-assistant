@@ -31,3 +31,7 @@ i18n.use(initReactI18next).init({
 });
 
 export default i18n;
+export const useV2T = () => {
+  const t = i18n.t.bind(i18n);
+  return { t };
+};

@@ -2,9 +2,7 @@ import "@/i18n"; // must be first — initializes i18n before any component rend
 import React from "react";
 import ReactDOM from "react-dom/client";
 import App from "./App";
-import "@radix-ui/themes/styles.css";
 import "./global.css";
-import { SafeAreaProvider } from "./components/AppShell/safe-area-provider";
 
 function clearPreLoad() {
   const el = document.getElementById("pre-load");
@@ -22,9 +20,7 @@ try {
   clearPreLoad();
   ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
     <React.StrictMode>
-      <SafeAreaProvider>
-        <App />
-      </SafeAreaProvider>
+      <App />
     </React.StrictMode>,
   );
 } catch (err) {

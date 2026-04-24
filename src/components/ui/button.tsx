@@ -1,51 +1,93 @@
-// Thin wrapper around Radix Button mapping old variant/size names to Radix props.
 import React from "react";
-import { Button as RadixButton } from "@radix-ui/themes";
-import type { ComponentProps } from "react";
+import { useT, VT } from "@/tokens/tokens";
 
-type OldVariant = "primary" | "danger" | "ghost" | "outline";
-type OldSize = "sm" | "md";
+export type ButtonVariant =
+  | "primary"
+  | "destructive"
+  | "secondary"
+  | "outlined"
+  | "card";
+export type ButtonShape = "pill" | "rounded";
 
-interface ButtonProps extends Omit<
-  ComponentProps<typeof RadixButton>,
-  "variant" | "size"
-> {
-  variant?: OldVariant;
-  size?: OldSize;
+interface ButtonProps {
+  label: string;
+  variant?: ButtonVariant;
+  /** pill = full radius, rounded = t.radius.lg (14px). Default: pill */
+  shape?: ButtonShape;
+  icon?: React.ReactElement;
+  fullWidth?: boolean;
+  height?: number;
+  flex?: number;
+  disabled?: boolean;
+  onPress?: () => void;
+  style?: React.CSSProperties;
 }
 
-function mapVariantColor(variant: OldVariant): {
-  variant: ComponentProps<typeof RadixButton>["variant"];
-  color?: ComponentProps<typeof RadixButton>["color"];
-} {
-  switch (variant) {
-    case "primary":
-      return { variant: "solid" };
-    case "danger":
-      return { variant: "solid", color: "red" };
-    case "ghost":
-      return { variant: "ghost" };
-    case "outline":
-      return { variant: "outline" };
-  }
+export function Button({
+  label,
+  variant = "secondary",
+  shape = "pill",
+  icon,
+  fullWidth,
+  height = 52,
+  flex,
+  disabled,
+  onPress,
+  style = {},
+}: ButtonProps) {
+  const t = useT();
+  const borderRadius = shape === "pill" ? t.radius.full : t.radius.lg;
+
+  const variantStyle: Record<ButtonVariant, React.CSSProperties> = {
+    primary: { background: VT.cyan, color: t.navy },
+    destructive: {
+      background: VT.error,
+      color: "#fff",
+      boxShadow: `0 4px 14px ${VT.error}55`,
+    },
+    secondary: { background: t.surfaceAlt, color: t.text },
+    outlined: {
+      background: "transparent",
+      color: t.text,
+      border: `1.5px solid ${t.divider}`,
+    },
+    card: {
+      background: t.card,
+      color: t.text,
+      border: `1.5px solid ${t.divider}`,
+    },
+  };
+
+  const vs = variantStyle[variant];
+  const textColor = (vs as React.CSSProperties & { color: string }).color;
+
+  return (
+    <div
+      onClick={disabled ? undefined : onPress}
+      style={{
+        height,
+        borderRadius,
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        gap: 6,
+        fontSize: 15,
+        fontWeight: 700,
+        letterSpacing: -0.1,
+        cursor: disabled ? "default" : onPress ? "pointer" : "default",
+        opacity: disabled ? 0.45 : 1,
+        ...(fullWidth ? { width: "100%" } : {}),
+        ...(flex !== undefined ? { flex } : {}),
+        ...vs,
+        ...style,
+      }}
+    >
+      {icon &&
+        React.cloneElement(icon, {
+          s: icon.props.s ?? 16,
+          c: icon.props.c ?? textColor,
+        })}
+      {label}
+    </div>
+  );
 }
-
-export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
-  ({ variant = "primary", size = "md", color: colorProp, ...rest }, ref) => {
-    const { variant: radixVariant, color: derivedColor } =
-      mapVariantColor(variant);
-    const radixSize: ComponentProps<typeof RadixButton>["size"] =
-      size === "sm" ? "1" : "2";
-    return (
-      <RadixButton
-        ref={ref}
-        variant={radixVariant}
-        color={colorProp ?? derivedColor}
-        size={radixSize}
-        {...rest}
-      />
-    );
-  },
-);
-
-Button.displayName = "Button";

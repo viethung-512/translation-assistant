@@ -1,41 +1,40 @@
-import { AppShell } from "@/components/AppShell/app-shell";
-import { getApiKey } from "@/tauri/secure-storage";
-import { SonioxClient } from "@soniox/client";
-import { SonioxProvider } from "@soniox/react";
-import React from "react";
+import { useEffect, useState } from "react";
+import { MemoryRouter } from "react-router-dom";
+import { ThemeProvider } from "@/tokens/tokens";
+import { AppShellV2 } from "@/components/AppShell/app-shell-v2";
+import { ROUTES } from "@/router/routes";
+import { useV2SettingsStore } from "@/store/v2-settings-store";
 
-const sonioxClient = new SonioxClient({
-  async api_key() {
-    const result = await getApiKey();
-    if (result) {
-      return result;
-    }
-    throw new Error("Please set soniox api-key!");
-  },
-});
-
-const AppV2 =
-  import.meta.env.VITE_UI_VERSION === "v2"
-    ? React.lazy(() => import("@/v2/app-v2"))
-    : null;
-
-// <Theme> lives inside AppShell so the same component that owns theme state also drives appearance.
-function AppRoot() {
-  if (AppV2) {
-    return (
-      // <React.Suspense fallback={null}>
-      <SonioxProvider client={sonioxClient}>
-        <AppV2 />
-      </SonioxProvider>
-      // </React.Suspense>
-    );
-  }
-
+function getSystemDark(): boolean {
   return (
-    <SonioxProvider client={sonioxClient}>
-      <AppShell />
-    </SonioxProvider>
+    typeof window !== "undefined" &&
+    window.matchMedia("(prefers-color-scheme: dark)").matches
   );
 }
 
-export default AppRoot;
+function AppV2Inner() {
+  const theme = useV2SettingsStore((s) => s.theme);
+  const [systemDark, setSystemDark] = useState(getSystemDark);
+
+  useEffect(() => {
+    if (theme !== "system") return;
+    const mq = window.matchMedia("(prefers-color-scheme: dark)");
+    const handler = (e: MediaQueryListEvent) => setSystemDark(e.matches);
+    mq.addEventListener("change", handler);
+    return () => mq.removeEventListener("change", handler);
+  }, [theme]);
+
+  const dark = theme === "dark" ? true : theme === "light" ? false : systemDark;
+
+  return (
+    <ThemeProvider dark={dark}>
+      <MemoryRouter initialEntries={[ROUTES.MAIN]}>
+        <AppShellV2 />
+      </MemoryRouter>
+    </ThemeProvider>
+  );
+}
+
+export default function AppV2() {
+  return <AppV2Inner />;
+}
