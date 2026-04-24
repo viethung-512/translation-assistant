@@ -1,5 +1,4 @@
 import { Icon } from "@/components/icons";
-import { Typography } from "@/components/ui/typography";
 import { useT, VT } from "@/tokens/tokens";
 import React from "react";
 
@@ -15,14 +14,14 @@ export function IconBtn({
     <div
       onClick={onClick}
       style={{
-        width: 44,
-        height: 44,
-        borderRadius: 999,
-        background: t.card,
+        width: 36,
+        height: 36,
+        borderRadius: 8,
+        background: t.surface,
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
-        border: `1px solid ${t.divider}`,
+        boxShadow: VT.ring(t),
         cursor: onClick ? "pointer" : "default",
       }}
     >
@@ -49,28 +48,37 @@ export function LangPill({
         flex: "1 1 0",
         minWidth: 0,
         width: 0,
-        height: 56,
-        borderRadius: 999,
-        background: t.card,
+        height: 48,
+        borderRadius: 8,
+        background: t.surface,
         display: "flex",
         alignItems: "center",
         padding: "0 12px",
-        gap: 8,
-        border: `1.5px solid ${t.divider}`,
+        gap: 10,
+        boxShadow: VT.ring(t),
         boxSizing: "border-box",
         cursor: onClick ? "pointer" : "default",
       }}
       onClick={onClick}
     >
-      <div style={{ fontSize: 20, flexShrink: 0 }}>{flag}</div>
+      <div style={{ fontSize: 18, flexShrink: 0 }}>{flag}</div>
       <div style={{ flex: 1, minWidth: 0 }}>
-        <Typography variant="micro" style={{ letterSpacing: 0.6 }}>
-          {code}
-        </Typography>
         <div
           style={{
-            fontSize: 14,
-            fontWeight: 700,
+            fontSize: 10,
+            fontWeight: 500,
+            color: t.textDim,
+            fontFamily: VT.fontMono,
+            textTransform: "uppercase",
+            letterSpacing: 0.5,
+          }}
+        >
+          {code}
+        </div>
+        <div
+          style={{
+            fontSize: 13,
+            fontWeight: 500,
             color: t.text,
             letterSpacing: -0.3,
             whiteSpace: "nowrap",
@@ -81,81 +89,41 @@ export function LangPill({
           {name}
         </div>
       </div>
-      <Icon.ChevronDown s={14} c={t.textDim} />
+      <Icon.ChevronDown s={12} c={t.textDim} />
     </div>
   );
 }
 
-export function Segmented({ children }: { children: React.ReactNode }) {
-  const t = useT();
-  return (
-    <div
-      style={{
-        display: "flex",
-        background: t.card,
-        borderRadius: 999,
-        padding: 4,
-        gap: 2,
-        border: `1px solid ${t.divider}`,
-      }}
-    >
-      {children}
-    </div>
-  );
-}
-
-export function SegBtn({
-  active,
-  icon,
-  children,
-  onClick,
+export function SpeakerAvatar({
+  idx,
+  size = 28,
 }: {
-  active?: boolean;
-  icon: React.ReactElement;
-  children: React.ReactNode;
-  onClick?: () => void;
+  idx: number;
+  size?: number;
 }) {
   const t = useT();
-  const iconColor = active
-    ? t.mode === "dark"
-      ? t.navy
-      : "#fff"
-    : t.textMuted;
+  const color = VT.s[idx % VT.s.length] ?? VT.s[5];
+  const label = `S${idx + 1}`;
   return (
     <div
-      onClick={onClick}
       style={{
+        width: size,
+        height: size,
+        borderRadius: 999,
+        background: color,
         display: "flex",
         alignItems: "center",
-        gap: 6,
-        padding: "9px 16px",
-        borderRadius: 999,
-        fontSize: 13,
-        fontWeight: 700,
-        letterSpacing: -0.1,
-        background: active
-          ? t.mode === "dark"
-            ? VT.cyan
-            : t.text
-          : "transparent",
-        color: active ? (t.mode === "dark" ? t.navy : "#fff") : t.textMuted,
-        cursor: onClick ? "pointer" : "default",
-        transition: "background 0.15s, color 0.15s",
+        justifyContent: "center",
+        color: "#fff",
+        fontSize: size * 0.38,
+        fontWeight: 600,
+        letterSpacing: -0.4,
+        flexShrink: 0,
+        boxShadow: `0 0 0 2px ${t.bg}`,
+        fontFamily: VT.font,
       }}
     >
-      {React.cloneElement(icon, { c: iconColor, s: 15 })}
-      {children}
+      {label}
     </div>
   );
-}
-
-export function pulseRingStyle(i: number): React.CSSProperties {
-  return {
-    position: "absolute",
-    inset: 0,
-    borderRadius: 999,
-    border: `2px solid ${VT.cyan}`,
-    animation: `pulse-ring 1.6s cubic-bezier(0.22, 0.61, 0.36, 1) ${i * 0.53}s infinite`,
-    zIndex: 1,
-  };
 }

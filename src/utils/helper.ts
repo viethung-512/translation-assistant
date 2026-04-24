@@ -1,3 +1,4 @@
+import { RealtimeToken } from "@soniox/client";
 import { ALL_AVAILABLE_LANGUAGES } from "../tokens/languages";
 
 export function detectFlagCode(langCode?: string) {
@@ -9,3 +10,12 @@ export function detectFlagCode(langCode?: string) {
 
   return { flag, code };
 }
+
+export const generateRealtimeTokenKey = (
+  token: Pick<
+    RealtimeToken,
+    "speaker" | "language" | "translation_status" | "is_final"
+  >,
+  index?: number,
+) =>
+  `${token.speaker}-${token.language}-${token.translation_status}-${token.is_final ? "final" : "non_final"}-${index}`;
