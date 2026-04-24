@@ -1,10 +1,8 @@
 import { useState, useMemo, useCallback } from "react";
 import { useT, VT } from "@/tokens/tokens";
-import { Typography } from "@/components/ui/typography";
 import { Icon } from "@/components/icons";
-import { Card } from "@/components/ui/primitives";
+import { Pill } from "@/components/ui/primitives";
 import { ScreenLayout } from "@/components/ui/screen-layout";
-import { Button } from "@/components/ui/button";
 import { ActionBar } from "@/components/ui/action-bar";
 import { EmptyState } from "@/components/ui/empty-state";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
@@ -35,7 +33,6 @@ function HistoryRow({
   onToggle?: () => void;
 }) {
   const t = useT();
-  const { t: i18n } = useV2T();
   return (
     <div
       style={{ position: "relative", cursor: "pointer" }}
@@ -46,41 +43,46 @@ function HistoryRow({
           display: "flex",
           alignItems: "center",
           gap: 12,
-          padding: "14px 12px",
+          padding: "14px 14px",
         }}
       >
+        {/* Square multi-select checkbox */}
         {multiSelect && (
           <div
             style={{
-              width: 24,
-              height: 24,
-              borderRadius: 999,
+              width: 18,
+              height: 18,
+              borderRadius: 4,
               flexShrink: 0,
-              background: selected ? VT.cyan : "transparent",
-              border: `2px solid ${selected ? VT.cyan : t.divider}`,
+              background: selected ? t.text : "transparent",
+              boxShadow: selected ? "none" : VT.ring(t),
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
             }}
           >
-            {selected && <Icon.Check c={t.navy} s={14} />}
+            {selected && (
+              <Icon.Check c={t.mode === "dark" ? "#000" : "#fff"} s={12} />
+            )}
           </div>
         )}
+
+        {/* Flag stack — 26×26 */}
         <div style={{ display: "flex", alignItems: "center", flexShrink: 0 }}>
           {flags.slice(0, 4).map((f, i) => (
             <div
               key={i}
               style={{
-                width: 32,
-                height: 32,
+                width: 26,
+                height: 26,
                 borderRadius: 999,
                 background: t.surfaceAlt,
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
-                fontSize: 16,
-                marginLeft: i === 0 ? 0 : -10,
-                border: `2px solid ${t.card}`,
+                fontSize: 13,
+                marginLeft: i === 0 ? 0 : -8,
+                boxShadow: `0 0 0 2px ${t.surface}`,
                 zIndex: 10 - i,
               }}
             >
@@ -90,24 +92,26 @@ function HistoryRow({
           {flags.length > 4 && (
             <div
               style={{
-                width: 32,
-                height: 32,
+                width: 26,
+                height: 26,
                 borderRadius: 999,
                 background: t.surfaceAlt,
                 color: t.textMuted,
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
-                fontSize: 11,
-                fontWeight: 800,
-                marginLeft: -10,
-                border: `2px solid ${t.card}`,
+                fontSize: 10,
+                fontWeight: 500,
+                marginLeft: -8,
+                fontFamily: VT.fontMono,
+                boxShadow: `0 0 0 2px ${t.surface}`,
               }}
             >
               +{flags.length - 4}
             </div>
           )}
         </div>
+
         <div style={{ flex: 1, minWidth: 0 }}>
           <div
             style={{
@@ -115,37 +119,39 @@ function HistoryRow({
               justifyContent: "space-between",
               alignItems: "baseline",
               gap: 8,
-              marginBottom: 2,
+              marginBottom: 3,
             }}
           >
-            <Typography variant="label">{time}</Typography>
+            <div
+              style={{
+                fontSize: 14,
+                fontWeight: 500,
+                color: t.text,
+                letterSpacing: -0.3,
+              }}
+            >
+              {time}
+            </div>
             <div
               style={{
                 fontSize: 11,
                 color: t.textDim,
-                fontWeight: 700,
+                fontWeight: 400,
                 whiteSpace: "nowrap",
+                fontFamily: VT.fontMono,
               }}
             >
               {dur}
             </div>
           </div>
-          <div
-            style={{
-              fontSize: 11,
-              fontWeight: 700,
-              color: VT.cyan,
-              letterSpacing: 0.3,
-              marginBottom: 2,
-            }}
-          >
-            {i18n("v2_history_speakers", { count: speakers })}
+          <div style={{ marginBottom: 3 }}>
+            <Pill tone="neutral">{speakers} speakers</Pill>
           </div>
           <div
             style={{
-              fontSize: 13,
+              fontSize: 12,
               color: t.textMuted,
-              lineHeight: 1.35,
+              lineHeight: 1.4,
               whiteSpace: "nowrap",
               overflow: "hidden",
               textOverflow: "ellipsis",
@@ -154,15 +160,15 @@ function HistoryRow({
             {preview}
           </div>
         </div>
-        {!multiSelect && <Icon.ChevronRight s={16} c={t.textFaint} />}
+        {!multiSelect && <Icon.ChevronRight s={14} c={t.textFaint} />}
       </div>
       {!isLast && (
         <div
           style={{
             position: "absolute",
             bottom: 0,
-            left: multiSelect ? 94 : 68,
-            right: 12,
+            left: multiSelect ? 72 : 52,
+            right: 14,
             height: 1,
             background: t.hairline,
           }}
@@ -210,25 +216,22 @@ export function HistoryScreen({
 
   const handleConfirmDelete = useCallback(async () => {
     const ids = Array.from(selectedIds);
-
-    // Delete audio files first
     for (const id of ids) {
       try {
         await invoke("delete_audio", { filename: `recording-${id}.webm` });
       } catch {
-        // Ignore if file doesn't exist
+        // ignore missing files
       }
     }
-
     removeItems(ids);
     try {
       await deleteTranscripts(ids);
     } catch (firstError) {
-      console.error("Failed to delete transcript bodies, retrying once", firstError);
+      console.error("Failed to delete transcripts, retrying", firstError);
       try {
         await deleteTranscripts(ids);
       } catch (secondError) {
-        console.error("Retry failed while deleting transcript bodies", secondError);
+        console.error("Retry failed", secondError);
       }
     }
     setSelectedIds(new Set());
@@ -261,58 +264,79 @@ export function HistoryScreen({
     [selectedIds.size, i18n],
   );
 
+  // Bottom padding for the list when action bar is visible
+  const listBottomPadding = multiSelect
+    ? "calc(76px + env(safe-area-inset-bottom))"
+    : "calc(8px + env(safe-area-inset-bottom))";
+
   return (
     <ScreenLayout>
+      {/* Header */}
       <div
         style={{
           display: "flex",
           alignItems: "center",
           justifyContent: "space-between",
-          padding: "4px 16px 8px",
+          padding: "4px 12px 6px",
         }}
       >
         <div
           onClick={onBack}
           style={{
-            width: 44,
-            height: 44,
-            borderRadius: 999,
-            background: t.card,
-            border: `1px solid ${t.divider}`,
+            width: 36,
+            height: 36,
+            borderRadius: 8,
+            background: t.surface,
+            boxShadow: VT.ring(t),
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
             cursor: onBack ? "pointer" : "default",
           }}
         >
-          <Icon.ChevronLeft c={t.text} />
+          <Icon.ChevronLeft c={t.text} s={18} />
         </div>
         <div
           onClick={handleTrashPress}
           style={{
-            width: 44,
-            height: 44,
-            borderRadius: 999,
-            background: t.card,
-            border: `1px solid ${t.divider}`,
+            width: 36,
+            height: 36,
+            borderRadius: 8,
+            background: t.surface,
+            boxShadow: VT.ring(t),
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
             cursor: "pointer",
           }}
         >
-          <Icon.Trash c={VT.error} s={20} />
+          <Icon.Trash c={t.textMuted} s={16} />
         </div>
       </div>
 
-      <div style={{ padding: "4px 20px 6px" }}>
-        <Typography variant="display">{i18n("v2_history_title")}</Typography>
+      {/* Title */}
+      <div style={{ padding: "4px 20px 14px" }}>
         <div
           style={{
-            fontSize: 13,
+            fontFamily: VT.fontDisplay,
+            fontSize: 32,
+            fontWeight: 600,
+            color: t.text,
+            letterSpacing: -1.28,
+            lineHeight: 1.1,
+          }}
+        >
+          {i18n("v2_history_title")}
+        </div>
+        <div
+          style={{
+            fontSize: 12,
             color: t.textDim,
             marginTop: 4,
             fontWeight: 500,
+            fontFamily: VT.fontMono,
+            letterSpacing: 0.3,
+            textTransform: "uppercase",
           }}
         >
           {i18n("v2_history_sessions", { count: items.length })}
@@ -321,19 +345,44 @@ export function HistoryScreen({
 
       {empty || items.length === 0 ? (
         <EmptyState
-          icon={<Icon.Clock c={VT.cyan} s={42} />}
-          iconSize={96}
+          icon={<Icon.Clock c={t.textMuted} s={26} />}
+          iconSize={64}
           title={i18n("v2_history_empty_title")}
           subtitle={i18n("v2_history_empty_body")}
         />
       ) : (
-        <div style={{ padding: "14px 16px calc(8px + env(safe-area-inset-bottom))" }}>
+        <div
+          style={{
+            padding: `0 16px ${listBottomPadding}`,
+            flex: 1,
+            overflowY: "auto",
+          }}
+        >
           {Object.entries(groups).map(([date, arr]) => (
-            <div key={date} style={{ marginBottom: 16 }}>
-              <Typography variant="caption" style={{ padding: "0 8px 8px" }}>
+            <div key={date} style={{ marginBottom: 18 }}>
+              <div
+                style={{
+                  fontSize: 10,
+                  fontWeight: 500,
+                  letterSpacing: 0.8,
+                  color: t.textDim,
+                  textTransform: "uppercase",
+                  padding: "0 4px 8px",
+                  fontFamily: VT.fontMono,
+                }}
+              >
                 {date}
-              </Typography>
-              <Card style={{ padding: 4 }}>
+              </div>
+              <div
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  background: t.surface,
+                  borderRadius: 12,
+                  boxShadow: VT.ring(t),
+                  overflow: "hidden",
+                }}
+              >
                 {arr.map((it, i) => (
                   <HistoryRow
                     key={it.id}
@@ -345,35 +394,63 @@ export function HistoryScreen({
                     onToggle={() => toggleItem(it.id)}
                   />
                 ))}
-              </Card>
+              </div>
             </div>
           ))}
         </div>
       )}
 
+      {/* Action bar — pinned to device bottom */}
       {multiSelect && (
         <ActionBar>
-          <Button
-            variant="outlined"
-            label={i18n("v2_history_btn_cancel")}
-            flex={1}
-            onPress={handleCancelMultiSelect}
-          />
-          <Button
-            variant="destructive"
-            icon={<Icon.Trash />}
-            label={deleteLabel}
-            flex={1}
-            disabled={selectedIds.size === 0}
-            onPress={handleDeletePress}
-          />
+          <div
+            onClick={handleCancelMultiSelect}
+            style={{
+              flex: 1,
+              height: 44,
+              borderRadius: 8,
+              background: t.surface,
+              boxShadow: VT.ring(t),
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              fontSize: 14,
+              fontWeight: 500,
+              color: t.text,
+              letterSpacing: -0.2,
+              cursor: "pointer",
+            }}
+          >
+            {i18n("v2_history_btn_cancel")}
+          </div>
+          <div
+            onClick={selectedIds.size > 0 ? handleDeletePress : undefined}
+            style={{
+              flex: 1,
+              height: 44,
+              borderRadius: 8,
+              background: selectedIds.size > 0 ? VT.error : t.surfaceAlt,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: 6,
+              fontSize: 14,
+              fontWeight: 500,
+              color: selectedIds.size > 0 ? "#fff" : t.textDim,
+              letterSpacing: -0.2,
+              cursor: selectedIds.size > 0 ? "pointer" : "default",
+            }}
+          >
+            <Icon.Trash c={selectedIds.size > 0 ? "#fff" : t.textDim} s={14} />
+            {deleteLabel}
+          </div>
         </ActionBar>
       )}
 
       <ConfirmDialog
         isOpen={pendingDelete}
         onDismiss={handleCancelDelete}
-        icon={<Icon.Trash c={VT.error} s={24} />}
+        icon={<Icon.Trash c={VT.error} s={20} />}
         title={confirmTitle}
         body={i18n("v2_history_confirm_body")}
         confirmLabel={i18n("v2_history_confirm_delete")}
