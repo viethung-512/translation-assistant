@@ -228,9 +228,9 @@ export function HistoryScreen({
   const handleCancelDelete = useCallback(() => setPendingDelete(false), []);
 
   const handleTrashPress = useCallback(() => {
-    if (multiSelect) handleDeletePress();
+    if (multiSelect && selectedIds.size > 0) handleDeletePress();
     else setMultiSelect(true);
-  }, [multiSelect, handleDeletePress]);
+  }, [multiSelect, selectedIds.size, handleDeletePress]);
 
   const handleCancelMultiSelect = useCallback(() => {
     setMultiSelect(false);
@@ -353,6 +353,7 @@ export function HistoryScreen({
             icon={<Icon.Trash />}
             label={deleteLabel}
             flex={1}
+            disabled={selectedIds.size === 0}
             onPress={handleDeletePress}
           />
         </ActionBar>

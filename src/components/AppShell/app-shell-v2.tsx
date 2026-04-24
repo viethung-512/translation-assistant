@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Route, Routes, useNavigate } from "react-router-dom";
 
 import { DetailScreen } from "@/components/screens/detail-screen";
@@ -11,6 +12,14 @@ import { useT } from "@/tokens/tokens";
 export function AppShellV2() {
   const t = useT();
   const navigate = useNavigate();
+  const [settingsProps, setSettingsProps] = useState<{
+    autoOpenApiKey?: boolean;
+  }>({});
+
+  const handleGoToSettings = (autoOpenApiKey = false) => {
+    setSettingsProps({ autoOpenApiKey });
+    navigate(ROUTES.SETTINGS);
+  };
 
   return (
     <div
@@ -41,7 +50,7 @@ export function AppShellV2() {
             path={ROUTES.MAIN}
             element={
               <MainScreen
-                onSettings={() => navigate(ROUTES.SETTINGS)}
+                onSettings={() => handleGoToSettings()}
                 onHistory={() => navigate(ROUTES.HISTORY)}
               />
             }
@@ -50,7 +59,10 @@ export function AppShellV2() {
             path={ROUTES.SETTINGS}
             element={
               <SwipeBackLayer onBack={() => navigate(ROUTES.MAIN)}>
-                <SettingsScreen onBack={() => navigate(ROUTES.MAIN)} />
+                <SettingsScreen
+                  onBack={() => navigate(ROUTES.MAIN)}
+                  autoOpenApiKey={settingsProps.autoOpenApiKey}
+                />
               </SwipeBackLayer>
             }
           />

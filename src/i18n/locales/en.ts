@@ -82,6 +82,7 @@ export const en = {
   v2_status_paused_label: "Paused",
   v2_status_translating: "Translating…",
   v2_status_stopped: "Stopped",
+  v2_status_missing_key: "Missing API Key",
   v2_btn_pause: "Pause",
   v2_btn_resume: "Resume",
   v2_btn_start: "Start",

@@ -24,7 +24,7 @@ type SessionState =
   | "stopped";
 
 interface MainScreenProps {
-  onSettings?: () => void;
+  onSettings?: (autoOpenApiKey?: boolean) => void;
   onHistory?: () => void;
 }
 
@@ -72,6 +72,7 @@ export function MainScreen({ onSettings, onHistory }: MainScreenProps) {
     languageB: storeB,
     autoDetect,
     setAutoDetect,
+    apiKey,
   } = useV2SettingsStore();
 
   const [localLangA, setLocalLangA] = useState(storeA);
@@ -157,6 +158,11 @@ export function MainScreen({ onSettings, onHistory }: MainScreenProps) {
 
   const handleMainBtn = useCallback(async () => {
     if (sessionState === "ready" || sessionState === "stopped") {
+      // Check API key before starting
+      if (!apiKey.trim()) {
+        setShowNoKeyDialog(true);
+        return;
+      }
       try {
         await session.startSession();
         setCommittedRows([]);
@@ -169,7 +175,7 @@ export function MainScreen({ onSettings, onHistory }: MainScreenProps) {
     } else if (sessionState === "paused") {
       await session.resumeSession();
     }
-  }, [sessionState, session]);
+  }, [apiKey, sessionState, session]);
 
   const handleStop = useCallback(() => {
     session.stopSession();
@@ -481,8 +487,8 @@ export function MainScreen({ onSettings, onHistory }: MainScreenProps) {
         </div>
         <div style={{ marginTop: 12 }}>
           <RecordingStatus
-            label={status.label}
-            dotColor={status.dot}
+            label={!apiKey.trim() ? i18n("v2_status_missing_key") : status.label}
+            dotColor={!apiKey.trim() ? VT.error : status.dot}
             isActive={isActive}
           />
         </div>
@@ -652,7 +658,7 @@ export function MainScreen({ onSettings, onHistory }: MainScreenProps) {
         cancelLabel={i18n("v2_no_key_dialog_cancel")}
         onConfirm={() => {
           setShowNoKeyDialog(false);
-          onSettings?.();
+          onSettings?.(true);
         }}
       />
     </>

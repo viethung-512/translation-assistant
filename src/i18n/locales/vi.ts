@@ -84,6 +84,7 @@ export const vi: Record<TranslationKeys, string> = {
   v2_status_paused_label: "Đã tạm dừng",
   v2_status_translating: "Đang dịch…",
   v2_status_stopped: "Đã dừng",
+  v2_status_missing_key: "Thiếu khoá API",
   v2_btn_pause: "Tạm dừng",
   v2_btn_resume: "Tiếp tục",
   v2_btn_start: "Bắt đầu",

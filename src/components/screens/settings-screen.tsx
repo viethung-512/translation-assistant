@@ -8,7 +8,7 @@ import i18n, { useV2T } from "@/i18n";
 import { useV2SettingsStore, type V2Theme } from "@/store/v2-settings-store";
 import { ALL_AVAILABLE_LANGUAGES } from "@/tokens/languages";
 import { useT, VT } from "@/tokens/tokens";
-import React, { useCallback, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { ApiKeyDialog } from "../ui/api-key-dialog";
 import { ConfirmDialog } from "../ui/confirm-dialog";
 import { FlagEmoji } from "../ui/flag-emoji";
@@ -91,9 +91,10 @@ function LangDetail({ code }: { code: string }) {
 
 interface SettingsScreenProps {
   onBack?: () => void;
+  autoOpenApiKey?: boolean;
 }
 
-export function SettingsScreen({ onBack }: SettingsScreenProps) {
+export function SettingsScreen({ onBack, autoOpenApiKey }: SettingsScreenProps) {
   const t = useT();
   const { t: tr } = useV2T();
   const {
@@ -117,6 +118,14 @@ export function SettingsScreen({ onBack }: SettingsScreenProps) {
   const [confirmClearAllHistories, setConfirmClearAllHistories] =
     useState(false);
   const [apiKeyOpen, setApiKeyOpen] = useState(false);
+
+  // Auto-open API key dialog when navigated from main screen without key
+  useEffect(() => {
+    if (autoOpenApiKey) {
+      setApiKeyOpen(true);
+    }
+  }, [autoOpenApiKey]);
+
   const closeSheet = useCallback(() => setOpenSheet(null), []);
 
   const hasStoredKey = useMemo(() => apiKey && apiKey.trim() !== "", [apiKey]);
