@@ -1,12 +1,11 @@
 import { useState, useMemo, useCallback, useRef, useEffect } from "react";
 import { useT, VT } from "@/tokens/tokens";
-import { Typography } from "@/components/ui/typography";
 import { Icon } from "@/components/icons";
-import { Card, Toggle } from "@/components/ui/primitives";
 import { ScreenLayout } from "@/components/ui/screen-layout";
-import { IconBtn, LangPill, pulseRingStyle } from "./main-screen-helpers";
+import { IconBtn, LangPill } from "./main-screen-helpers";
+import { InlineBanner } from "@/components/ui/inline-banner";
+import { Button } from "@/components/ui/button";
 import { TranscriptRow } from "./shared/transcript-row";
-import { RecordingStatus } from "./main/recording-status";
 import { EmptyState } from "@/components/ui/empty-state";
 import { LangSheet } from "@/components/ui/lang-sheet";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
@@ -67,13 +66,7 @@ function deriveRowMeta(
 export function MainScreen({ onSettings, onHistory }: MainScreenProps) {
   const t = useT();
   const { t: i18n } = useV2T();
-  const {
-    languageA: storeA,
-    languageB: storeB,
-    autoDetect,
-    setAutoDetect,
-    apiKey,
-  } = useV2SettingsStore();
+  const { languageA: storeA, languageB: storeB, apiKey } = useV2SettingsStore();
 
   const [localLangA, setLocalLangA] = useState(storeA);
   const [localLangB, setLocalLangB] = useState(storeB);
@@ -272,11 +265,23 @@ export function MainScreen({ onSettings, onHistory }: MainScreenProps) {
   const mainBtn = useMemo(
     () =>
       isActive
-        ? { bg: VT.warning, icon: <Icon.Pause s={30} /> }
+        ? {
+            bg: VT.warning,
+            color: "#fff",
+            icon: <Icon.Pause s={26} c="#fff" />,
+          }
         : isPaused
-          ? { bg: VT.success, icon: <Icon.Play s={28} /> }
-          : { bg: VT.cyan, icon: <Icon.Mic s={30} /> },
-    [isActive, isPaused],
+          ? {
+              bg: VT.success,
+              color: "#fff",
+              icon: <Icon.Play s={26} c="#fff" />,
+            }
+          : {
+              bg: t.text,
+              color: t.mode === "dark" ? "#000" : "#fff",
+              icon: <Icon.Mic s={26} c={t.mode === "dark" ? "#000" : "#fff"} />,
+            },
+    [isActive, isPaused, t.text, t.mode],
   );
 
   const mainLabel = useMemo(
@@ -297,27 +302,35 @@ export function MainScreen({ onSettings, onHistory }: MainScreenProps) {
             display: "flex",
             alignItems: "center",
             justifyContent: "space-between",
-            padding: "8px 16px 14px",
+            padding: "6px 16px 10px",
           }}
         >
-          <Typography variant="title">
+          <div
+            style={{
+              fontFamily: VT.fontDisplay,
+              fontSize: 20,
+              fontWeight: 600,
+              letterSpacing: -1.2,
+              color: t.text,
+            }}
+          >
             Hey<span style={{ color: VT.cyan }}>Gracie</span>
-          </Typography>
-          <div style={{ display: "flex", gap: 8 }}>
+          </div>
+          <div style={{ display: "flex", gap: 6 }}>
             <IconBtn onClick={onHistory}>
-              <Icon.Clock c={t.text} />
+              <Icon.Clock c={t.text} s={18} />
             </IconBtn>
             <IconBtn onClick={onSettings}>
-              <Icon.Gear c={t.text} />
+              <Icon.Gear c={t.text} s={18} />
             </IconBtn>
           </div>
         </div>
-        <div style={{ padding: "0 16px" }}>
+        <div style={{ padding: "0 16px 10px" }}>
           <div
             style={{
               display: "flex",
               alignItems: "center",
-              gap: 8,
+              gap: 6,
               width: "100%",
             }}
           >
@@ -330,19 +343,19 @@ export function MainScreen({ onSettings, onHistory }: MainScreenProps) {
             <div
               onClick={swapLocal}
               style={{
-                width: 40,
-                height: 40,
+                width: 36,
+                height: 36,
                 borderRadius: 999,
                 flexShrink: 0,
-                background: t.card,
+                background: t.surface,
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
-                border: `1px solid ${t.divider}`,
+                boxShadow: VT.ring(t),
                 cursor: "pointer",
               }}
             >
-              <Icon.Swap s={18} c={VT.cyan} />
+              <Icon.Swap s={15} c={t.text} />
             </div>
             <LangPill
               flag={langB.flag}
@@ -351,34 +364,29 @@ export function MainScreen({ onSettings, onHistory }: MainScreenProps) {
               onClick={openLangSlotB}
             />
           </div>
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              marginTop: 10,
-              padding: "0 4px",
-            }}
-          >
-            <div style={{ fontSize: 13, fontWeight: 600, color: t.textMuted }}>
-              {i18n("v2_main_auto_detect")}
-            </div>
-            <Toggle on={autoDetect} onChange={setAutoDetect} />
-          </div>
         </div>
+        {!apiKey.trim() && (
+          <div style={{ padding: "0 16px 8px" }}>
+            <InlineBanner
+              tone="warn"
+              title={i18n("v2_status_missing_key")}
+              subtitle={i18n("v2_status_missing_key_hint")}
+              onClick={() => onSettings?.()}
+            />
+          </div>
+        )}
       </>
     ),
     [
       t,
       langA,
       langB,
-      autoDetect,
+      apiKey,
       onHistory,
       onSettings,
       openLangSlotA,
       openLangSlotB,
       swapLocal,
-      setAutoDetect,
       i18n,
     ],
   );
@@ -387,109 +395,80 @@ export function MainScreen({ onSettings, onHistory }: MainScreenProps) {
     () => (
       <div
         style={{
-          padding:
-            "12px 20px calc(24px + env(safe-area-inset-bottom))",
+          padding: "14px 20px calc(22px + env(safe-area-inset-bottom))",
           display: "flex",
-          flexDirection: "column",
           alignItems: "center",
+          justifyContent: "space-between",
+          gap: 12,
         }}
       >
+        {/* Status chip */}
         <div
           style={{
             display: "flex",
-            alignItems: "flex-start",
-            justifyContent: "center",
-            width: "100%",
-            position: "relative",
+            alignItems: "center",
+            gap: 7,
+            padding: "6px 12px",
+            borderRadius: 9999,
+            background: t.surface,
+            boxShadow: VT.ring(t),
           }}
         >
           <div
             style={{
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
-              gap: 8,
+              width: 6,
+              height: 6,
+              borderRadius: 999,
+              background: status.dot,
+              boxShadow: isActive ? `0 0 0 3px ${status.dot}33` : "none",
+            }}
+          />
+          <div
+            style={{
+              fontSize: 11,
+              fontWeight: 500,
+              color: t.textMuted,
+              fontFamily: VT.fontMono,
+              textTransform: "uppercase",
+              letterSpacing: 0.6,
             }}
           >
-            <div style={{ position: "relative", width: 76, height: 76 }}>
-              {isActive &&
-                [0, 1, 2].map((i) => <div key={i} style={pulseRingStyle(i)} />)}
-              <div
-                onClick={handleMainBtn}
-                style={{
-                  position: "absolute",
-                  inset: 0,
-                  borderRadius: 999,
-                  background: mainBtn.bg,
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  boxShadow: `0 8px 24px ${mainBtn.bg}66, 0 2px 4px rgba(10,22,40,0.12)`,
-                  zIndex: 2,
-                  cursor: "pointer",
-                  transition: "background 0.2s",
-                }}
-              >
-                {mainBtn.icon}
-              </div>
-            </div>
-            <div
-              style={{
-                fontSize: 12,
-                fontWeight: 700,
-                color: t.text,
-                letterSpacing: -0.1,
-              }}
-            >
-              {mainLabel}
-            </div>
+            {status.label}
           </div>
+        </div>
+
+        {/* Action buttons */}
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
           {(isActive || isPaused) && (
             <div
+              onClick={handleStop}
               style={{
-                position: "absolute",
-                right: 0,
-                top: 12,
+                width: 44,
+                height: 44,
+                borderRadius: 8,
+                background: t.surface,
                 display: "flex",
-                flexDirection: "column",
                 alignItems: "center",
-                gap: 8,
+                justifyContent: "center",
+                boxShadow: VT.ring(t),
+                cursor: "pointer",
               }}
             >
-              <div
-                onClick={handleStop}
-                style={{
-                  width: 52,
-                  height: 52,
-                  borderRadius: 999,
-                  background: VT.error,
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  boxShadow: `0 4px 12px ${VT.error}55`,
-                  cursor: "pointer",
-                }}
-              >
-                <Icon.Stop s={18} />
-              </div>
-              <div
-                style={{
-                  fontSize: 12,
-                  fontWeight: 700,
-                  color: t.text,
-                  letterSpacing: -0.1,
-                }}
-              >
-                {i18n("v2_btn_stop")}
-              </div>
+              <Icon.Stop s={16} c={VT.error} />
             </div>
           )}
-        </div>
-        <div style={{ marginTop: 12 }}>
-          <RecordingStatus
-            label={!apiKey.trim() ? i18n("v2_status_missing_key") : status.label}
-            dotColor={!apiKey.trim() ? VT.error : status.dot}
-            isActive={isActive}
+          <Button
+            variant="primary"
+            icon={mainBtn.icon}
+            label={mainLabel}
+            height={44}
+            onPress={handleMainBtn}
+            style={{
+              width: 150,
+              background: mainBtn.bg,
+              color: mainBtn.color,
+              transition: "background 0.15s",
+            }}
           />
         </div>
       </div>
@@ -503,7 +482,6 @@ export function MainScreen({ onSettings, onHistory }: MainScreenProps) {
       status,
       handleMainBtn,
       handleStop,
-      i18n,
     ],
   );
 
@@ -522,7 +500,12 @@ export function MainScreen({ onSettings, onHistory }: MainScreenProps) {
         <div
           ref={transcriptScrollRef}
           onScroll={handleTranscriptScroll}
-          style={{ height: "100%", overflowY: "auto", padding: "6px 4px" }}
+          style={{
+            height: "100%",
+            overflowY: "auto",
+            padding: "6px 4px",
+            border: `1px solid red`,
+          }}
         >
           {committedRows.map((row, idx) => {
             const isLatest =
@@ -622,23 +605,26 @@ export function MainScreen({ onSettings, onHistory }: MainScreenProps) {
       <ScreenLayout variant="fixed" header={header} footer={footer}>
         <div
           style={{
-            padding: "12px 16px 0",
+            padding: "12px 16px",
             flex: 1,
             display: "flex",
             flexDirection: "column",
             minHeight: 0,
           }}
         >
-          <Card
+          <div
             style={{
               flex: 1,
               display: "flex",
               flexDirection: "column",
               overflow: "hidden",
+              background: t.surface,
+              borderRadius: 12,
+              boxShadow: VT.ring(t),
             }}
           >
             {bodyMarkup}
-          </Card>
+          </div>
         </div>
       </ScreenLayout>
 
