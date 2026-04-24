@@ -83,6 +83,7 @@ export const en = {
   v2_status_translating: "Translating…",
   v2_status_stopped: "Stopped",
   v2_status_missing_key: "Missing API Key",
+  v2_status_missing_key_hint: "Set up in Settings to start translating",
   v2_btn_pause: "Pause",
   v2_btn_resume: "Resume",
   v2_btn_start: "Start",
@@ -185,6 +186,19 @@ export const en = {
   v2_detail_btn_cancel: "Cancel",
   v2_detail_btn_save: "Save",
   v2_detail_filter_all: "All",
+
+  // v2 Settings — AI Provider section
+  v2_settings_section_provider: "AI Provider",
+  v2_settings_provider_name: "Soniox",
+  v2_settings_provider_hint: "Only supported provider",
+  v2_settings_api_key_add: "Add API key",
+  v2_settings_api_key_connected: "Connected",
+  v2_settings_api_key_edit: "Edit",
+  v2_settings_api_key_delete: "Delete",
+  v2_settings_section_data: "Data",
+  v2_settings_auto_save_transcript: "Auto-save transcript",
+  v2_settings_auto_save_transcript_hint: "Keep conversation transcripts in history",
+  v2_settings_auto_save_recording_hint: "Also store the original audio for replay",
 
   // v2 Dialog
   v2_dialog_clear_title: "Clear all history?",

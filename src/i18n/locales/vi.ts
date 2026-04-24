@@ -85,6 +85,7 @@ export const vi: Record<TranslationKeys, string> = {
   v2_status_translating: "Đang dịch…",
   v2_status_stopped: "Đã dừng",
   v2_status_missing_key: "Thiếu khoá API",
+  v2_status_missing_key_hint: "Cài đặt trong Cài đặt để bắt đầu dịch",
   v2_btn_pause: "Tạm dừng",
   v2_btn_resume: "Tiếp tục",
   v2_btn_start: "Bắt đầu",
@@ -188,6 +189,19 @@ export const vi: Record<TranslationKeys, string> = {
   v2_detail_btn_cancel: "Hủy",
   v2_detail_btn_save: "Lưu",
   v2_detail_filter_all: "Tất cả",
+
+  // v2 Settings — AI Provider section
+  v2_settings_section_provider: "Nhà cung cấp AI",
+  v2_settings_provider_name: "Soniox",
+  v2_settings_provider_hint: "Nhà cung cấp duy nhất được hỗ trợ",
+  v2_settings_api_key_add: "Thêm khoá API",
+  v2_settings_api_key_connected: "Đã kết nối",
+  v2_settings_api_key_edit: "Sửa",
+  v2_settings_api_key_delete: "Xóa",
+  v2_settings_section_data: "Dữ liệu",
+  v2_settings_auto_save_transcript: "Tự động lưu bản ghi",
+  v2_settings_auto_save_transcript_hint: "Lưu bản ghi cuộc hội thoại vào lịch sử",
+  v2_settings_auto_save_recording_hint: "Cũng lưu âm thanh gốc để phát lại",
 
   // v2 Dialog
   v2_dialog_clear_title: "Xóa tất cả lịch sử?",
