@@ -1,21 +1,16 @@
 import React from "react";
-import { useT } from "@/tokens/tokens";
-import { Typography } from "./typography";
+import { useT, VT } from "@/tokens/tokens";
 
 interface EmptyStateProps {
   icon: React.ReactElement;
-  /** Container size for the icon circle. Default: 80 */
   iconSize?: number;
-  /** Icon circle background. Default: t.cyanTint */
-  iconBg?: string;
   title: string;
   subtitle?: string;
 }
 
 export function EmptyState({
   icon,
-  iconSize = 80,
-  iconBg,
+  iconSize = 56,
   title,
   subtitle,
 }: EmptyStateProps) {
@@ -28,16 +23,17 @@ export function EmptyState({
         flexDirection: "column",
         alignItems: "center",
         justifyContent: "center",
-        gap: 12,
-        padding: 20,
+        gap: 14,
+        padding: 24,
       }}
     >
       <div
         style={{
           width: iconSize,
           height: iconSize,
-          borderRadius: t.radius.full,
-          background: iconBg ?? t.cyanTint,
+          borderRadius: 999,
+          background: t.surfaceAlt,
+          boxShadow: VT.ringSoft(t),
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
@@ -45,22 +41,30 @@ export function EmptyState({
       >
         {icon}
       </div>
-      <Typography
-        variant="subheading"
-        align="center"
-        style={{ fontWeight: 700 }}
+      <div
+        style={{
+          fontSize: 17,
+          fontWeight: 600,
+          color: t.text,
+          letterSpacing: -0.6,
+          textAlign: "center",
+          fontFamily: VT.fontDisplay,
+        }}
       >
         {title}
-      </Typography>
+      </div>
       {subtitle && (
-        <Typography
-          variant="action"
-          color={t.textMuted}
-          align="center"
-          style={{ padding: "0 24px", lineHeight: 1.4 }}
+        <div
+          style={{
+            fontSize: 13,
+            color: t.textMuted,
+            textAlign: "center",
+            lineHeight: 1.5,
+            maxWidth: 280,
+          }}
         >
           {subtitle}
-        </Typography>
+        </div>
       )}
     </div>
   );

@@ -14,12 +14,8 @@ export function Card({
     <div
       style={{
         background: t.card,
-        borderRadius: 16,
-        boxShadow:
-          t.mode === "light"
-            ? "0 1px 2px rgba(10,22,40,0.04), 0 6px 20px rgba(10,22,40,0.06)"
-            : "0 1px 0 rgba(255,255,255,0.04) inset, 0 8px 24px rgba(0,0,0,0.4)",
-        border: t.mode === "dark" ? `1px solid ${t.hairline}` : "none",
+        borderRadius: 12,
+        boxShadow: VT.card(t),
         ...style,
       }}
     >
@@ -35,31 +31,32 @@ export function Toggle({
   on: boolean;
   onChange?: (v: boolean) => void;
 }) {
+  const t = useT();
   return (
     <div
       onClick={() => onChange?.(!on)}
       style={{
-        width: 52,
-        height: 32,
+        width: 44,
+        height: 26,
         borderRadius: 999,
-        background: on ? VT.cyan : "rgba(120,120,128,0.30)",
+        background: on ? VT.cyan : (t.mode === "dark" ? "#2A2A2A" : "#E4E4E4"),
         position: "relative",
         flexShrink: 0,
         cursor: onChange ? "pointer" : "default",
-        transition: "background 0.2s",
+        transition: "background 0.15s",
       }}
     >
       <div
         style={{
           position: "absolute",
           top: 2,
-          left: on ? 22 : 2,
-          width: 28,
-          height: 28,
+          left: on ? 20 : 2,
+          width: 22,
+          height: 22,
           borderRadius: 999,
           background: "#fff",
-          boxShadow: "0 2px 4px rgba(0,0,0,0.25)",
-          transition: "left 0.2s",
+          boxShadow: "0 1px 2px rgba(0,0,0,0.2), 0 0 0 0.5px rgba(0,0,0,0.04)",
+          transition: "left 0.15s",
         }}
       />
     </div>
@@ -74,17 +71,61 @@ export function LangTag({ flag, code }: { flag: string; code: string }) {
         display: "inline-flex",
         alignItems: "center",
         gap: 5,
-        padding: "3px 8px 3px 6px",
-        borderRadius: 999,
+        padding: "2px 8px",
+        borderRadius: 9999,
         background: t.surfaceAlt,
+        boxShadow: VT.ringSoft(t),
         fontSize: 11,
-        fontWeight: 700,
-        letterSpacing: 0.4,
+        fontWeight: 500,
+        letterSpacing: 0.2,
         color: t.textMuted,
+        fontFamily: VT.fontMono,
+        textTransform: "uppercase",
       }}
     >
-      <FlagEmoji flag={flag} size={13} />
+      <FlagEmoji flag={flag} size={12} />
       <span>{code}</span>
     </div>
+  );
+}
+
+export type PillTone = "neutral" | "cyan" | "warn" | "error" | "success";
+
+export function Pill({
+  tone = "neutral",
+  children,
+}: {
+  tone?: PillTone;
+  children: React.ReactNode;
+}) {
+  const t = useT();
+  const tones: Record<PillTone, { bg: string; fg: string }> = {
+    neutral: { bg: t.surfaceAlt, fg: t.textMuted },
+    cyan: { bg: t.cyanTint, fg: t.cyanText },
+    warn: { bg: t.warnTint, fg: VT.warning },
+    error: { bg: t.errorTint, fg: VT.error },
+    success: {
+      bg: t.mode === "dark" ? "rgba(13,159,110,0.18)" : "rgba(13,159,110,0.10)",
+      fg: VT.success,
+    },
+  };
+  const s = tones[tone];
+  return (
+    <span
+      style={{
+        display: "inline-flex",
+        alignItems: "center",
+        gap: 4,
+        padding: "2px 10px",
+        borderRadius: 9999,
+        background: s.bg,
+        color: s.fg,
+        fontSize: 11,
+        fontWeight: 500,
+        fontFamily: VT.font,
+      }}
+    >
+      {children}
+    </span>
   );
 }
