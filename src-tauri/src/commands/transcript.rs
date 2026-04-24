@@ -100,3 +100,62 @@ pub async fn delete_transcript(
     }
     fs::remove_file(&path).map_err(|e| e.to_string())
 }
+
+/// Write audio recording to the recordings subdirectory.
+#[tauri::command]
+pub async fn write_audio(
+    app: tauri::AppHandle,
+    filename: String,
+    data: Vec<u8>,
+) -> Result<(), String> {
+    let docs = app.path().document_dir().map_err(|e| e.to_string())?;
+    let dir = docs.join("HeyGracie").join("recordings");
+    fs::create_dir_all(&dir).map_err(|e| e.to_string())?;
+
+    let path = dir.join(&filename);
+    println!("[write_audio] Saving to: {:?}", path);
+    fs::write(&path, &data).map_err(|e| e.to_string())
+}
+
+/// Read audio recording file.
+#[tauri::command]
+pub async fn read_audio(
+    app: tauri::AppHandle,
+    filename: String,
+) -> Result<Vec<u8>, String> {
+    let docs = app.path().document_dir().map_err(|e| e.to_string())?;
+    let recordings_dir = docs.join("HeyGracie").join("recordings");
+    let path = recordings_dir.join(&filename);
+
+    println!("[read_audio] Looking for: {:?}, exists: {}", path, path.exists());
+
+    // Guard against path traversal
+    if !path.starts_with(&recordings_dir) {
+        return Err("Invalid filename".to_string());
+    }
+
+    fs::read(&path).map_err(|e| e.to_string())
+}
+
+/// Delete audio recording file.
+#[tauri::command]
+pub async fn delete_audio(
+    app: tauri::AppHandle,
+    filename: String,
+) -> Result<(), String> {
+    let docs = app.path().document_dir().map_err(|e| e.to_string())?;
+    let recordings_dir = docs.join("HeyGracie").join("recordings");
+    let path = recordings_dir.join(&filename);
+
+    // Guard against path traversal
+    if !path.starts_with(&recordings_dir) {
+        return Err("Invalid filename".to_string());
+    }
+
+    // Allow missing file (no error if already deleted)
+    if path.exists() {
+        fs::remove_file(&path).map_err(|e| e.to_string())
+    } else {
+        Ok(())
+    }
+}

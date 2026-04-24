@@ -94,7 +94,10 @@ interface SettingsScreenProps {
   autoOpenApiKey?: boolean;
 }
 
-export function SettingsScreen({ onBack, autoOpenApiKey }: SettingsScreenProps) {
+export function SettingsScreen({
+  onBack,
+  autoOpenApiKey,
+}: SettingsScreenProps) {
   const t = useT();
   const { t: tr } = useV2T();
   const {
@@ -105,12 +108,14 @@ export function SettingsScreen({ onBack, autoOpenApiKey }: SettingsScreenProps) 
     theme,
     autoSave,
     uiLanguage,
+    recordSessions,
     setAutoDetect,
     setTheme,
     setAutoSave,
     setUiLanguage,
     setLanguageA,
     setLanguageB,
+    setRecordSessions,
   } = useV2SettingsStore();
 
   const [langSheetSlot, setLangSheetSlot] = useState<"A" | "B" | null>(null);
@@ -133,6 +138,32 @@ export function SettingsScreen({ onBack, autoOpenApiKey }: SettingsScreenProps) 
   const handleApiKeyDismiss = useCallback(() => {
     setApiKeyOpen(false);
   }, []);
+
+  const [recordError, setRecordError] = useState<string | null>(null);
+
+  const handleRecordSessionsChange = useCallback(
+    async (enabled: boolean) => {
+      setRecordError(null);
+      if (enabled) {
+        // Check mic permission
+        try {
+          const stream = await navigator.mediaDevices.getUserMedia({
+            audio: true,
+          });
+          stream.getTracks().forEach((t) => t.stop()); // Release immediately
+        } catch {
+          setRecordError(tr("v2_settings_mic_permission_denied"));
+          return;
+        }
+        // For storage, we rely on Tauri to handle file writing
+        // If Tauri can write to documents dir, we have storage access
+        setRecordSessions(true);
+      } else {
+        setRecordSessions(false);
+      }
+    },
+    [setRecordSessions, tr],
+  );
 
   const themeIndex = useMemo(
     () => (theme === "light" ? 0 : theme === "dark" ? 1 : 2),
@@ -259,6 +290,19 @@ export function SettingsScreen({ onBack, autoOpenApiKey }: SettingsScreenProps) 
             title={tr("v2_settings_auto_save")}
             control={<Toggle on={autoSave} onChange={setAutoSave} />}
           />
+          {autoSave && (
+            <SectionRow
+              title={tr("v2_settings_record_sessions")}
+              detail={recordError || undefined}
+              control={
+                <Toggle
+                  on={recordSessions}
+                  onChange={handleRecordSessionsChange}
+                />
+              }
+              isLast={false}
+            />
+          )}
           <SectionRow
             title={tr("v2_settings_clear_history")}
             destructive

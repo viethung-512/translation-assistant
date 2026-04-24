@@ -157,6 +157,12 @@ export const en = {
   v2_no_key_dialog_go_settings: "Go to Settings",
   v2_no_key_dialog_cancel: "Cancel",
 
+  // v2 Record Sessions
+  v2_settings_record_sessions: "Record translation sessions",
+  v2_settings_record_sessions_hint: "Save audio recordings for later review",
+  v2_settings_mic_permission_denied: "Microphone permission required to record sessions",
+  v2_settings_storage_permission_denied: "Storage permission required to save recordings",
+
   // v2 History
   v2_history_title: "History",
   v2_history_sessions: "{{count}} sessions",

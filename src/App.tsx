@@ -18,18 +18,14 @@ function AppV2Inner() {
   const theme = useV2SettingsStore((s) => s.theme);
   const setApiKeyToGlobal = useV2SettingsStore((s) => s.setApiKey);
   const [systemDark, setSystemDark] = useState(getSystemDark);
-  const [apiKey, setApiKey] = useState<string>("");
 
   useEffect(() => {
-    if (!apiKey || apiKey.trim() === "") {
-      getApiKey().then((data) => {
-        if (data) {
-          setApiKey(data);
-          setApiKeyToGlobal(data);
-        }
-      });
-    }
-  }, [apiKey]);
+    getApiKey().then((data) => {
+      if (data) {
+        setApiKeyToGlobal(data);
+      }
+    });
+  }, []);
 
   useEffect(() => {
     if (theme !== "system") return;
@@ -47,7 +43,15 @@ function AppV2Inner() {
   return (
     <ThemeProvider dark={dark}>
       <MemoryRouter initialEntries={[ROUTES.MAIN]}>
-        <SonioxProvider apiKey={apiKey}>
+        <SonioxProvider
+          apiKey={async () => {
+            const apiKey = await getApiKey();
+            if (!apiKey) {
+              throw new Error("Please set soniox apikey");
+            }
+            return apiKey;
+          }}
+        >
           <AppShellV2 />
         </SonioxProvider>
       </MemoryRouter>

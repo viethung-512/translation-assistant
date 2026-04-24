@@ -160,6 +160,12 @@ export const vi: Record<TranslationKeys, string> = {
   v2_no_key_dialog_go_settings: "Đến Cài đặt",
   v2_no_key_dialog_cancel: "Huỷ",
 
+  // v2 Record Sessions
+  v2_settings_record_sessions: "Ghi phiên dịch",
+  v2_settings_record_sessions_hint: "Lưu bản ghi âm để xem lại sau",
+  v2_settings_mic_permission_denied: "Cần quyền microphone để ghi phiên",
+  v2_settings_storage_permission_denied: "Cần quyền lưu trữ để lưu bản ghi",
+
   // v2 History
   v2_history_title: "Lịch sử",
   v2_history_sessions: "{{count}} phiên",

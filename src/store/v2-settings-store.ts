@@ -10,6 +10,7 @@ interface V2SettingsState {
   theme: V2Theme;
   autoSave: boolean;
   uiLanguage: string;
+  recordSessions: boolean;
   apiKey: string; // in-memory only — never written to localStorage
   // actions
   setLanguageA: (code: string) => void;
@@ -19,6 +20,7 @@ interface V2SettingsState {
   setTheme: (theme: V2Theme) => void;
   setAutoSave: (v: boolean) => void;
   setUiLanguage: (lang: string) => void;
+  setRecordSessions: (v: boolean) => void;
   setApiKey: (key: string) => void;
 }
 
@@ -31,6 +33,7 @@ export const useV2SettingsStore = create<V2SettingsState>()(
       theme: "system",
       autoSave: true,
       uiLanguage: "en",
+      recordSessions: false,
       apiKey: "",
       setLanguageA: (code) => set({ languageA: code }),
       setLanguageB: (code) => set({ languageB: code }),
@@ -40,6 +43,7 @@ export const useV2SettingsStore = create<V2SettingsState>()(
       setTheme: (theme) => set({ theme }),
       setAutoSave: (v) => set({ autoSave: v }),
       setUiLanguage: (lang) => set({ uiLanguage: lang }),
+      setRecordSessions: (v) => set({ recordSessions: v }),
       setApiKey: (key) => set({ apiKey: key }),
     }),
     {
@@ -51,6 +55,7 @@ export const useV2SettingsStore = create<V2SettingsState>()(
         theme: s.theme,
         autoSave: s.autoSave,
         uiLanguage: s.uiLanguage,
+        recordSessions: s.recordSessions,
       }),
     },
   ),

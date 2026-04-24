@@ -17,6 +17,7 @@ import {
 import type { CommittedRow } from "@/utils/scrape-transcript";
 import { ALL_AVAILABLE_LANGUAGES } from "@/tokens/languages";
 import { TranscriptRow } from "./shared/transcript-row";
+import { invoke } from "@tauri-apps/api/core";
 
 function FilterChip({
   active,
@@ -75,6 +76,8 @@ export function DetailScreen({ onBack }: { onBack?: () => void }) {
   const [hydrated, setHydrated] = useState(
     useV2HistoryStore.persist.hasHydrated(),
   );
+  const [audioUrl, setAudioUrl] = useState<string | null>(null);
+  const [audioLoading, setAudioLoading] = useState(false);
   const historyItem = useMemo(
     () => items.find((item) => item.id === historyId),
     [items, historyId],
@@ -116,6 +119,38 @@ export function DetailScreen({ onBack }: { onBack?: () => void }) {
       isCancelled = true;
     };
   }, [historyId, navigate]);
+
+  // Load audio recording if exists
+  useEffect(() => {
+    if (!historyId) return;
+
+    let cancelled = false;
+    setAudioLoading(true);
+
+    async function loadAudio() {
+      try {
+        const data = await invoke<number[]>("read_audio", {
+          filename: `recording-${historyId}.webm`,
+        });
+        if (cancelled) return;
+        const blob = new Blob([new Uint8Array(data)], { type: "audio/webm" });
+        const url = URL.createObjectURL(blob);
+        setAudioUrl(url);
+      } catch (err) {
+        // Silently ignore - no recording for this session
+        if (!cancelled) setAudioUrl(null);
+      } finally {
+        if (!cancelled) setAudioLoading(false);
+      }
+    }
+
+    loadAudio();
+
+    return () => {
+      cancelled = true;
+      if (audioUrl) URL.revokeObjectURL(audioUrl);
+    };
+  }, [historyId]);
 
   const speakerOrder = useMemo(() => {
     const seen = new Set<string>();
@@ -237,6 +272,35 @@ export function DetailScreen({ onBack }: { onBack?: () => void }) {
 
   return (
     <ScreenLayout>
+      {/* Audio player */}
+      {audioUrl && (
+        <div
+          style={{
+            padding: "12px 16px",
+            borderBottom: `1px solid ${t.hairline}`,
+            background: t.surfaceAlt,
+          }}
+        >
+          <audio
+            controls
+            style={{ width: "100%", height: 40 }}
+            src={audioUrl}
+          />
+        </div>
+      )}
+      {audioLoading && (
+        <div
+          style={{
+            padding: "12px 16px",
+            borderBottom: `1px solid ${t.hairline}`,
+            background: t.surfaceAlt,
+            color: t.textDim,
+            fontSize: 13,
+          }}
+        >
+          Loading audio...
+        </div>
+      )}
       <div
         style={{
           display: "flex",

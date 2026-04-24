@@ -14,6 +14,7 @@ import {
   type V2HistoryItem,
 } from "@/store/v2-history-store";
 import { useV2T } from "@/i18n";
+import { invoke } from "@tauri-apps/api/core";
 
 function HistoryRow({
   time,
@@ -209,6 +210,16 @@ export function HistoryScreen({
 
   const handleConfirmDelete = useCallback(async () => {
     const ids = Array.from(selectedIds);
+
+    // Delete audio files first
+    for (const id of ids) {
+      try {
+        await invoke("delete_audio", { filename: `recording-${id}.webm` });
+      } catch {
+        // Ignore if file doesn't exist
+      }
+    }
+
     removeItems(ids);
     try {
       await deleteTranscripts(ids);

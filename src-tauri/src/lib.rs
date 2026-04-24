@@ -1,7 +1,7 @@
 mod commands;
 
 use commands::platform::host_os_id;
-use commands::transcript::{delete_transcript, list_transcripts, read_transcript, write_transcript};
+use commands::transcript::{delete_transcript, list_transcripts, read_transcript, write_transcript, write_audio, read_audio, delete_audio};
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
@@ -12,6 +12,9 @@ pub fn run() {
             list_transcripts,
             read_transcript,
             delete_transcript,
+            write_audio,
+            read_audio,
+            delete_audio,
             host_os_id,
         ])
         .run(tauri::generate_context!())
