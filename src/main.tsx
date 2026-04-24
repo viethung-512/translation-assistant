@@ -5,6 +5,7 @@ import React from "react";
 import ReactDOM from "react-dom/client";
 import App from "./App";
 import "./global.css";
+import { SafeAreaProvider } from "./components/AppShell/safe-area-provider";
 
 function clearPreLoad() {
   const el = document.getElementById("pre-load");
@@ -22,7 +23,9 @@ try {
   clearPreLoad();
   ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
     <React.StrictMode>
-      <App />
+      <SafeAreaProvider>
+        <App />
+      </SafeAreaProvider>
     </React.StrictMode>,
   );
 } catch (err) {
