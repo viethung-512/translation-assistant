@@ -26,25 +26,36 @@ function LangRow({
       style={{
         display: "flex",
         alignItems: "center",
-        gap: 14,
-        padding: "12px 12px",
-        minHeight: 56,
-        borderRadius: 12,
-        background: sel ? t.cyanTint : "transparent",
+        gap: 12,
+        padding: "10px 10px",
+        minHeight: 48,
+        borderRadius: 8,
+        background: sel ? t.surfaceAlt : "transparent",
         cursor: "pointer",
+        margin: "0 8px",
       }}
     >
-      <div style={{ fontSize: 26 }}>{flag}</div>
-      <div style={{ flex: 1 }}>
-        <Typography variant="body">{name}</Typography>
-        <Typography variant="action" color={t.textDim} style={{ marginTop: 1 }}>
-          {native}
-        </Typography>
+      <div style={{ fontSize: 22 }}>{flag}</div>
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <div style={{ fontSize: 14, fontWeight: 500, color: t.text, letterSpacing: -0.3 }}>
+            {name}
+          </div>
+          <span
+            style={{
+              fontFamily: VT.fontMono,
+              fontSize: 10,
+              color: t.textDim,
+              letterSpacing: 0.4,
+              textTransform: "uppercase",
+            }}
+          >
+            {code.toUpperCase()}
+          </span>
+        </div>
+        <div style={{ fontSize: 12, color: t.textDim, marginTop: 1 }}>{native}</div>
       </div>
-      <Typography variant="micro" style={{ letterSpacing: 0.4 }}>
-        {code.toUpperCase()}
-      </Typography>
-      {sel && <Icon.Check c={VT.cyan} s={22} />}
+      {sel && <Icon.Check c={t.text} s={16} />}
     </div>
   );
 }
@@ -131,11 +142,12 @@ export function LangSheet({
                     flexShrink: 0,
                     padding: "9px 14px",
                     borderRadius: 999,
-                    background: active ? VT.cyan : t.surfaceAlt,
-                    color: active ? t.navy : t.text,
-                    fontSize: 13,
-                    fontWeight: 700,
+                    background: active ? t.text : t.surface,
+                    color: active ? (t.mode === "dark" ? "#000" : "#fff") : t.text,
+                    fontSize: 12,
+                    fontWeight: 500,
                     letterSpacing: -0.1,
+                    boxShadow: active ? "none" : VT.ring(t),
                     cursor: "pointer",
                   }}
                 >

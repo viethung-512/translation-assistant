@@ -32,13 +32,13 @@ export function TextField({
     <div
       style={{
         height,
-        borderRadius: t.radius.md,
-        background: t.surfaceAlt,
+        borderRadius: 8,
+        background: t.surface,
         display: "flex",
         alignItems: "center",
         padding: `0 ${t.spacing.lg}px`,
         gap: t.spacing.sm,
-        border: focused ? `2px solid ${VT.cyan}` : `1px solid ${t.divider}`,
+        boxShadow: focused ? `0 0 0 1px ${VT.cyan}` : VT.ring(t),
         ...style,
       }}
     >

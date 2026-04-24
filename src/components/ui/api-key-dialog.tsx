@@ -68,7 +68,9 @@ export function ApiKeyDialog({ isOpen, onDismiss }: ApiKeyDialogProps) {
         style={{
           position: "absolute",
           inset: 0,
-          background: "rgba(10,22,40,0.6)",
+          background: "rgba(0,0,0,0.4)",
+          backdropFilter: "blur(4px)",
+          WebkitBackdropFilter: "blur(4px)",
         }}
       />
       <div
@@ -79,20 +81,25 @@ export function ApiKeyDialog({ isOpen, onDismiss }: ApiKeyDialogProps) {
           margin: "0 24px",
           width: "100%",
           maxWidth: 382,
-          background: t.card,
-          borderRadius: t.radius.xl,
-          padding: "28px 24px 20px",
-          boxShadow: "0 20px 60px rgba(0,0,0,0.4)",
-          border: t.mode === "dark" ? `1px solid ${t.hairline}` : "none",
+          background: t.surface,
+          borderRadius: 12,
+          padding: "24px 20px 20px",
+          boxShadow: `0 0 0 1px ${t.ringBorder}, 0 24px 48px rgba(0,0,0,0.24)`,
         }}
       >
-        <Typography
-          variant="heading"
-          align="center"
-          style={{ marginBottom: 6 }}
+        <div
+          style={{
+            fontFamily: VT.fontDisplay,
+            fontSize: 18,
+            fontWeight: 600,
+            color: t.text,
+            letterSpacing: -0.6,
+            textAlign: "center",
+            marginBottom: 6,
+          }}
         >
           {tr("v2_api_key_dialog_title")}
-        </Typography>
+        </div>
 
         {hasStoredKey && (
           <Typography

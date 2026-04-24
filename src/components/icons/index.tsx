@@ -209,4 +209,34 @@ export const Icon = {
       <path d="M20 14.5A8 8 0 119.5 4a6.5 6.5 0 0010.5 10.5z" fill={c} />
     </svg>
   ),
+  Alert: ({ c = "currentColor", s = 24 }: IconProps) => (
+    <svg width={s} height={s} viewBox="0 0 24 24" fill="none">
+      <path d="M12 3l10 18H2L12 3z" stroke={c} strokeWidth="1.8" strokeLinejoin="round" />
+      <path d="M12 10v5M12 18.5v.01" stroke={c} strokeWidth="2" strokeLinecap="round" />
+    </svg>
+  ),
+  Key: ({ c = "currentColor", s = 18 }: IconProps) => (
+    <svg width={s} height={s} viewBox="0 0 24 24" fill="none">
+      <circle cx="8" cy="15" r="4" stroke={c} strokeWidth="1.8" />
+      <path d="M11 13l10-10M17 7l3 3" stroke={c} strokeWidth="1.8" strokeLinecap="round" />
+    </svg>
+  ),
+  Eye: ({ c = "currentColor", s = 18 }: IconProps) => (
+    <svg width={s} height={s} viewBox="0 0 24 24" fill="none">
+      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8S1 12 1 12z" stroke={c} strokeWidth="1.8" />
+      <circle cx="12" cy="12" r="3" stroke={c} strokeWidth="1.8" />
+    </svg>
+  ),
+  EyeOff: ({ c = "currentColor", s = 18 }: IconProps) => (
+    <svg width={s} height={s} viewBox="0 0 24 24" fill="none">
+      <path d="M17.94 17.94A10.06 10.06 0 0112 20C5 20 1 12 1 12a19.27 19.27 0 014.22-5.19M9.9 4.24A10 10 0 0112 4c7 0 11 8 11 8a19.5 19.5 0 01-3.17 4.19M14.12 14.12a3 3 0 01-4.24-4.24" stroke={c} strokeWidth="1.8" strokeLinecap="round" />
+      <path d="M1 1l22 22" stroke={c} strokeWidth="1.8" strokeLinecap="round" />
+    </svg>
+  ),
+  Copy: ({ c = "currentColor", s = 16 }: IconProps) => (
+    <svg width={s} height={s} viewBox="0 0 24 24" fill="none">
+      <rect x="9" y="9" width="12" height="12" rx="2" stroke={c} strokeWidth="1.8" />
+      <path d="M5 15V5a2 2 0 012-2h10" stroke={c} strokeWidth="1.8" strokeLinecap="round" />
+    </svg>
+  ),
 };

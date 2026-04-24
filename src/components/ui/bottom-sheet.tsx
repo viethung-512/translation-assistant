@@ -1,8 +1,7 @@
 import React from "react";
 import { createPortal } from "react-dom";
-import { useT } from "@/tokens/tokens";
+import { useT, VT } from "@/tokens/tokens";
 import { Icon } from "@/components/icons";
-import { Typography } from "./typography";
 
 interface BottomSheetProps {
   isOpen: boolean;
@@ -47,56 +46,53 @@ export function BottomSheet({
           height: `${heightPercent}%`,
           maxHeight: "90%",
           background: t.surface,
-          borderRadius: `${t.radius.xl}px ${t.radius.xl}px 0 0`,
-          boxShadow: "0 -8px 30px rgba(0,0,0,0.25)",
+          borderRadius: "16px 16px 0 0",
+          boxShadow: `0 0 0 1px ${t.ringBorder}, 0 -8px 30px rgba(0,0,0,0.25)`,
           display: "flex",
           flexDirection: "column",
           overflow: "hidden",
-          border: t.mode === "dark" ? `1px solid ${t.hairline}` : "none",
-          borderBottom: "none",
         }}
       >
-        {/* Drag handle */}
-        <div
-          style={{ display: "flex", justifyContent: "center", paddingTop: 10 }}
-        >
-          <div
-            style={{
-              width: 44,
-              height: 5,
-              borderRadius: t.radius.full,
-              background:
-                t.mode === "dark"
-                  ? "rgba(255,255,255,0.25)"
-                  : "rgba(10,22,40,0.3)",
-            }}
-          />
+        {/* Grabber */}
+        <div style={{ display: "flex", justifyContent: "center", paddingTop: 8 }}>
+          <div style={{ width: 32, height: 4, borderRadius: 999, background: t.divider }} />
         </div>
         {/* Header row */}
         <div
           style={{
-            padding: `14px ${t.spacing.xl}px 12px`,
+            padding: "12px 20px 14px",
             display: "flex",
             justifyContent: "space-between",
             alignItems: "center",
           }}
         >
-          <Typography variant="heading">{title}</Typography>
+          <div
+            style={{
+              fontFamily: VT.fontDisplay,
+              fontSize: 20,
+              fontWeight: 600,
+              color: t.text,
+              letterSpacing: -0.8,
+            }}
+          >
+            {title}
+          </div>
           {rightAction ?? (
             <div
               onClick={onDismiss}
               style={{
-                width: 36,
-                height: 36,
-                borderRadius: t.radius.full,
+                width: 32,
+                height: 32,
+                borderRadius: 8,
                 background: t.surfaceAlt,
+                boxShadow: VT.ringSoft(t),
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
                 cursor: "pointer",
               }}
             >
-              <Icon.Close c={t.textMuted} />
+              <Icon.Close c={t.textMuted} s={14} />
             </div>
           )}
         </div>

@@ -6,20 +6,22 @@ interface ActionBarProps {
   style?: React.CSSProperties;
 }
 
-/** Bottom surface bar with a horizontal row of action buttons — sticks to the bottom of its scroll container. */
+/** Fixed bottom action bar — always visible above the device chrome. */
 export function ActionBar({ children, style = {} }: ActionBarProps) {
   const t = useT();
   return (
     <div
       style={{
-        position: "sticky",
+        position: "fixed",
         bottom: 0,
-        zIndex: 10,
-        padding: `${t.spacing.md}px ${t.spacing.lg}px calc(${t.spacing.xxl}px + env(safe-area-inset-bottom))`,
+        left: 0,
+        right: 0,
+        zIndex: 20,
+        padding: `12px 16px calc(12px + env(safe-area-inset-bottom))`,
         background: t.surface,
-        borderTop: `1px solid ${t.divider}`,
+        boxShadow: `inset 0 1px 0 ${t.ringBorder}`,
         display: "flex",
-        gap: 10,
+        gap: 8,
         ...style,
       }}
     >

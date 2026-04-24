@@ -1,14 +1,11 @@
 import React from "react";
 import { createPortal } from "react-dom";
-import { useT } from "@/tokens/tokens";
-import { Button } from "./button";
-import { Typography } from "./typography";
+import { useT, VT } from "@/tokens/tokens";
 
 interface ConfirmDialogProps {
   isOpen: boolean;
   onDismiss: () => void;
   icon: React.ReactElement;
-  iconBg?: string;
   title: string;
   body: string;
   confirmLabel: string;
@@ -21,7 +18,6 @@ export function ConfirmDialog({
   isOpen,
   onDismiss,
   icon,
-  iconBg,
   title,
   body,
   confirmLabel,
@@ -31,7 +27,8 @@ export function ConfirmDialog({
 }: ConfirmDialogProps) {
   const t = useT();
   if (!isOpen) return null;
-  const bg = iconBg ?? (destructive ? "rgba(239,68,68,0.15)" : t.cyanTint);
+
+  const iconBg = destructive ? t.errorTint : t.cyanTint;
 
   return createPortal(
     <div
@@ -49,7 +46,9 @@ export function ConfirmDialog({
         style={{
           position: "absolute",
           inset: 0,
-          background: "rgba(10,22,40,0.6)",
+          background: "rgba(0,0,0,0.4)",
+          backdropFilter: "blur(4px)",
+          WebkitBackdropFilter: "blur(4px)",
         }}
       />
       <div
@@ -59,25 +58,23 @@ export function ConfirmDialog({
           zIndex: 1,
           margin: "0 24px",
           width: "100%",
-          maxWidth: 382,
+          maxWidth: 360,
+          background: t.surface,
+          borderRadius: 12,
+          overflow: "hidden",
+          boxShadow: `0 0 0 1px ${t.ringBorder}, 0 24px 48px rgba(0,0,0,0.24)`,
         }}
       >
-        <div
-          style={{
-            background: t.card,
-            borderRadius: t.radius.xl,
-            padding: `28px ${t.spacing.xxl}px 16px`,
-            boxShadow: "0 20px 60px rgba(0,0,0,0.4)",
-            border: t.mode === "dark" ? `1px solid ${t.hairline}` : "none",
-          }}
-        >
+        {/* Content */}
+        <div style={{ padding: "24px 20px 18px", textAlign: "center" }}>
+          {/* Tinted icon circle */}
           <div
             style={{
-              width: 56,
-              height: 56,
-              borderRadius: t.radius.full,
-              background: bg,
-              margin: `0 auto ${t.spacing.lg}px`,
+              width: 48,
+              height: 48,
+              borderRadius: 999,
+              background: iconBg,
+              margin: "0 auto 12px",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
@@ -85,34 +82,66 @@ export function ConfirmDialog({
           >
             {icon}
           </div>
-          <Typography
-            variant="heading"
-            align="center"
-            style={{ marginBottom: t.spacing.sm }}
+          <div
+            style={{
+              fontFamily: VT.fontDisplay,
+              fontSize: 18,
+              fontWeight: 600,
+              color: t.text,
+              letterSpacing: -0.6,
+              marginBottom: 6,
+            }}
           >
             {title}
-          </Typography>
-          <Typography
-            variant="action"
-            color={t.textMuted}
-            align="center"
-            style={{ lineHeight: 1.4, padding: `0 ${t.spacing.sm}px` }}
+          </div>
+          <div
+            style={{
+              fontSize: 13,
+              color: t.textMuted,
+              lineHeight: 1.45,
+              letterSpacing: -0.1,
+            }}
           >
             {body}
-          </Typography>
-          <div style={{ display: "flex", gap: 10, marginTop: 20 }}>
-            <Button
-              variant="outlined"
-              label={cancelLabel}
-              flex={1}
-              onPress={onDismiss}
-            />
-            <Button
-              variant={destructive ? "destructive" : "primary"}
-              label={confirmLabel}
-              flex={1}
-              onPress={onConfirm}
-            />
+          </div>
+        </div>
+
+        {/* Grid button row */}
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "1fr 1fr",
+            boxShadow: `inset 0 1px 0 ${t.ringBorder}`,
+          }}
+        >
+          <div
+            onClick={onDismiss}
+            style={{
+              padding: "14px 0",
+              textAlign: "center",
+              fontSize: 14,
+              fontWeight: 500,
+              color: t.textMuted,
+              letterSpacing: -0.2,
+              boxShadow: `inset -1px 0 0 ${t.ringBorder}`,
+              cursor: "pointer",
+            }}
+          >
+            {cancelLabel}
+          </div>
+          <div
+            onClick={onConfirm}
+            style={{
+              padding: "14px 0",
+              textAlign: "center",
+              fontSize: 14,
+              fontWeight: 600,
+              color: destructive ? VT.error : t.text,
+              letterSpacing: -0.2,
+              cursor: "pointer",
+            }}
+          >
+            {confirmLabel}
           </div>
         </div>
       </div>
