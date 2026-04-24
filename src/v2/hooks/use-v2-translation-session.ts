@@ -1,16 +1,15 @@
 // Orchestrates recording session for v2 UI using @soniox/react SDK.
 // Mirrors src/hooks/use-translation-session.ts but reads from v2 store.
 import { TtsService } from "@/audio/tts-service";
-import { useV2SettingsStore } from "@/v2/store/v2-settings-store";
-import { useV2HistoryStore } from "@/v2/store/v2-history-store";
 import { putTranscript } from "@/v2/storage/transcript-idb";
+import { useV2HistoryStore } from "@/v2/store/v2-history-store";
+import { useV2SettingsStore } from "@/v2/store/v2-settings-store";
 import {
   buildHistoryFromSnapshot,
   type CommittedRow,
 } from "@/v2/utils/scrape-transcript";
 import { useMicrophonePermission, useRecording } from "@soniox/react";
 import { useCallback, useRef, useState } from "react";
-import { RealtimeToken } from "@soniox/client";
 
 export type RecordingStatus = "idle" | "recording" | "paused" | "stopping";
 export type ConnectionStatus = "disconnected" | "connecting" | "connected";
@@ -87,7 +86,6 @@ export function useV2TranslationSession(props: {
 
   const [isPaused, setIsPaused] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
-  const [activeTokens, setActiveTokens] = useState<RealtimeToken[]>([]);
 
   const { status: permissionStatus } = useMicrophonePermission({
     autoCheck: true,
@@ -111,13 +109,6 @@ export function useV2TranslationSession(props: {
         tts: ttsRef.current,
         languageB: languageBRef.current,
       });
-      setActiveTokens([]);
-    },
-    onResult(result) {
-      setActiveTokens((prev) => [
-        ...result.tokens,
-        ...prev.filter((tk) => tk.is_final),
-      ]);
     },
   });
 
@@ -193,6 +184,6 @@ export function useV2TranslationSession(props: {
       permissionStatus === "denied" ||
       permissionStatus === "unavailable" ||
       permissionStatus === "unsupported",
-    activeTokens,
+    activeTokens: [...recording.tokens, ...recording.partialTokens],
   };
 }
