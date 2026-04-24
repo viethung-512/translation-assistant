@@ -1,9 +1,11 @@
-import { useEffect, useState } from "react";
-import { MemoryRouter } from "react-router-dom";
-import { ThemeProvider } from "@/tokens/tokens";
 import { AppShellV2 } from "@/components/AppShell/app-shell-v2";
 import { ROUTES } from "@/router/routes";
 import { useV2SettingsStore } from "@/store/v2-settings-store";
+import { ThemeProvider } from "@/tokens/tokens";
+import { SonioxProvider } from "@soniox/react";
+import { useEffect, useMemo, useState } from "react";
+import { MemoryRouter } from "react-router-dom";
+import { getApiKey } from "./tauri/secure-storage";
 
 function getSystemDark(): boolean {
   return (
@@ -14,7 +16,20 @@ function getSystemDark(): boolean {
 
 function AppV2Inner() {
   const theme = useV2SettingsStore((s) => s.theme);
+  const setApiKeyToGlobal = useV2SettingsStore((s) => s.setApiKey);
   const [systemDark, setSystemDark] = useState(getSystemDark);
+  const [apiKey, setApiKey] = useState<string>("");
+
+  useEffect(() => {
+    if (!apiKey || apiKey.trim() === "") {
+      getApiKey().then((data) => {
+        if (data) {
+          setApiKey(data);
+          setApiKeyToGlobal(data);
+        }
+      });
+    }
+  }, [apiKey]);
 
   useEffect(() => {
     if (theme !== "system") return;
@@ -24,12 +39,17 @@ function AppV2Inner() {
     return () => mq.removeEventListener("change", handler);
   }, [theme]);
 
-  const dark = theme === "dark" ? true : theme === "light" ? false : systemDark;
+  const dark = useMemo(
+    () => (theme === "dark" ? true : theme === "light" ? false : systemDark),
+    [theme, systemDark],
+  );
 
   return (
     <ThemeProvider dark={dark}>
       <MemoryRouter initialEntries={[ROUTES.MAIN]}>
-        <AppShellV2 />
+        <SonioxProvider apiKey={apiKey}>
+          <AppShellV2 />
+        </SonioxProvider>
       </MemoryRouter>
     </ThemeProvider>
   );

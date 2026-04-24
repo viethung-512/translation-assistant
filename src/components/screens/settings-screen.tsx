@@ -1,28 +1,20 @@
-import React, { useState, useMemo, useCallback, useEffect } from "react";
-import { useT, VT } from "@/tokens/tokens";
-import { Typography } from "@/components/ui/typography";
 import { Icon } from "@/components/icons";
+import { OptionSheet } from "@/components/ui/option-sheet";
 import { Toggle } from "@/components/ui/primitives";
 import { ScreenLayout } from "@/components/ui/screen-layout";
 import { SectionGroup, SectionRow } from "@/components/ui/section-list";
-import { OptionSheet } from "@/components/ui/option-sheet";
-import {
-  useV2SettingsStore,
-  type V2Theme,
-} from "@/store/v2-settings-store";
+import { Typography } from "@/components/ui/typography";
+import i18n, { useV2T } from "@/i18n";
+import { useV2SettingsStore, type V2Theme } from "@/store/v2-settings-store";
 import { ALL_AVAILABLE_LANGUAGES } from "@/tokens/languages";
-import { useV2T } from "@/i18n";
-import i18n from "@/i18n";
-import { ConfirmDialog } from "../ui/confirm-dialog";
+import { useT, VT } from "@/tokens/tokens";
+import React, { useCallback, useMemo, useState } from "react";
 import { ApiKeyDialog } from "../ui/api-key-dialog";
+import { ConfirmDialog } from "../ui/confirm-dialog";
 import { FlagEmoji } from "../ui/flag-emoji";
 import { LangSheet } from "../ui/lang-sheet";
-import { getApiKey } from "@/tauri/secure-storage";
 
-type OpenSheet =
-  | "theme"
-  | "appLanguage"
-  | null;
+type OpenSheet = "theme" | "appLanguage" | null;
 
 function Segmented3({
   options,
@@ -105,6 +97,7 @@ export function SettingsScreen({ onBack }: SettingsScreenProps) {
   const t = useT();
   const { t: tr } = useV2T();
   const {
+    apiKey,
     languageA,
     languageB,
     autoDetect,
@@ -124,16 +117,12 @@ export function SettingsScreen({ onBack }: SettingsScreenProps) {
   const [confirmClearAllHistories, setConfirmClearAllHistories] =
     useState(false);
   const [apiKeyOpen, setApiKeyOpen] = useState(false);
-  const [hasStoredKey, setHasStoredKey] = useState(false);
   const closeSheet = useCallback(() => setOpenSheet(null), []);
 
-  useEffect(() => {
-    getApiKey().then((k) => setHasStoredKey(!!k));
-  }, []);
+  const hasStoredKey = useMemo(() => apiKey && apiKey.trim() !== "", [apiKey]);
 
   const handleApiKeyDismiss = useCallback(() => {
     setApiKeyOpen(false);
-    getApiKey().then((k) => setHasStoredKey(!!k));
   }, []);
 
   const themeIndex = useMemo(
@@ -213,7 +202,9 @@ export function SettingsScreen({ onBack }: SettingsScreenProps) {
       <div style={{ padding: "0 20px 16px" }}>
         <Typography variant="display">{tr("v2_settings_title")}</Typography>
       </div>
-      <div style={{ padding: "0 16px calc(24px + env(safe-area-inset-bottom))" }}>
+      <div
+        style={{ padding: "0 16px calc(24px + env(safe-area-inset-bottom))" }}
+      >
         <SectionGroup title={tr("v2_settings_section_languages")}>
           <SectionRow
             title={tr("v2_settings_lang_a")}

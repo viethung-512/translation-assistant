@@ -1,26 +1,16 @@
-import { useEffect } from "react";
 import { Route, Routes, useNavigate } from "react-router-dom";
 
 import { DetailScreen } from "@/components/screens/detail-screen";
 import { HistoryScreen } from "@/components/screens/history-screen";
 import { MainScreen } from "@/components/screens/main-screen";
 import { SettingsScreen } from "@/components/screens/settings-screen";
+import { SwipeBackLayer } from "@/components/ui/swipe-back-layer";
 import { ROUTES, detailPath } from "@/router/routes";
 import { useT } from "@/tokens/tokens";
-import { getApiKey } from "@/tauri/secure-storage";
-import { useV2SettingsStore } from "@/store/v2-settings-store";
-import { SwipeBackLayer } from "@/components/ui/swipe-back-layer";
 
 export function AppShellV2() {
   const t = useT();
   const navigate = useNavigate();
-
-  // Populate in-memory apiKey from localStorage on mount (mirrors v1 app-shell pattern)
-  useEffect(() => {
-    getApiKey().then((key) => {
-      if (key) useV2SettingsStore.getState().setApiKey(key);
-    });
-  }, []);
 
   return (
     <div

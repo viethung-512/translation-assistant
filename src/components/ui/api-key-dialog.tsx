@@ -1,12 +1,12 @@
-import { useState, useEffect, useCallback } from "react";
-import { createPortal } from "react-dom";
-import { useT, VT } from "@/tokens/tokens";
-import { useV2SettingsStore } from "@/store/v2-settings-store";
-import { getApiKey, saveApiKey, deleteApiKey } from "@/tauri/secure-storage";
-import { TextField } from "@/components/ui/text-input";
 import { Button } from "@/components/ui/button";
+import { TextField } from "@/components/ui/text-input";
 import { Typography } from "@/components/ui/typography";
 import { useV2T } from "@/i18n";
+import { useV2SettingsStore } from "@/store/v2-settings-store";
+import { deleteApiKey, saveApiKey } from "@/tauri/secure-storage";
+import { useT, VT } from "@/tokens/tokens";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { createPortal } from "react-dom";
 
 interface ApiKeyDialogProps {
   isOpen: boolean;
@@ -16,18 +16,18 @@ interface ApiKeyDialogProps {
 export function ApiKeyDialog({ isOpen, onDismiss }: ApiKeyDialogProps) {
   const t = useT();
   const { t: tr } = useV2T();
-  const { setApiKey } = useV2SettingsStore();
+  const { apiKey, setApiKey } = useV2SettingsStore();
   const [input, setInput] = useState("");
-  const [hasStoredKey, setHasStoredKey] = useState(false);
   const [saving, setSaving] = useState(false);
   const [focused, setFocused] = useState(false);
+
+  const hasStoredKey = useMemo(() => apiKey && apiKey.trim() !== "", [apiKey]);
 
   useEffect(() => {
     if (!isOpen) {
       setInput("");
       return;
     }
-    getApiKey().then((k) => setHasStoredKey(!!k));
   }, [isOpen]);
 
   const handleSave = useCallback(async () => {
@@ -36,7 +36,6 @@ export function ApiKeyDialog({ isOpen, onDismiss }: ApiKeyDialogProps) {
     try {
       await saveApiKey(input.trim());
       setApiKey(input.trim());
-      setHasStoredKey(true);
       setInput("");
       onDismiss();
     } finally {
@@ -47,7 +46,6 @@ export function ApiKeyDialog({ isOpen, onDismiss }: ApiKeyDialogProps) {
   const handleDelete = useCallback(async () => {
     await deleteApiKey();
     setApiKey("");
-    setHasStoredKey(false);
     setInput("");
     onDismiss();
   }, [setApiKey, onDismiss]);
@@ -67,7 +65,11 @@ export function ApiKeyDialog({ isOpen, onDismiss }: ApiKeyDialogProps) {
     >
       <div
         onClick={onDismiss}
-        style={{ position: "absolute", inset: 0, background: "rgba(10,22,40,0.6)" }}
+        style={{
+          position: "absolute",
+          inset: 0,
+          background: "rgba(10,22,40,0.6)",
+        }}
       />
       <div
         onClick={(e) => e.stopPropagation()}
@@ -84,7 +86,11 @@ export function ApiKeyDialog({ isOpen, onDismiss }: ApiKeyDialogProps) {
           border: t.mode === "dark" ? `1px solid ${t.hairline}` : "none",
         }}
       >
-        <Typography variant="heading" align="center" style={{ marginBottom: 6 }}>
+        <Typography
+          variant="heading"
+          align="center"
+          style={{ marginBottom: 6 }}
+        >
           {tr("v2_api_key_dialog_title")}
         </Typography>
 
@@ -114,7 +120,13 @@ export function ApiKeyDialog({ isOpen, onDismiss }: ApiKeyDialogProps) {
           style={{ marginBottom: 16 }}
         />
 
-        <div style={{ display: "flex", gap: 10, marginBottom: hasStoredKey ? 10 : 0 }}>
+        <div
+          style={{
+            display: "flex",
+            gap: 10,
+            marginBottom: hasStoredKey ? 10 : 0,
+          }}
+        >
           <Button
             variant="outlined"
             label={tr("v2_api_key_dialog_cancel")}
@@ -123,7 +135,11 @@ export function ApiKeyDialog({ isOpen, onDismiss }: ApiKeyDialogProps) {
           />
           <Button
             variant="primary"
-            label={saving ? tr("v2_api_key_dialog_saving") : tr("v2_api_key_dialog_save")}
+            label={
+              saving
+                ? tr("v2_api_key_dialog_saving")
+                : tr("v2_api_key_dialog_save")
+            }
             flex={1}
             disabled={saving || !input.trim()}
             onPress={handleSave}
