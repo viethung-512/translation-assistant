@@ -11,6 +11,8 @@
     "tauri": "tauri"
   },
   "dependencies": {
+    "@fontsource-variable/geist": "^5.2.8",
+    "@fontsource-variable/geist-mono": "^5.2.7",
     "@soniox/client": "^1.0.2",
     "@soniox/react": "^1.0.2",
     "@tauri-apps/api": "^2",
