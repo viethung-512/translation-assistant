@@ -6,7 +6,6 @@ import { Card, Toggle } from "@/v2/components/ui/primitives";
 import { ScreenLayout } from "@/v2/components/ui/screen-layout";
 import { IconBtn, LangPill, pulseRingStyle } from "./main-screen-helpers";
 import { TranscriptRow } from "./shared/transcript-row";
-import { OutputModeSegment } from "./main/output-mode-segment";
 import { RecordingStatus } from "./main/recording-status";
 import { EmptyState } from "@/v2/components/ui/empty-state";
 import { LangSheet } from "@/v2/components/ui/lang-sheet";
@@ -634,7 +633,6 @@ export function MainScreen({ onSettings, onHistory }: MainScreenProps) {
           >
             {bodyMarkup}
           </Card>
-          <OutputModeSegment />
         </div>
       </ScreenLayout>
 

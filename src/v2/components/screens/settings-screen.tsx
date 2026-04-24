@@ -8,7 +8,6 @@ import { SectionGroup, SectionRow } from "@/v2/components/ui/section-list";
 import { OptionSheet } from "@/v2/components/ui/option-sheet";
 import {
   useV2SettingsStore,
-  type V2OutputMode,
   type V2Theme,
 } from "@/v2/store/v2-settings-store";
 import { ALL_AVAILABLE_LANGUAGES } from "@/v2/tokens/languages";
@@ -21,9 +20,6 @@ import { LangSheet } from "../ui/lang-sheet";
 import { getApiKey } from "@/tauri/secure-storage";
 
 type OpenSheet =
-  | "outputMode"
-  | "speakingVoice"
-  | "outputDevice"
   | "theme"
   | "appLanguage"
   | null;
@@ -112,14 +108,10 @@ export function SettingsScreen({ onBack }: SettingsScreenProps) {
     languageA,
     languageB,
     autoDetect,
-    outputMode,
-    speakingVoice,
     theme,
     autoSave,
     uiLanguage,
     setAutoDetect,
-    setOutputMode,
-    setSpeakingVoice,
     setTheme,
     setAutoSave,
     setUiLanguage,
@@ -148,28 +140,6 @@ export function SettingsScreen({ onBack }: SettingsScreenProps) {
     () => (theme === "light" ? 0 : theme === "dark" ? 1 : 2),
     [theme],
   );
-  const outputModeIndex = useMemo(
-    () => (outputMode === "text" ? 0 : 1),
-    [outputMode],
-  );
-
-  const voiceOptions = useMemo(
-    () => [
-      { label: tr("v2_settings_voice_neutral"), value: "neutral" },
-      { label: tr("v2_settings_voice_female"), value: "female" },
-      { label: tr("v2_settings_voice_male"), value: "male" },
-    ],
-    [i18n],
-  );
-
-  const deviceOptions = useMemo(
-    () => [
-      { label: tr("v2_settings_device_speaker"), value: "speaker" },
-      { label: tr("v2_settings_device_earpiece"), value: "earpiece" },
-      { label: tr("v2_settings_device_bluetooth"), value: "bluetooth" },
-    ],
-    [i18n],
-  );
 
   const appLangOptions = useMemo(
     () => [
@@ -177,14 +147,6 @@ export function SettingsScreen({ onBack }: SettingsScreenProps) {
       { label: "Tiếng Việt", value: "vi" },
     ],
     [],
-  );
-
-  const outputModeOptions = useMemo(
-    () => [
-      { label: tr("v2_output_text"), value: "text" as V2OutputMode },
-      { label: tr("v2_output_voice"), value: "voice" as V2OutputMode },
-    ],
-    [i18n],
   );
 
   const themeSegOptions = useMemo(
@@ -196,21 +158,9 @@ export function SettingsScreen({ onBack }: SettingsScreenProps) {
     [i18n],
   );
 
-  const outputSegOptions = useMemo(
-    () => [
-      { l: tr("v2_output_text"), i: <Icon.Text /> },
-      { l: tr("v2_output_voice"), i: <Icon.Speaker /> },
-    ],
-    [i18n],
-  );
-
   const handleThemeChange = useCallback(
     (i: number) => setTheme((["light", "dark", "system"] as V2Theme[])[i]),
     [setTheme],
-  );
-  const handleOutputModeChange = useCallback(
-    (i: number) => setOutputMode(i === 0 ? "text" : "voice"),
-    [setOutputMode],
   );
   const handleAppLangSelect = useCallback(
     (lang: string) => {
@@ -229,12 +179,6 @@ export function SettingsScreen({ onBack }: SettingsScreenProps) {
   );
   const closeLangSheet = useCallback(() => setLangSheetSlot(null), []);
 
-  const currentVoiceLabel = useMemo(
-    () =>
-      voiceOptions.find((o) => o.value === speakingVoice)?.label ??
-      tr("v2_settings_voice_neutral"),
-    [voiceOptions, speakingVoice, i18n],
-  );
   const currentAppLangLabel = useMemo(
     () =>
       appLangOptions.find((o) => o.value === uiLanguage)?.label ?? "English",
@@ -287,34 +231,6 @@ export function SettingsScreen({ onBack }: SettingsScreenProps) {
             title={tr("v2_settings_auto_detect")}
             subtitle={tr("v2_settings_auto_detect_hint")}
             control={<Toggle on={autoDetect} onChange={setAutoDetect} />}
-            isLast
-          />
-        </SectionGroup>
-        <SectionGroup title={tr("v2_settings_section_translation")}>
-          <SectionRow
-            title={tr("v2_settings_output_mode")}
-            stacked
-            control={
-              <Segmented3
-                options={outputSegOptions}
-                value={outputModeIndex}
-                onChange={handleOutputModeChange}
-              />
-            }
-          />
-          {outputMode === "voice" && (
-            <SectionRow
-              title={tr("v2_settings_speaking_voice")}
-              stacked
-              detail={currentVoiceLabel}
-              onPress={() => setOpenSheet("speakingVoice")}
-            />
-          )}
-          <SectionRow
-            title={tr("v2_settings_output_device")}
-            stacked
-            detail={deviceOptions[0].label}
-            onPress={() => setOpenSheet("outputDevice")}
             isLast
           />
         </SectionGroup>
@@ -384,36 +300,12 @@ export function SettingsScreen({ onBack }: SettingsScreenProps) {
       </div>
 
       <OptionSheet
-        isOpen={openSheet === "speakingVoice"}
-        onDismiss={closeSheet}
-        title={tr("v2_settings_sheet_speaking_voice")}
-        options={voiceOptions}
-        selected={speakingVoice}
-        onSelect={setSpeakingVoice}
-      />
-      <OptionSheet
-        isOpen={openSheet === "outputDevice"}
-        onDismiss={closeSheet}
-        title={tr("v2_settings_sheet_output_device")}
-        options={deviceOptions}
-        selected="speaker"
-        onSelect={() => {}}
-      />
-      <OptionSheet
         isOpen={openSheet === "appLanguage"}
         onDismiss={closeSheet}
         title={tr("v2_settings_sheet_app_language")}
         options={appLangOptions}
         selected={uiLanguage}
         onSelect={handleAppLangSelect}
-      />
-      <OptionSheet
-        isOpen={openSheet === "outputMode"}
-        onDismiss={closeSheet}
-        title={tr("v2_settings_sheet_output_mode")}
-        options={outputModeOptions}
-        selected={outputMode}
-        onSelect={setOutputMode}
       />
       {/* Language sheet overlay — writes to global store */}
       <LangSheet

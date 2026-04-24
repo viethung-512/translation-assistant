@@ -1,6 +1,5 @@
 // Orchestrates recording session for v2 UI using @soniox/react SDK.
 // Mirrors src/hooks/use-translation-session.ts but reads from v2 store.
-import { TtsService } from "@/audio/tts-service";
 import { putTranscript } from "@/v2/storage/transcript-idb";
 import { useV2HistoryStore } from "@/v2/store/v2-history-store";
 import { useV2SettingsStore } from "@/v2/store/v2-settings-store";
@@ -30,7 +29,6 @@ function toConnectionStatus(state: string): ConnectionStatus {
 /** Read `#active-transcript-row` and append if non-empty and not duplicate of last row. */
 function appendActiveTranscriptSnapshot(
   rows: CommittedRow[],
-  opts: { speak: boolean; tts: TtsService; languageB: string },
 ): void {
   const el = document.getElementById(
     "active-transcript-row",
@@ -54,18 +52,13 @@ function appendActiveTranscriptSnapshot(
     transText: trans,
     endMs: Number(endMs),
   });
-  if (opts.speak && trans) {
-    opts.tts.speak(trans, opts.languageB);
-  }
 }
 
 export function useV2TranslationSession(props: {
   languageA?: string;
   languageB?: string;
-  outputMode?: string;
 }) {
   const {
-    outputMode: defaultOutputMode,
     languageA: defaultLanguageA,
     languageB: defaultLanguageB,
     autoDetect,
@@ -74,14 +67,10 @@ export function useV2TranslationSession(props: {
   const {
     languageA = defaultLanguageA,
     languageB = defaultLanguageB,
-    outputMode = defaultOutputMode,
   } = props;
-  const ttsRef = useRef(new TtsService());
   const sessionStartedAt = useRef(0);
   const rowSnapshotsRef = useRef<CommittedRow[]>([]);
-  const outputModeRef = useRef(outputMode);
   const languageBRef = useRef(languageB);
-  outputModeRef.current = outputMode;
   languageBRef.current = languageB;
 
   const [isPaused, setIsPaused] = useState(false);
@@ -104,11 +93,7 @@ export function useV2TranslationSession(props: {
     enable_speaker_diarization: true,
     enable_endpoint_detection: true,
     onEndpoint() {
-      appendActiveTranscriptSnapshot(rowSnapshotsRef.current, {
-        speak: outputModeRef.current === "voice",
-        tts: ttsRef.current,
-        languageB: languageBRef.current,
-      });
+      appendActiveTranscriptSnapshot(rowSnapshotsRef.current);
     },
   });
 
@@ -116,34 +101,26 @@ export function useV2TranslationSession(props: {
     rowSnapshotsRef.current = [];
     sessionStartedAt.current = Date.now();
     setSaveError(null);
-    ttsRef.current.setEnabled(outputMode === "voice");
     await recording.start();
-  }, [outputMode, recording]);
+  }, [recording]);
 
   const pauseSession = useCallback(() => {
-    ttsRef.current.stop();
     recording.stop();
     setIsPaused(true);
   }, [recording]);
 
   const resumeSession = useCallback(async () => {
-    ttsRef.current.setEnabled(outputMode === "voice");
     await recording.start();
     setIsPaused(false);
-  }, [outputMode, recording]);
+  }, [recording]);
 
   const stopSession = useCallback(async () => {
     setIsPaused(false);
-    ttsRef.current.stop();
     const startMs = sessionStartedAt.current;
 
     if (autoSave) {
       // Flush tail utterance before SDK stop may clear tokens / DOM.
-      appendActiveTranscriptSnapshot(rowSnapshotsRef.current, {
-        speak: false,
-        tts: ttsRef.current,
-        languageB: languageBRef.current,
-      });
+      appendActiveTranscriptSnapshot(rowSnapshotsRef.current);
     }
 
     recording.stop();
