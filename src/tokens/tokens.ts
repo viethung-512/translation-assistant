@@ -5,21 +5,31 @@ export type Platform = "ios" | "android" | "desktop";
 export interface Theme {
   mode: "light" | "dark";
   platform: Platform;
-  // Colors
+  // Surfaces
   bg: string;
   surface: string;
   surfaceAlt: string;
   card: string;
   elevated: string;
+  // Text
   text: string;
   textMuted: string;
   textDim: string;
   textFaint: string;
+  // Lines
   divider: string;
   hairline: string;
+  // Shadow-as-border
+  ringBorder: string;
+  ringBorderSoft: string;
+  // Accent
   cyan: string;
   cyanTint: string;
   cyanText: string;
+  // Status tints
+  warnTint: string;
+  errorTint: string;
+  // Device frame
   navy: string;
   statusBarGlyph: string;
   frameBg: string;
@@ -48,56 +58,64 @@ export interface Theme {
 const SPACING = { xs: 4, sm: 8, md: 12, lg: 16, xl: 20, xxl: 24 } as const;
 const RADIUS = { sm: 8, md: 12, lg: 16, xl: 24, full: 9999 } as const;
 const TYPE = {
-  display: { size: 34, weight: 800, tracking: -0.8 },
-  title: { size: 21, weight: 800, tracking: -0.6 },
-  body: { size: 16, weight: 600, tracking: -0.2 },
-  label: { size: 13, weight: 600, tracking: -0.1 },
-  caption: { size: 11, weight: 700, tracking: 0.4 },
+  display: { size: 32, weight: 600, tracking: -1.28 },
+  title: { size: 20, weight: 600, tracking: -0.8 },
+  body: { size: 16, weight: 400, tracking: -0.2 },
+  label: { size: 14, weight: 500, tracking: -0.3 },
+  caption: { size: 11, weight: 500, tracking: 0.4 },
 } as const;
 
 export function makeTheme(dark: boolean, platform: Platform = "ios"): Theme {
   const colors = dark
     ? {
         mode: "dark" as const,
-        bg: "#05090F",
-        surface: "#0F1929",
-        surfaceAlt: "#142238",
-        card: "#142238",
-        elevated: "#1B2D49",
-        text: "#FFFFFF",
-        textMuted: "rgba(255,255,255,0.65)",
-        textDim: "rgba(255,255,255,0.45)",
-        textFaint: "rgba(255,255,255,0.25)",
+        bg: "#000000",
+        surface: "#0A0A0A",
+        surfaceAlt: "#111111",
+        card: "#0A0A0A",
+        elevated: "#171717",
+        text: "#FAFAFA",
+        textMuted: "#A1A1A1",
+        textDim: "#737373",
+        textFaint: "#525252",
         divider: "rgba(255,255,255,0.10)",
         hairline: "rgba(255,255,255,0.06)",
+        ringBorder: "rgba(255,255,255,0.10)",
+        ringBorderSoft: "rgba(255,255,255,0.06)",
         cyan: "#00D4FF",
-        cyanTint: "rgba(0, 212, 255, 0.14)",
+        cyanTint: "rgba(0, 212, 255, 0.12)",
         cyanText: "#5DE5FF",
+        warnTint: "rgba(245,158,11,0.14)",
+        errorTint: "rgba(239,68,68,0.14)",
         navy: "#0A1628",
-        statusBarGlyph: "#fff",
-        frameBg: "#05090F",
-        bezel: "#1A1F2A",
+        statusBarGlyph: "#FAFAFA",
+        frameBg: "#000000",
+        bezel: "#111111",
       }
     : {
         mode: "light" as const,
-        bg: "#F6F8FB",
+        bg: "#FFFFFF",
         surface: "#FFFFFF",
-        surfaceAlt: "#EEF2F7",
+        surfaceAlt: "#FAFAFA",
         card: "#FFFFFF",
         elevated: "#FFFFFF",
-        text: "#0A1628",
-        textMuted: "rgba(10, 22, 40, 0.70)",
-        textDim: "rgba(10, 22, 40, 0.50)",
-        textFaint: "rgba(10, 22, 40, 0.30)",
-        divider: "rgba(10, 22, 40, 0.10)",
-        hairline: "rgba(10, 22, 40, 0.06)",
+        text: "#171717",
+        textMuted: "#4D4D4D",
+        textDim: "#666666",
+        textFaint: "#808080",
+        divider: "#EBEBEB",
+        hairline: "#F0F0F0",
+        ringBorder: "rgba(0,0,0,0.08)",
+        ringBorderSoft: "#EBEBEB",
         cyan: "#00D4FF",
         cyanTint: "#E6FAFF",
-        cyanText: "#00A8CC",
-        navy: "#0A1628",
-        statusBarGlyph: "#0A1628",
-        frameBg: "#F6F8FB",
-        bezel: "#0A1628",
+        cyanText: "#0088A8",
+        warnTint: "#FFF4E5",
+        errorTint: "#FFEDEC",
+        navy: "#171717",
+        statusBarGlyph: "#171717",
+        frameBg: "#FFFFFF",
+        bezel: "#171717",
       };
   return { ...colors, platform, spacing: SPACING, radius: RADIUS, type: TYPE };
 }
@@ -105,15 +123,21 @@ export function makeTheme(dark: boolean, platform: Platform = "ios"): Theme {
 // Static brand / semantic tokens (not theme-dependent)
 export const VT = {
   cyan: "#00D4FF",
-  cyanText: "#00A8CC",
-  success: "#22C55E",
-  error: "#EF4444",
-  warning: "#F59E0B",
-  s: ["#00D4FF", "#F97316", "#22C55E", "#A855F7", "#EAB308", "#94A3B8"],
-  font: '-apple-system, "SF Pro Text", "Inter", system-ui, sans-serif',
-  fontDisplay:
-    '-apple-system, "SF Pro Display", "Inter", system-ui, sans-serif',
-} as const;
+  cyanText: "#0088A8",
+  success: "#0D9F6E",
+  error: "#E5484D",
+  warning: "#F5A623",
+  s: ["#00D4FF", "#F5A623", "#0D9F6E", "#7C3AED", "#E5484D", "#737373"],
+  font: '"Geist Variable", -apple-system, "SF Pro Text", "Inter", system-ui, Arial, sans-serif',
+  fontDisplay: '"Geist Variable", -apple-system, "SF Pro Display", "Inter", system-ui, Arial, sans-serif',
+  fontMono: '"Geist Mono Variable", ui-monospace, SFMono-Regular, Menlo, Monaco, "Courier New", monospace',
+  ring: (t: Theme) => `0 0 0 1px ${t.ringBorder}`,
+  ringSoft: (t: Theme) => `0 0 0 1px ${t.ringBorderSoft}`,
+  card: (t: Theme) =>
+    t.mode === "dark"
+      ? `0 0 0 1px ${t.ringBorder}, 0 2px 2px rgba(0,0,0,0.3), 0 8px 8px -8px rgba(0,0,0,0.3)`
+      : `0 0 0 1px ${t.ringBorder}, 0 2px 2px rgba(0,0,0,0.04), 0 8px 8px -8px rgba(0,0,0,0.04)`,
+};
 
 function detectPlatform(): Platform {
   const ua = navigator.userAgent;
